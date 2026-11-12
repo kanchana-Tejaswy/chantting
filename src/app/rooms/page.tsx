@@ -11,7 +11,7 @@ export default async function RoomsPage() {
 
   if (result.status === "schema_not_ready") {
     return (
-      <AppShell pageTitle="Chanting Rooms">
+      <AppShell pageTitle="Satsang">
         <div className="mx-auto max-w-2xl px-5 py-12">
           <Card surface="parchment">
             <CardHeader>
@@ -33,7 +33,7 @@ export default async function RoomsPage() {
 
   if (result.status === "error") {
     return (
-      <AppShell pageTitle="Chanting Rooms">
+      <AppShell pageTitle="Satsang">
         <div className="mx-auto max-w-2xl px-5 py-12">
           <Card surface="parchment">
             <CardHeader>
@@ -50,7 +50,7 @@ export default async function RoomsPage() {
 
   return (
     <AppShell
-      pageTitle="Chanting Rooms"
+      pageTitle="Satsang"
       userSummary={
         result.user
           ? { displayName: result.user.displayName, email: result.user.email }

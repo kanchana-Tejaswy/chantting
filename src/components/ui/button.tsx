@@ -23,17 +23,17 @@ export interface ButtonProps
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    "bg-peacock-deep text-ink-on-dark hover:bg-peacock-slate border border-transparent shadow-sacred-sm",
+    "bg-peacock-deep text-ink-on-dark hover:bg-peacock-slate border border-transparent shadow-sacred-sm ks-glow-primary",
   secondary:
-    "bg-linen text-ink hover:bg-sandalwood-border/50 border border-sandalwood-border",
+    "bg-linen text-ink hover:bg-sandalwood-border/50 border border-sandalwood-border ks-glow-secondary",
   gold:
-    "bg-gold-antique text-krishna-midnight hover:bg-gold-antique/90 border border-gold-border/60 font-medium shadow-sacred-sm",
+    "bg-gold-antique text-krishna-midnight hover:bg-gold-antique/90 border border-gold-border/60 font-medium shadow-sacred-sm ks-glow-gold",
   outline:
-    "bg-transparent text-ink hover:bg-linen/70 border border-sandalwood-strong",
+    "bg-transparent text-ink hover:bg-linen/70 border border-sandalwood-strong ks-glow-outline",
   ghost:
-    "bg-transparent text-ink hover:bg-linen/75 border border-transparent",
+    "bg-transparent text-ink hover:bg-linen/75 border border-transparent ks-glow-ghost",
   destructive:
-    "bg-kumkum text-paper hover:bg-kumkum/90 border border-transparent shadow-sacred-sm",
+    "bg-kumkum text-paper hover:bg-kumkum/90 border border-transparent shadow-sacred-sm ks-glow-destructive",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -68,7 +68,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         aria-busy={loading || undefined}
         className={cn(
           "inline-flex cursor-pointer items-center justify-center whitespace-nowrap select-none",
-          "transition-[transform,background-color,border-color,color,opacity] duration-150 ease-out",
+          "transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)]",
           !staticPress && !isDisabled && "active:scale-[0.96]",
           "disabled:cursor-not-allowed disabled:opacity-50",
           variantClasses[variant],
@@ -106,7 +106,7 @@ export function buttonStyles({
 } = {}) {
   return cn(
     "inline-flex cursor-pointer items-center justify-center whitespace-nowrap select-none",
-    "transition-[transform,background-color,border-color,color,opacity] duration-150 ease-out active:scale-[0.96]",
+    "transition-[transform,background-color,border-color,color,box-shadow,opacity] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.96]",
     variantClasses[variant],
     sizeClasses[size],
     className

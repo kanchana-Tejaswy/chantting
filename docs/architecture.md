@@ -1,4 +1,6 @@
-# KRISHNA SĀDHANA — System Architecture & Foundation (Phase 1)
+# SMARAN (स्मरण) — System Architecture & Foundation
+
+> *Remember Him. Stay Connected.*
 
 ## 1. Core Philosophy & Non-Profit Constitution
 

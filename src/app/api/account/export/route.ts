@@ -5,10 +5,20 @@ import {
   type AccountPreferences,
   type AccountProfile,
 } from "@/lib/account/domain";
+import { enforceApiRateLimit } from "@/lib/security/rate-limit";
 
-export async function GET() {
+export async function GET(request: Request) {
   const auth = await getAuthenticatedGitaContext();
   if (!auth.ok) return auth.response;
+
+  const rateLimited = enforceApiRateLimit({
+    request,
+    bucket: "account-export",
+    userId: auth.user.id,
+    limit: 10,
+    windowMs: 15 * 60_000,
+  });
+  if (rateLimited) return rateLimited;
 
   const uid = auth.user.id;
   const db = auth.supabase;
@@ -108,7 +118,7 @@ export async function GET() {
     status: 200,
     headers: {
       "Content-Type": "application/json; charset=utf-8",
-      "Content-Disposition": `attachment; filename="krishna-sadhana-export-${dateTag}.json"`,
+      "Content-Disposition": `attachment; filename="smaran-export-${dateTag}.json"`,
       "Cache-Control": "no-store, private",
     },
   });

@@ -383,7 +383,7 @@ describe("Phase 10 Platform Completion — Account, Notifications, Milestones, P
       achievements: [],
       notifications: [],
     });
-    expect(exportDoc.platform).toBe("KRISHNA SADHANA");
+    expect(exportDoc.platform).toBe("SMARAN");
 
     vi.resetModules();
     vi.doMock("@/lib/supabase/server", () => ({
@@ -396,7 +396,10 @@ describe("Phase 10 Platform Completion — Account, Notifications, Milestones, P
     vi.doMock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
     const { GET: exportGet } = await import("@/app/api/account/export/route");
-    expect((await exportGet()).status).toBe(401);
+    expect(
+      (await exportGet(new Request("http://localhost:3000/api/account/export")))
+        .status
+    ).toBe(401);
 
     const { PATCH: profilePatch } = await import(
       "@/app/api/account/profile/route"

@@ -17,7 +17,7 @@ describe("Phase 3 component rendering & empty/active states", () => {
     const html = renderToStaticMarkup(
       <AuthPanel nextPath="/sadhana" callbackError="Session expired" />
     );
-    expect(html).toContain("Sign in to Sādhana");
+    expect(html).toContain("Sign in to SMARAN");
     expect(html).toContain("Forgot password?");
     expect(html).toContain("Session expired");
     expect(html).toContain('aria-label="Show password"');
@@ -25,7 +25,7 @@ describe("Phase 3 component rendering & empty/active states", () => {
     const signUpHtml = renderToStaticMarkup(
       <AuthPanel nextPath="/sadhana" initialMode="signup" />
     );
-    expect(signUpHtml).toContain("Create your account");
+    expect(signUpHtml).toContain("Create your SMARAN account");
     expect(signUpHtml).toContain('aria-label="Show password"');
   });
 
@@ -96,9 +96,14 @@ describe("Phase 3 component rendering & empty/active states", () => {
     );
 
     expect(html).toContain("Hare Krishna, Govinda");
+    expect(html).toContain(">Japa<");
+    expect(html).toContain(">Lakshya<");
     expect(html).toContain("Your chanting journal begins gently");
     expect(html).toContain("Start chanting");
     expect(html).toContain('href="/sadhana/chant"');
+    expect(html).toContain("108 beads = 1 full round");
+    expect(html).toContain("ks-glow-gold");
+    expect(html).toContain("ks-glow-secondary");
   });
 
   it("renders distinct original, carried-forward, and effective targets plus recent activity", () => {

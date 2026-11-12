@@ -30,12 +30,22 @@ export async function PATCH(request: Request) {
   // Case 1: Member updating ONLY their own sharing preference
   const privacyParsed = updateMembershipPrivacySchema.safeParse(body);
   if (privacyParsed.success) {
+    const privacyUpdates: {
+      share_progress_mode: "full" | "completion_only" | "private";
+      share_streak?: boolean;
+    } = {
+      share_progress_mode: privacyParsed.data.shareProgressMode,
+    };
+
+    if (privacyParsed.data.shareProgressMode === "private") {
+      privacyUpdates.share_streak = false;
+    } else if (privacyParsed.data.shareStreak !== undefined) {
+      privacyUpdates.share_streak = privacyParsed.data.shareStreak;
+    }
+
     const res = await supabase
       .from("room_memberships")
-      .update({
-        share_progress_mode: privacyParsed.data.shareProgressMode,
-        share_streak: privacyParsed.data.shareStreak,
-      })
+      .update(privacyUpdates)
       .eq("room_id", privacyParsed.data.roomId)
       .eq("user_id", user.id)
       .select("id, room_id, share_progress_mode, share_streak")
@@ -48,8 +58,28 @@ export async function PATCH(request: Request) {
       );
     }
 
+    let purgedActivity = false;
+    if (privacyParsed.data.shareProgressMode === "private") {
+      await supabase
+        .from("room_activity_feed")
+        .delete()
+        .eq("room_id", privacyParsed.data.roomId)
+        .eq("user_id", user.id)
+        .neq("activity_type", "joined_room");
+      purgedActivity = true;
+    } else if (privacyParsed.data.shareProgressMode === "completion_only") {
+      await supabase
+        .from("room_activity_feed")
+        .delete()
+        .eq("room_id", privacyParsed.data.roomId)
+        .eq("user_id", user.id)
+        .eq("activity_type", "rounds_shared");
+      purgedActivity = true;
+    }
+
     revalidatePath("/rooms");
-    return NextResponse.json({ membership: res.data });
+    revalidatePath("/account");
+    return NextResponse.json({ membership: res.data, purgedActivity });
   }
 
   // Case 2: Room owner/admin updating another member's role via audited RPC

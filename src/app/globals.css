@@ -74,8 +74,16 @@
   --color-kumkum-wash: var(--ks-kumkum-wash);
 }
 
+:root {
+  --ease-sanctum-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-sanctum-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+}
+
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 4.5rem;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: contain;
 }
 
 body {
@@ -85,6 +93,148 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  overscroll-behavior-y: contain;
+}
+
+button,
+a,
+[role="button"] {
+  touch-action: manipulation;
+}
+
+@media (pointer: coarse) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
+/* Compositor-only (transform + opacity) Japa Mala bead & tap animations */
+@keyframes ks-bead-halo {
+  0% {
+    transform: scale(0.72);
+    opacity: 0.72;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+
+@keyframes ks-center-ripple {
+  0% {
+    transform: scale(0.92);
+    opacity: 0.42;
+  }
+  100% {
+    transform: scale(1.1);
+    opacity: 0;
+  }
+}
+
+@keyframes ks-sumaru-radiance {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(2.15);
+    opacity: 0;
+  }
+}
+
+.animate-ks-bead-halo {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ks-bead-halo 540ms var(--ease-sanctum-out) forwards;
+}
+
+.animate-ks-center-ripple {
+  transform-origin: center;
+  animation: ks-center-ripple 380ms var(--ease-sanctum-out) forwards;
+}
+
+.animate-ks-sumaru-radiance {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ks-sumaru-radiance 900ms var(--ease-sanctum-out) forwards;
+}
+
+@keyframes ks-login-bg-enter {
+  from {
+    opacity: 0;
+    transform: scale(1.03);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes ks-login-panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-ks-login-bg {
+  animation: ks-login-bg-enter 900ms var(--ease-sanctum-out) both;
+}
+
+.animate-ks-login-panel {
+  animation: ks-login-panel-enter 520ms var(--ease-sanctum-out) 90ms both;
+}
+
+/* Luminous hover glow for pointer-capable devices (never sticks on touch screens) */
+@media (hover: hover) and (pointer: fine) {
+  .ks-glow-primary:hover,
+  .ks-glow-primary:focus-visible {
+    box-shadow:
+      0 0 24px 2px rgba(42, 134, 121, 0.5),
+      0 0 10px 0 rgba(214, 168, 72, 0.34),
+      0 8px 18px -6px rgba(13, 22, 40, 0.34);
+    transform: translateY(-1px);
+  }
+
+  .ks-glow-gold:hover,
+  .ks-glow-gold:focus-visible {
+    box-shadow:
+      0 0 26px 3px rgba(214, 168, 72, 0.62),
+      0 0 12px 0 rgba(255, 232, 163, 0.55),
+      0 8px 18px -6px rgba(13, 22, 40, 0.28);
+    transform: translateY(-1px);
+  }
+
+  .ks-glow-secondary:hover,
+  .ks-glow-secondary:focus-visible,
+  .ks-glow-outline:hover,
+  .ks-glow-outline:focus-visible {
+    border-color: rgba(200, 155, 60, 0.65);
+    box-shadow:
+      0 0 18px 1px rgba(214, 168, 72, 0.38),
+      0 0 8px 0 rgba(42, 134, 121, 0.18),
+      0 6px 14px -5px rgba(17, 27, 51, 0.15);
+    transform: translateY(-1px);
+  }
+
+  .ks-glow-ghost:hover,
+  .ks-glow-ghost:focus-visible {
+    box-shadow: 0 0 14px 0 rgba(214, 168, 72, 0.28);
+  }
+
+  .ks-glow-destructive:hover,
+  .ks-glow-destructive:focus-visible {
+    box-shadow:
+      0 0 20px 1px rgba(185, 58, 50, 0.45),
+      0 6px 14px -5px rgba(13, 22, 40, 0.25);
+    transform: translateY(-1px);
+  }
 }
 
 /* Layered neutral elevation surfaces */
@@ -142,4 +292,8 @@ body {
   animation-duration: 0.01ms !important;
   animation-iteration-count: 1 !important;
   transition-duration: 0.01ms !important;
+}
+
+[data-reduced-motion="true"] [data-veo-motion="video"] {
+  display: none !important;
 }

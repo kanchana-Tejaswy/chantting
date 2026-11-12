@@ -101,7 +101,7 @@ export default async function ChantPage() {
 
   return (
     <AppShell
-      pageTitle="Chanting Practice"
+      pageTitle="Japa"
       userSummary={{
         displayName: result.data.displayName,
         email: result.data.userEmail,

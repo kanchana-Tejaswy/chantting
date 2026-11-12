@@ -64,7 +64,7 @@ export function ProgressBar({
       >
         <div
           className={cn(
-            "h-full origin-left rounded-full transition-transform duration-300 ease-out",
+            "h-full origin-left rounded-full transition-transform duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]",
             fillColor
           )}
           style={{ transform: `scaleX(${pct / 100})` }}
@@ -138,7 +138,7 @@ export function SacredRingProgress({
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
-          className="text-peacock-green transition-[stroke-dashoffset] duration-300 ease-out"
+          className="text-peacock-green transition-[stroke-dashoffset] duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]"
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center">

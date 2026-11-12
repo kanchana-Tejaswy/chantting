@@ -1,5 +1,5 @@
 /**
- * KRISHNA SĀDHANA — Canonical Design Tokens (Phase 2)
+ * SMARAN (स्मरण) — Canonical Design Tokens (Phase 2)
  *
  * Palette grounded in Pahari/Rajasthani devotional manuscripts,
  * Yamuna twilight, peacock plumage, antique gold leaf, warm ivory paper,

@@ -73,6 +73,16 @@ describe("Phase 2 UI components & responsive AppShell routes", () => {
       expect(html).toContain('href="#main-content"');
       expect(html).toContain('aria-label="Primary navigation"');
       expect(html).toContain('aria-label="Mobile navigation"');
+      expect(html).not.toContain(">Chanting<");
+      expect(html).toContain(">DṚṢṬI<");
+      expect(html).toContain(">Japa<");
+      expect(html).toContain(">Lakshya<");
+      expect(html).toContain(">Satsang<");
+      expect(html).toContain('href="/sadhana/chant"');
+      expect(html).toContain('href="/sadhana"');
+      expect(html).toContain("SMARAN");
+      expect(html).toContain("स्मरण");
+      expect(html).toContain("Remember Him. Stay Connected.");
       expect(html).toContain("safe-area-inset-bottom");
       expect(html).toContain("min-h-dvh");
       expect(html).not.toContain("h-screen");

@@ -77,7 +77,7 @@ export const redeemInvitationSchema = z.object({
 export const updateMembershipPrivacySchema = z.object({
   roomId: z.uuid(),
   shareProgressMode: roomShareModeSchema,
-  shareStreak: z.boolean(),
+  shareStreak: z.boolean().optional(),
 });
 
 export const updateMemberRoleInputSchema = z.object({

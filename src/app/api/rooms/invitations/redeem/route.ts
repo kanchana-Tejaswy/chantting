@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { redeemInvitationSchema } from "@/lib/rooms/validation";
+import {
+  enforceApiRateLimit,
+  PRIVATE_NO_STORE_HEADERS,
+} from "@/lib/security/rate-limit";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -13,9 +17,18 @@ export async function POST(request: Request) {
   if (authError || !user) {
     return NextResponse.json(
       { error: "Authentication required." },
-      { status: 401 }
+      { status: 401, headers: PRIVATE_NO_STORE_HEADERS }
     );
   }
+
+  const rateLimited = enforceApiRateLimit({
+    request,
+    bucket: "room-invite-redeem",
+    userId: user.id,
+    limit: 15,
+    windowMs: 15 * 60_000,
+  });
+  if (rateLimited) return rateLimited;
 
   let body: unknown;
   try {

@@ -4,7 +4,6 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  ArrowLeft,
   CheckCircle2,
   Minus,
   Pause,
@@ -32,6 +31,7 @@ import type {
   ChantWorkspacePayload,
 } from "@/lib/chant/types";
 import { JapaMalaWheel } from "@/components/chant/japa-mala-wheel";
+import { ChantingSectionTabs } from "@/components/sadhana/chanting-section-tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonStyles } from "@/components/ui/button";
 import {
@@ -46,7 +46,7 @@ import {
   AlertDialogContent,
   AlertDialogTrigger,
 } from "@/components/ui/dialog";
-import { ProgressBar } from "@/components/ui/progress";
+import { ProgressBar, SacredRingProgress } from "@/components/ui/progress";
 import { SwitchField } from "@/components/ui/switch";
 
 function makeClientKey(prefix: string): string {
@@ -65,6 +65,23 @@ function formatDuration(totalSeconds: number): string {
     return `${String(hrs).padStart(2, "0")}:${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   }
   return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+}
+
+function subscribeOnlineStatus(callback: () => void): () => void {
+  window.addEventListener("online", callback);
+  window.addEventListener("offline", callback);
+  return () => {
+    window.removeEventListener("online", callback);
+    window.removeEventListener("offline", callback);
+  };
+}
+
+function getClientOnlineSnapshot(): boolean {
+  return typeof navigator.onLine === "boolean" ? navigator.onLine : true;
+}
+
+function getServerOnlineSnapshot(): boolean {
+  return true;
 }
 
 export interface ChantingWorkspaceProps {
@@ -89,15 +106,9 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
     initialData.recoverableSession?.method ??
       initialData.preferences.defaultCountingMethod
   );
-  const [beadCount, setBeadCount] = React.useState<number>(() => {
-    const recovered = initialData.recoverableSession;
-    if (!recovered) return 0;
-    const localDraft = readDraftBeadState(initialData.userId);
-    if (localDraft && localDraft.sessionId === recovered.id) {
-      return Math.max(recovered.current_bead_count, localDraft.currentBeadCount);
-    }
-    return recovered.current_bead_count;
-  });
+  const [beadCount, setBeadCount] = React.useState<number>(
+    () => initialData.recoverableSession?.current_bead_count ?? 0
+  );
 
   const [soundEnabled, setSoundEnabled] = React.useState(
     initialData.preferences.soundFeedbackEnabled
@@ -107,10 +118,12 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
   );
 
   const [queuedRounds, setQueuedRounds] = React.useState<QueuedRoundSubmission[]>(
-    () => readOfflineRoundQueue(initialData.userId)
+    []
   );
-  const [isOnline, setIsOnline] = React.useState<boolean>(() =>
-    typeof navigator === "undefined" ? true : navigator.onLine
+  const isOnline = React.useSyncExternalStore(
+    subscribeOnlineStatus,
+    getClientOnlineSnapshot,
+    getServerOnlineSnapshot
   );
   const [isSubmittingRound, setIsSubmittingRound] = React.useState(false);
   const [isSessionBusy, setIsSessionBusy] = React.useState(false);
@@ -128,18 +141,24 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
   const [elapsedSeconds, setElapsedSeconds] = React.useState<number>(() => {
     const s = initialData.recoverableSession;
     if (!s) return 0;
-    const endMs = s.paused_at ? Date.parse(s.paused_at) : Date.now();
-    return Math.max(0, Math.floor((endMs - Date.parse(s.started_at)) / 1000));
+    const endMs = Date.parse(s.paused_at ?? s.last_activity_at);
+    return Number.isFinite(endMs)
+      ? Math.max(0, Math.floor((endMs - Date.parse(s.started_at)) / 1000))
+      : 0;
   });
 
   const beadSyncTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(
     null
   );
+  const hasHydratedDraftRef = React.useRef(false);
   const inFlightSubmitRef = React.useRef(false);
   const inFlightSessionPromiseRef =
     React.useRef<Promise<ChantingSessionRecord | null> | null>(null);
 
-  const isPaused = activeSession?.status === "paused";
+  const isPaused =
+    method === "japa_mala" &&
+    activeSession?.method === "japa_mala" &&
+    activeSession.status === "paused";
   const latestRecord = todayRecords[0] ?? null;
 
   // Session duration tick while active
@@ -156,8 +175,9 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
     return () => clearInterval(id);
   }, [activeSession]);
 
-  // Persist bead draft locally whenever beadCount changes
+  // Persist bead draft locally whenever beadCount changes after draft hydration
   React.useEffect(() => {
+    if (!hasHydratedDraftRef.current) return;
     if (activeSession && method === "japa_mala") {
       writeDraftBeadState(initialData.userId, {
         sessionId: activeSession.id,
@@ -318,29 +338,38 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
     }
   }, [initialData.userId, submitRoundToServer]);
 
-  // Monitor online/offline status and sync queued rounds on reconnect
+  // Hydrate client-only localStorage drafts/queue & sync queued rounds after SSR hydration
   React.useEffect(() => {
+    const hydrateTimer = setTimeout(() => {
+      const recovered = initialData.recoverableSession;
+      if (recovered) {
+        const localDraft = readDraftBeadState(initialData.userId);
+        if (localDraft && localDraft.sessionId === recovered.id) {
+          setBeadCount((prev) => Math.max(prev, localDraft.currentBeadCount));
+        }
+      }
+      hasHydratedDraftRef.current = true;
+
+      const storedQueue = readOfflineRoundQueue(initialData.userId);
+      if (storedQueue.length > 0) {
+        setQueuedRounds(storedQueue);
+      }
+
+      if (getClientOnlineSnapshot()) {
+        void syncOfflineQueue();
+      }
+    }, 0);
+
     const onOnline = () => {
-      setIsOnline(true);
       void syncOfflineQueue();
     };
-    const onOffline = () => setIsOnline(false);
-
     window.addEventListener("online", onOnline);
-    window.addEventListener("offline", onOffline);
-
-    const mountSyncTimer = navigator.onLine
-      ? setTimeout(() => {
-          void syncOfflineQueue();
-        }, 0)
-      : null;
 
     return () => {
-      if (mountSyncTimer) clearTimeout(mountSyncTimer);
+      clearTimeout(hydrateTimer);
       window.removeEventListener("online", onOnline);
-      window.removeEventListener("offline", onOffline);
     };
-  }, [syncOfflineQueue]);
+  }, [initialData.recoverableSession, initialData.userId, syncOfflineQueue]);
 
   const recordCompletedRound = React.useCallback(
     async (targetMethod: ChantingMethod, sessionOverride?: ChantingSessionRecord | null) => {
@@ -351,7 +380,9 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
 
       try {
         const session =
-          sessionOverride ?? (await ensureActiveSession(targetMethod));
+          targetMethod === "japa_mala"
+            ? (sessionOverride ?? (await ensureActiveSession(targetMethod)))
+            : null;
 
         const submission: QueuedRoundSubmission = {
           idempotencyKey: makeClientKey("round"),
@@ -608,6 +639,7 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
       }
       setMethod(nextMethod);
       setBeadCount(0);
+      setStatusMessage(null);
       await fetch("/api/chant/preferences", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -617,24 +649,25 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
     [activeSession, beadCount, method]
   );
 
+  const quarterMilestones = [
+    { label: "Quarter 1", target: 27 },
+    { label: "Halfway", target: 54 },
+    { label: "Quarter 3", target: 81 },
+    { label: "Complete", target: BEADS_PER_ROUND },
+  ] as const;
+
   return (
-    <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 sm:px-8 sm:py-8">
+    <div className="mx-auto max-w-4xl space-y-5 px-4 py-5 sm:px-8 sm:py-7">
       {/* Screen-reader milestone announcer */}
       <p className="sr-only" aria-live="polite">
         {announcement}
       </p>
 
-      {/* Top Distraction-Free Controls */}
+      {/* Slim Top Section Switcher & Status Strip */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link
-          href="/sadhana"
-          className={buttonStyles({ variant: "ghost", size: "sm" })}
-        >
-          <ArrowLeft className="size-4" strokeWidth={1.75} aria-hidden={true} />
-          <span>Dashboard</span>
-        </Link>
+        <ChantingSectionTabs active="japa" />
 
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2">
           {!isOnline && (
             <Badge variant="gold">
               <WifiOff className="size-3.5" aria-hidden={true} />
@@ -651,22 +684,67 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
               <span>Sync queued ({queuedRounds.length})</span>
             </Button>
           )}
-          <Badge variant="neutral" className="tabular-nums">
-            Duration {formatDuration(elapsedSeconds)}
-          </Badge>
+          {method === "japa_mala" && (
+            <Badge variant="neutral" className="tabular-nums">
+              Duration {formatDuration(elapsedSeconds)}
+            </Badge>
+          )}
         </div>
       </div>
 
-      {/* Method Switcher */}
+      {/* Slim Daily Goal Overview Strip (keeps interactive Mala above the fold) */}
+      <div className="rounded-[16px] border border-sandalwood-border bg-paper px-4 py-3.5 shadow-sacred-sm sm:px-5">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+          <div className="flex flex-wrap items-baseline gap-2">
+            <span className="font-serif text-xl font-semibold text-peacock-deep tabular-nums sm:text-2xl">
+              {dailySadhana.completed_rounds} /{" "}
+              {dailySadhana.effective_daily_target}
+            </span>
+            <span className="text-xs font-medium text-ink-muted">
+              rounds done today
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 text-xs text-ink-muted tabular-nums">
+            <span>
+              {dailySadhana.remaining_balance === 0
+                ? "Daily goal completed"
+                : `${dailySadhana.remaining_balance} remaining`}
+            </span>
+            {dailySadhana.extra_rounds > 0 && (
+              <Badge variant="gold">+{dailySadhana.extra_rounds} extra</Badge>
+            )}
+          </div>
+        </div>
+
+        <ProgressBar
+          value={dailySadhana.completed_rounds}
+          max={dailySadhana.effective_daily_target}
+          label="Today's progress"
+          showValueLabel={false}
+          tone={dailySadhana.remaining_balance === 0 ? "peacock" : "gold"}
+          className="mt-2.5"
+        />
+      </div>
+
+      {/* Simple Mode Switcher with Friendly Subtitles */}
       <div
         role="tablist"
         aria-label="Chanting counting method"
-        className="mx-auto grid max-w-md grid-cols-2 gap-1.5 rounded-[12px] border border-sandalwood-border bg-linen p-1"
+        className="mx-auto grid max-w-lg grid-cols-2 gap-1.5 rounded-[14px] border border-sandalwood-border bg-linen p-1.5"
       >
         {(
           [
-            { id: "japa_mala", label: "Digital Japa Mala" },
-            { id: "manual", label: "Manual Counter" },
+            {
+              id: "japa_mala",
+              label: "Digital Japa Mala",
+              hint: "108 beads 1 by 1",
+            },
+            {
+              id: "manual",
+              label: "Manual Counter",
+              hint: "1 whole round (+1)",
+            },
           ] as const
         ).map((tab) => {
           const active = method === tab.id;
@@ -678,54 +756,18 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
               aria-selected={active}
               onClick={() => void handleSwitchMethod(tab.id)}
               className={cn(
-                "min-h-11 cursor-pointer rounded-[8px] px-3 text-sm font-medium transition-colors duration-150",
+                "flex min-h-12 cursor-pointer flex-col items-center justify-center rounded-[10px] px-3 py-1.5 text-center transition-[transform,background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.97]",
                 active
-                  ? "bg-paper text-ink shadow-sacred-sm"
-                  : "text-ink-muted hover:text-ink"
+                  ? "bg-paper text-ink shadow-sacred-sm ring-1 ring-gold-border/35"
+                  : "text-ink-muted hover:bg-paper/60 hover:text-ink ks-glow-ghost"
               )}
             >
-              {tab.label}
+              <span className="text-sm font-semibold">{tab.label}</span>
+              <span className="text-[11px] opacity-80">{tab.hint}</span>
             </button>
           );
         })}
       </div>
-
-      {/* Authoritative Daily Progress Strip */}
-      <Card surface="parchment" className="p-4 sm:p-5">
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <div>
-            <p className="text-xs text-ink-muted">Completed today</p>
-            <p className="mt-0.5 font-serif text-2xl font-semibold text-peacock-ink tabular-nums">
-              {dailySadhana.completed_rounds}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-ink-muted">Effective target</p>
-            <p className="mt-0.5 font-serif text-2xl font-semibold text-ink tabular-nums">
-              {dailySadhana.effective_daily_target}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-ink-muted">Remaining</p>
-            <p className="mt-0.5 font-serif text-2xl font-semibold text-ink tabular-nums">
-              {dailySadhana.remaining_balance}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-ink-muted">Extra rounds</p>
-            <p className="mt-0.5 font-serif text-2xl font-semibold text-gold-ink tabular-nums">
-              {dailySadhana.extra_rounds}
-            </p>
-          </div>
-        </div>
-        <ProgressBar
-          value={dailySadhana.completed_rounds}
-          max={dailySadhana.effective_daily_target}
-          label="Today's progress"
-          tone={dailySadhana.remaining_balance === 0 ? "peacock" : "gold"}
-          className="mt-4"
-        />
-      </Card>
 
       {errorMessage && (
         <div
@@ -765,28 +807,67 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
         </div>
       )}
 
-      {/* Primary Interactive Surface */}
+      {/* Primary Visual Interactive Sanctuary */}
       <Card surface="elevated" className="p-5 sm:p-8">
         {method === "japa_mala" ? (
-          <div className="space-y-6">
+          <div className="space-y-5">
+            {/* Visual Quarter-Round Cadence Strip */}
+            <div
+              aria-label="Current round milestones"
+              className="mx-auto grid max-w-md grid-cols-4 gap-2"
+            >
+              {quarterMilestones.map((step) => {
+                const reached = beadCount >= step.target;
+                return (
+                  <div
+                    key={step.target}
+                    className={cn(
+                      "rounded-[10px] border px-2 py-1.5 text-center transition-colors duration-200",
+                      reached
+                        ? "border-gold-border/60 bg-gold-wash text-gold-ink"
+                        : "border-sandalwood-border/80 bg-linen/60 text-ink-muted"
+                    )}
+                  >
+                    <p className="font-serif text-sm font-semibold tabular-nums">
+                      {step.target}
+                    </p>
+                    <p className="text-[10px] font-medium">{step.label}</p>
+                  </div>
+                );
+              })}
+            </div>
+
             <JapaMalaWheel
               currentBead={beadCount}
               isPaused={isPaused}
               isBusy={isSubmittingRound}
               onAdvanceBead={() => void handleAdvanceBead()}
               sessionRounds={activeSession?.rounds_completed ?? 0}
+              todayRounds={dailySadhana.completed_rounds}
             />
 
-            <p className="text-center text-xs text-ink-muted">
-              Partial bead progress does not count toward completed rounds until
-              bead {BEADS_PER_ROUND} is reached.
+            <p className="mx-auto max-w-md text-center text-xs leading-relaxed text-ink-muted">
+              Tap the center circle (or button below) for each chant. Partial
+              bead progress does not count toward completed rounds until bead{" "}
+              {BEADS_PER_ROUND} is reached.
             </p>
 
-            {/* Quick Japa Controls */}
+            {/* Clear Primary & Undo Controls */}
             <div className="flex flex-wrap items-center justify-center gap-3">
               <Button
+                variant="gold"
+                size="lg"
+                disabled={isPaused || isSubmittingRound}
+                onClick={() => void handleAdvanceBead()}
+                className="min-w-44"
+              >
+                <Plus className="size-4" strokeWidth={2} aria-hidden={true} />
+                <span>Next bead ({Math.min(beadCount + 1, BEADS_PER_ROUND)})</span>
+              </Button>
+
+              <Button
                 variant="secondary"
-                size="md"
+                size="lg"
                 disabled={beadCount === 0 || isPaused}
                 onClick={() => void handleUndoBead()}
               >
@@ -816,18 +897,77 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
                 </AlertDialog>
               )}
             </div>
+
+            {/* Session Pause / Resume / Finish / New Controls (Japa Mala only) */}
+            <div className="mt-7 flex flex-wrap items-center justify-center gap-3 border-t border-sandalwood-border pt-5">
+              {activeSession && (
+                <>
+                  {isPaused ? (
+                    <Button
+                      variant="gold"
+                      size="md"
+                      loading={isSessionBusy}
+                      onClick={() => void handleSessionStatus("active")}
+                    >
+                      <Play className="size-4" strokeWidth={1.75} aria-hidden={true} />
+                      <span>Resume session</span>
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="secondary"
+                      size="md"
+                      loading={isSessionBusy}
+                      onClick={() => void handleSessionStatus("paused")}
+                    >
+                      <Pause className="size-4" strokeWidth={1.75} aria-hidden={true} />
+                      <span>Pause session</span>
+                    </Button>
+                  )}
+
+                  <Button
+                    variant="outline"
+                    size="md"
+                    loading={isSessionBusy}
+                    onClick={() => void handleSessionStatus("completed")}
+                  >
+                    <span>Finish session</span>
+                  </Button>
+                </>
+              )}
+
+              <Button
+                variant="ghost"
+                size="md"
+                disabled={isSessionBusy}
+                onClick={() => void handleStartNewSession(method)}
+              >
+                <Plus className="size-4" strokeWidth={1.75} aria-hidden={true} />
+                <span>Start new session</span>
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="mx-auto flex max-w-md flex-col items-center space-y-6 py-4 text-center">
+            <SacredRingProgress
+              value={dailySadhana.completed_rounds}
+              max={dailySadhana.effective_daily_target}
+              label="Today's manual chanting progress"
+              size={148}
+              strokeWidth={9}
+            />
+
             <div>
-              <p className="text-xs font-medium text-ink-muted">
+              <p className="text-xs font-medium tracking-wide uppercase text-ink-muted">
                 Manual Round Counter
               </p>
-              <p className="mt-2 font-serif text-6xl font-semibold text-ink tabular-nums">
-                {dailySadhana.completed_rounds}
+              <p className="mt-1 font-serif text-5xl font-semibold text-ink tabular-nums">
+                {dailySadhana.completed_rounds}{" "}
+                <span className="text-xl font-normal text-ink-muted">
+                  / {dailySadhana.effective_daily_target} rounds
+                </span>
               </p>
-              <p className="mt-1 text-sm text-ink-muted tabular-nums">
-                Session rounds: {activeSession?.rounds_completed ?? 0} · Remaining:{" "}
+              <p className="mt-1.5 text-sm text-ink-muted tabular-nums">
+                Rounds today: {dailySadhana.completed_rounds} · Remaining:{" "}
                 {dailySadhana.remaining_balance}
               </p>
             </div>
@@ -835,16 +975,13 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
             <Button
               variant="primary"
               size="lg"
-              staticPress
-              disabled={isPaused || isSubmittingRound}
+              disabled={isSubmittingRound}
               loading={isSubmittingRound}
               onClick={() => void recordCompletedRound("manual")}
-              className="min-h-16 w-full max-w-xs rounded-[16px] text-base"
+              className="min-h-16 w-full max-w-xs rounded-[16px] text-base font-semibold"
             >
               <Plus className="size-5" strokeWidth={2} aria-hidden={true} />
-              <span>
-                {isPaused ? "Session paused" : "Add 1 completed round"}
-              </span>
+              <span>Add 1 completed round</span>
             </Button>
 
             <div className="flex flex-wrap items-center justify-center gap-3">
@@ -884,54 +1021,6 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
             </div>
           </div>
         )}
-
-        {/* Session Pause / Resume / Finish / New Controls */}
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3 border-t border-sandalwood-border pt-5">
-          {activeSession && (
-            <>
-              {isPaused ? (
-                <Button
-                  variant="gold"
-                  size="md"
-                  loading={isSessionBusy}
-                  onClick={() => void handleSessionStatus("active")}
-                >
-                  <Play className="size-4" strokeWidth={1.75} aria-hidden={true} />
-                  <span>Resume session</span>
-                </Button>
-              ) : (
-                <Button
-                  variant="secondary"
-                  size="md"
-                  loading={isSessionBusy}
-                  onClick={() => void handleSessionStatus("paused")}
-                >
-                  <Pause className="size-4" strokeWidth={1.75} aria-hidden={true} />
-                  <span>Pause session</span>
-                </Button>
-              )}
-
-              <Button
-                variant="outline"
-                size="md"
-                loading={isSessionBusy}
-                onClick={() => void handleSessionStatus("completed")}
-              >
-                <span>Finish session</span>
-              </Button>
-            </>
-          )}
-
-          <Button
-            variant="ghost"
-            size="md"
-            disabled={isSessionBusy}
-            onClick={() => void handleStartNewSession(method)}
-          >
-            <Plus className="size-4" strokeWidth={1.75} aria-hidden={true} />
-            <span>Start new session</span>
-          </Button>
-        </div>
       </Card>
 
       {/* Tactile & Audio Settings + Session History */}
@@ -965,7 +1054,7 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
           <CardHeader>
             <CardTitle className="text-lg">Today&apos;s Sessions &amp; Rounds</CardTitle>
             <CardDescription>
-              Multiple sessions per day update the same daily Sadhana total.
+              Multiple sessions per day update the same daily practice total.
             </CardDescription>
           </CardHeader>
           <CardContent>

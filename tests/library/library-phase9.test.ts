@@ -43,7 +43,7 @@ function makeSampleResource(
     estimated_minutes: 8,
     license_name: "CC BY 4.0",
     copyright_notice: null,
-    attribution_text: "Krishna Sadhana Editorial",
+    attribution_text: "SMARAN Editorial",
     is_original_content: true,
     is_archived: false,
     tags: ["japa", "consistency"],
@@ -118,14 +118,14 @@ describe("Phase 9 Spiritual Library — RLS, URL Safety, Publishing & Bookmarks"
         const art = await tx.query<{ id: string }>(
           `INSERT INTO public.library_resources
            (slug, title, summary, resource_type, category, source_id, external_url, license_name, attribution_text, review_status)
-           VALUES ('quiet-japa-notes', 'Quiet Japa Guidance', 'Practical calm focus guidance.', 'article', 'chanting_guidance', $1, 'https://example.org/study-notes', 'CC BY 4.0', 'Krishna Sadhana Archive', 'pending_review')
+           VALUES ('quiet-japa-notes', 'Quiet Japa Guidance', 'Practical calm focus guidance.', 'article', 'chanting_guidance', $1, 'https://example.org/study-notes', 'CC BY 4.0', 'SMARAN Archive', 'pending_review')
            RETURNING id`,
           [src.rows[0]!.id]
         );
         const book = await tx.query<{ id: string }>(
           `INSERT INTO public.library_resources
            (slug, title, summary, resource_type, category, body_markdown, is_original_content, license_name, attribution_text, review_status)
-           VALUES ('gita-study-primer', 'Gita Reading Companion', 'Introductory reading map.', 'book', 'gita_learning', '# Primer\n\nRead steadily.', TRUE, 'CC0 1.0', 'Krishna Sadhana', 'approved')
+           VALUES ('gita-study-primer', 'Gita Reading Companion', 'Introductory reading map.', 'book', 'gita_learning', '# Primer\n\nRead steadily.', TRUE, 'CC0 1.0', 'SMARAN', 'approved')
            RETURNING id`
         );
         return {

@@ -172,7 +172,7 @@ export function buildAccountExportDocument(params: {
   notifications: unknown[];
 }) {
   return {
-    platform: "KRISHNA SADHANA",
+    platform: "SMARAN",
     exportVersion: "1.0",
     exportedAt: params.exportedAt,
     account: {

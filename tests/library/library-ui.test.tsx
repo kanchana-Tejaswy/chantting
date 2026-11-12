@@ -27,7 +27,7 @@ const MOCK_RESOURCE: LibraryResource = {
   estimated_minutes: 6,
   license_name: "CC BY 4.0",
   copyright_notice: "Verified test copyright statement.",
-  attribution_text: "Krishna Sadhana Editorial Archive",
+  attribution_text: "SMARAN Editorial Archive",
   is_original_content: false,
   is_archived: false,
   tags: ["japa", "clarity"],

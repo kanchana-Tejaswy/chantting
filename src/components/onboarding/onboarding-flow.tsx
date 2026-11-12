@@ -199,8 +199,8 @@ export function OnboardingFlow({
                   : "Set your daily Sādhana"}
               </CardTitle>
               <CardDescription>
-                Only essential preferences are asked—keeping your practice quiet
-                and timezone-accurate.
+                Welcome to SMARAN (स्मरण). Only essential preferences are
+                asked—keeping your practice quiet and timezone-accurate.
               </CardDescription>
             </div>
           </div>

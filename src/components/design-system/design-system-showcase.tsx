@@ -65,7 +65,7 @@ export function DesignSystemShowcase() {
         </h1>
         <p className="mt-3 text-base leading-relaxed text-ink-muted text-pretty">
           Canonical color tokens, Sanskrit-capable typography, elevation surfaces,
-          and accessible interactive primitives shared across KRISHNA SĀDHANA.
+          and accessible interactive primitives shared across SMARAN (स्मरण).
         </p>
       </header>
 

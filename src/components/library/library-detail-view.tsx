@@ -148,7 +148,7 @@ export function LibraryDetailView({
                 {LIBRARY_TYPE_LABELS[resource.resource_type]}
               </Badge>
               {resource.is_original_content ? (
-                <Badge variant="gold">Original Krishna Sādhana Edition</Badge>
+                <Badge variant="gold">Original SMARAN Edition</Badge>
               ) : (
                 <Badge variant="neutral">
                   External / Attributed Resource

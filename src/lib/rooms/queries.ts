@@ -400,8 +400,8 @@ export async function loadRoomDetail(slug: string): Promise<RoomDetailLoadResult
 }
 
 /**
- * Publishes consented room milestone snapshots when the caller records rounds,
- * strictly respecting each room's share_progress_mode (never exposing private data).
+ * Publishes or reconciles consented room milestone snapshots when the caller
+ * records or undoes rounds, strictly respecting each room's share_progress_mode.
  */
 export async function syncConsentedRoomActivity(
   supabase: SupabaseClient,
@@ -421,11 +421,28 @@ export async function syncConsentedRoomActivity(
     dailySadhana.completed_rounds >= dailySadhana.effective_daily_target;
 
   for (const mem of memRes.data) {
-    if (mem.share_progress_mode === "private") continue;
+    if (mem.share_progress_mode === "private") {
+      await supabase
+        .from("room_activity_feed")
+        .delete()
+        .eq("room_id", mem.room_id)
+        .eq("user_id", userId)
+        .neq("activity_type", "joined_room");
+      continue;
+    }
 
     if (mem.share_progress_mode === "completion_only") {
-      if (!targetMet) continue;
-      // Only publish once per date under completion_only
+      if (!targetMet) {
+        await supabase
+          .from("room_activity_feed")
+          .delete()
+          .eq("room_id", mem.room_id)
+          .eq("user_id", userId)
+          .eq("activity_date", dailySadhana.sadhana_date)
+          .in("activity_type", ["daily_target_met", "rounds_shared"]);
+        continue;
+      }
+
       const existing = await supabase
         .from("room_activity_feed")
         .select("id")
@@ -448,13 +465,23 @@ export async function syncConsentedRoomActivity(
     }
 
     if (mem.share_progress_mode === "full") {
-      await supabase.from("room_activity_feed").insert({
-        room_id: mem.room_id,
-        user_id: userId,
-        activity_date: dailySadhana.sadhana_date,
-        activity_type: targetMet ? "daily_target_met" : "rounds_shared",
-        shared_rounds_count: dailySadhana.completed_rounds,
-      });
+      await supabase
+        .from("room_activity_feed")
+        .delete()
+        .eq("room_id", mem.room_id)
+        .eq("user_id", userId)
+        .eq("activity_date", dailySadhana.sadhana_date)
+        .in("activity_type", ["daily_target_met", "rounds_shared"]);
+
+      if (dailySadhana.completed_rounds > 0) {
+        await supabase.from("room_activity_feed").insert({
+          room_id: mem.room_id,
+          user_id: userId,
+          activity_date: dailySadhana.sadhana_date,
+          activity_type: targetMet ? "daily_target_met" : "rounds_shared",
+          shared_rounds_count: dailySadhana.completed_rounds,
+        });
+      }
     }
   }
 }

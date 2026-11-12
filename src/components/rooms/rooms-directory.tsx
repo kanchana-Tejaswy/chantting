@@ -164,7 +164,7 @@ export function RoomsDirectory({
       <header className="flex flex-col gap-4 border-b border-sandalwood-border pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="font-display text-3xl font-semibold text-ink text-balance sm:text-4xl">
-            Chanting Rooms
+            Satsang
           </h1>
           <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-ink-muted text-pretty">
             Shared devotional spaces with friends and sangha. Every member owns

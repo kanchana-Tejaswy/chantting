@@ -12,7 +12,7 @@ import {
   LotusEmblem,
   ManuscriptDivider,
 } from "@/components/sacred/ornaments";
-import { VeoMediaFrame } from "@/components/sacred/veo-media-frame";
+import { VeoHeroBackground } from "@/components/sacred/veo-media-frame";
 import { Badge } from "@/components/ui/badge";
 import { buttonStyles } from "@/components/ui/button";
 import {
@@ -54,10 +54,10 @@ const PILLARS = [
   },
   {
     icon: Users,
-    title: "Chanting Rooms",
+    title: "Satsang",
     tag: "Consented",
     href: "/rooms",
-    cta: "View Chanting Rooms",
+    cta: "Join Satsang",
     description:
       "Quiet public and invite-only circles with voluntary shared goals while every member retains full ownership over private chanting records.",
   },
@@ -65,21 +65,33 @@ const PILLARS = [
 
 export default function HomePage() {
   return (
-    <AppShell pageTitle="Sanctum Welcome">
-      {/* Immersive Sanctum Introduction */}
-      <section className="relative overflow-hidden bg-krishna-midnight text-ink-on-dark">
-        <div className="mx-auto grid max-w-6xl gap-10 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[1.08fr_0.92fr] lg:items-center lg:gap-12 lg:py-20">
+    <AppShell pageTitle="SMARAN — स्मरण">
+      {/* Immersive Sanctum Introduction (extends behind frosted glass sidebar on desktop) */}
+      <section className="relative flex min-h-[calc(100dvh-7.25rem-env(safe-area-inset-bottom))] items-center overflow-hidden border-b border-gold-antique/25 bg-[#0D1117] text-ink-on-dark lg:-ml-64 lg:min-h-[calc(100dvh-3.5rem-1px)] lg:pl-64">
+        <VeoHeroBackground
+          videoSrc="/media/vrindavan-lake-boat.mp4"
+          alt="Tranquil Vrindavan twilight lake with a wooden devotional boat drifting across calm water"
+        />
+
+        <div className="relative z-10 mx-auto grid w-full max-w-6xl gap-10 px-5 pt-10 pb-20 sm:px-8 sm:pt-12 sm:pb-20 lg:grid-cols-[1.08fr_0.92fr] lg:items-center lg:gap-12 lg:py-16">
           <div className="flex flex-col items-start">
-            <Badge variant="sanctum">
+            <Badge variant="sanctum" className="bg-black/45 backdrop-blur-xs">
               <LotusEmblem size={14} className="text-gold-antique" />
               <span>Non-profit devotional platform</span>
             </Badge>
 
-            <h1 className="mt-5 font-display text-4xl font-semibold leading-[1.08] tracking-tight text-ink-on-dark text-balance sm:text-5xl lg:text-6xl">
-              KRISHNA SĀDHANA
+            <h1 className="mt-5 font-display text-4xl font-semibold leading-[1.08] tracking-tight text-ink-on-dark text-balance drop-shadow-[0_1px_2px_rgba(0,0,0,0.65)] sm:text-5xl lg:text-6xl">
+              SMARAN{" "}
+              <span className="font-devanagari text-2xl font-normal text-gold-antique sm:text-3xl lg:text-4xl">
+                स्मरण
+              </span>
             </h1>
 
-            <p className="mt-5 max-w-xl font-serif text-base leading-relaxed text-ink-muted-dark text-pretty sm:text-lg">
+            <p className="mt-2 font-serif text-sm tracking-wide text-gold-antique/95 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)] sm:text-base">
+              Remember Him. Stay Connected.
+            </p>
+
+            <p className="mt-5 max-w-xl font-serif text-base leading-relaxed text-ink-on-dark/90 text-pretty drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)] sm:text-lg">
               A quiet digital sanctuary built to sustain daily Japa practice,
               authentic Bhagavad Gītā study, and respectful community—without
               commercial pressure, rankings, or distraction.
@@ -98,14 +110,14 @@ export default function HomePage() {
                   variant: "outline",
                   size: "lg",
                   className:
-                    "border-gold-antique/40 text-ink-on-dark hover:bg-krishna-elevated",
+                    "border-white/35 bg-black/40 text-ink-on-dark backdrop-blur-[2px] hover:border-gold-antique/60 hover:bg-black/60",
                 })}
               >
                 Read Bhagavad Gītā
               </Link>
             </div>
 
-            <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-gold-antique/20 pt-6 text-xs text-ink-muted-dark">
+            <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-white/20 pt-6 text-xs text-ink-on-dark/85 drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]">
               <span className="inline-flex items-center gap-1.5">
                 <ShieldCheck
                   className="size-4 text-gold-antique"
@@ -125,9 +137,9 @@ export default function HomePage() {
             </div>
           </div>
 
-          <VeoMediaFrame
-            alt="Minimal twilight vector illustration of a Vrindavan temple arch and calm Yamuna river beneath the moon"
-            caption="Immersive sanctum visual anchor — supports curated ambient scenes with automatic reduced-motion and static fallbacks."
+          <div
+            aria-hidden="true"
+            className="hidden min-h-[260px] lg:block"
           />
         </div>
       </section>
@@ -154,7 +166,7 @@ export default function HomePage() {
               <Card
                 key={pillar.title}
                 surface="parchment"
-                className="flex flex-col"
+                className="flex flex-col transition-[transform,border-color,box-shadow] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] [@media(hover:hover)_and_(pointer:fine)]:hover:-translate-y-0.5 [@media(hover:hover)_and_(pointer:fine)]:hover:border-gold-border/60 [@media(hover:hover)_and_(pointer:fine)]:hover:shadow-sacred-sm"
               >
                 <CardHeader>
                   <div className="flex items-center justify-between gap-2">

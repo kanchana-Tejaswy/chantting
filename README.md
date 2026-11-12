@@ -1,6 +1,8 @@
-# KRISHNA SĀDHANA
+# SMARAN (स्मरण)
 
-A standalone, non-profit devotional technology platform dedicated to consistent Krishna chanting (*sādhana*), authentic *Bhagavad Gītā* study, and respectful spiritual communities.
+**Remember Him. Stay Connected.**
+
+A standalone, non-profit devotional technology platform dedicated to remembering Lord Krishna through consistent chanting, authentic *Bhagavad Gītā* study, and respectful spiritual communities.
 
 ## Phase 1 Foundation
 

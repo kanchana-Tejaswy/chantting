@@ -4,6 +4,10 @@ import { createClient } from "@/lib/supabase/server";
 import { dailySadhanaSchema } from "@/lib/domain/sadhana";
 import { recordRoundApiInputSchema } from "@/lib/chant/validation";
 import { syncConsentedRoomActivity } from "@/lib/rooms/queries";
+import {
+  enforceApiRateLimit,
+  PRIVATE_NO_STORE_HEADERS,
+} from "@/lib/security/rate-limit";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -15,9 +19,18 @@ export async function POST(request: Request) {
   if (authError || !user) {
     return NextResponse.json(
       { error: "Authentication required." },
-      { status: 401 }
+      { status: 401, headers: PRIVATE_NO_STORE_HEADERS }
     );
   }
+
+  const rateLimited = enforceApiRateLimit({
+    request,
+    bucket: "chant-round-record",
+    userId: user.id,
+    limit: 120,
+    windowMs: 60_000,
+  });
+  if (rateLimited) return rateLimited;
 
   let body: unknown;
   try {

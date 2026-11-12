@@ -2,7 +2,7 @@
   "name": "krishna-sadhana",
   "version": "0.1.0",
   "private": true,
-  "description": "KRISHNA SĀDHANA — Non-profit devotional chanting, Bhagavad Gita study, and spiritual community platform.",
+  "description": "SMARAN (स्मरण) — Remember Him. Stay Connected. Non-profit devotional chanting, Bhagavad Gita study, and spiritual community platform.",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",

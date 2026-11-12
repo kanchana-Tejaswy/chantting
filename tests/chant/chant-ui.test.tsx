@@ -54,9 +54,16 @@ describe("Phase 4 Digital Japa Mala, Manual Counter UI & Offline Queue", () => {
     expect(html).toContain("71 remaining");
     expect(html).toContain("Session rounds: 2");
     expect(html).toContain("Advance to bead 38 of 108");
+    expect(html).toContain("ks-tulsi-");
+    expect(html).toContain("ks-gold-");
+    expect(html).toContain("ks-sandal-");
+    expect(html).toContain("ks-sumaru-");
+    expect(html).toContain("stroke-dashoffset");
+    expect(html).toContain("animate-ks-bead-halo");
+    expect(html).toContain("animate-ks-center-ripple");
+    expect(html).toContain("motion-reduce:hidden");
 
-    // 108 chanting beads + 1 Sumaru circle + 1 current bead halo circle + 1 Sumaru inner circle + 1 center button?
-    // Each remaining/completed bead is a <circle>; 107 regular circles + 2 current bead circles + 2 Sumaru circles = 111 <circle> tags
+    // 108 chanting beads + Sumaru rings + active halos + specular highlights >= 109 <circle> tags
     const circleCount = (html.match(/<circle/g) ?? []).length;
     expect(circleCount).toBeGreaterThanOrEqual(109);
   });
@@ -125,11 +132,54 @@ describe("Phase 4 Digital Japa Mala, Manual Counter UI & Offline Queue", () => {
 
     const html = renderToStaticMarkup(<ChantingWorkspace initialData={payload} />);
     expect(html).toContain("Recovered paused Japa Mala session.");
+    expect(html).toContain(">Japa<");
+    expect(html).toContain(">Lakshya<");
     expect(html).toContain("Digital Japa Mala");
     expect(html).toContain("Manual Counter");
     expect(html).toContain("Resume session");
     expect(html).toContain("37/108 beads saved");
     expect(html).toContain("Partial bead progress does not count");
+    expect(html).toContain("108 beads 1 by 1");
+    expect(html).toContain("Quarter 1");
+    expect(html).toContain("Halfway");
+    expect(html).toContain("Next bead (38)");
+
+    // Active session with prior manual rounds: wheel and top bar must agree on today's total (6)
+    const unifiedHtml = renderToStaticMarkup(
+      <ChantingWorkspace
+        initialData={{
+          ...payload,
+          recoverableSession: {
+            ...payload.recoverableSession!,
+            status: "active",
+            paused_at: null,
+          },
+        }}
+      />
+    );
+    expect(unifiedHtml).toContain("6 / 18");
+    expect(unifiedHtml).toContain("Rounds today: 6");
+    expect(unifiedHtml).not.toContain(">Offline<");
+    expect(unifiedHtml).toContain("Duration 25:00");
+
+    // Manual Counter does not render session controls or session duration
+    const manualHtml = renderToStaticMarkup(
+      <ChantingWorkspace
+        initialData={{
+          ...payload,
+          preferences: {
+            ...payload.preferences,
+            defaultCountingMethod: "manual",
+          },
+          recoverableSession: null,
+        }}
+      />
+    );
+    expect(manualHtml).toContain("Add 1 completed round");
+    expect(manualHtml).not.toContain("Start new session");
+    expect(manualHtml).not.toContain("Pause session");
+    expect(manualHtml).not.toContain("Finish session");
+    expect(manualHtml).not.toContain("Duration 00:00");
   });
 
   it("deduplicates offline round queue submissions and preserves partial bead drafts", () => {

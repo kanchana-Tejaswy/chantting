@@ -1,5 +1,14 @@
-import Link from "next/link";
-import { Calendar, CalendarDays, Clock, Flame, Settings2, Sparkles } from "lucide-react";
+import {
+  ArrowRight,
+  Award,
+  Calendar,
+  CalendarDays,
+  CheckCircle2,
+  Clock,
+  Flame,
+  Settings2,
+  Sparkles,
+} from "lucide-react";
 import { LotusEmblem, ManuscriptDivider } from "@/components/sacred/ornaments";
 import { Badge } from "@/components/ui/badge";
 import { buttonStyles } from "@/components/ui/button";
@@ -19,6 +28,8 @@ import type {
   UnappliedPendingNotice,
 } from "@/lib/sadhana/carry-forward";
 import { CarryForwardPanel } from "@/components/sadhana/carry-forward-panel";
+import { ChantingSectionTabs } from "@/components/sadhana/chanting-section-tabs";
+import { SadhanaGlowLink } from "@/components/sadhana/sadhana-glow-link";
 import type {
   ChantingSessionSummary,
   PersonalDashboardMetrics,
@@ -52,104 +63,218 @@ export function PersonalSadhanaDashboard({
   const isNewUser =
     metrics.lifetimeRounds === 0 && recentSessions.length === 0;
   const hasCarriedBalance = metrics.carriedForwardBalance > 0;
+  const isDoneToday = metrics.pendingRounds === 0;
+
+  const friendlyNextPrompt = isDoneToday
+    ? `Wonderful! You finished all ${metrics.effectiveTarget} rounds for today.`
+    : metrics.completedRounds === 0
+      ? `Ready to begin? You have ${metrics.effectiveTarget} rounds planned for today.`
+      : `Great progress! ${metrics.completedRounds} done, only ${metrics.pendingRounds} more to finish today's goal.`;
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8 px-5 py-8 sm:px-8 sm:py-10">
-      {/* Header Greeting & Primary Chanting CTA */}
-      <header className="flex flex-col gap-4 border-b border-sandalwood-border pb-6 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-xs font-medium text-ink-muted tabular-nums">
-            {metrics.todayDate} · {timezone}
-          </p>
-          <h1 className="mt-1 font-display text-3xl font-semibold text-ink text-balance sm:text-4xl">
-            Hare Krishna, {displayName}
-          </h1>
-          <p className="mt-1.5 text-sm text-ink-muted">
-            Policy:{" "}
-            <span className="font-medium capitalize text-ink">
-              {carryForwardPolicy.replace("_", " ")}
-            </span>
-          </p>
+    <div className="mx-auto max-w-5xl space-y-7 px-5 py-7 sm:px-8 sm:py-10">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <ChantingSectionTabs active="lakshya" />
+        <p className="text-xs font-medium text-ink-muted">
+          Track today&apos;s daily target, analytics, and recorded history
+        </p>
+      </div>
+
+      {/* Friendly Hero Greeting & One-Tap Start Banner */}
+      <header className="rounded-[20px] border border-sandalwood-border bg-paper p-5 shadow-sacred-sm sm:p-7">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-ink-muted tabular-nums">
+              <span>{metrics.todayDate}</span>
+              <span aria-hidden="true">·</span>
+              <span>{timezone}</span>
+              <Badge variant="neutral" className="capitalize">
+                {carryForwardPolicy.replace("_", " ")} rule
+              </Badge>
+            </div>
+
+            <h1 className="font-display text-3xl font-semibold text-ink text-balance sm:text-4xl">
+              Hare Krishna, {displayName}
+            </h1>
+
+            <p className="max-w-xl text-sm leading-relaxed text-ink-muted text-pretty sm:text-base">
+              {friendlyNextPrompt}
+            </p>
+          </div>
+
+          <SadhanaGlowLink
+            href="/sadhana/chant"
+            tone="gold"
+            className={buttonStyles({
+              variant: "gold",
+              size: "lg",
+              className:
+                "min-h-14 w-full justify-between rounded-[14px] px-6 text-base font-semibold sm:w-auto sm:justify-center",
+            })}
+          >
+            <Flame className="size-5 shrink-0" strokeWidth={2} aria-hidden={true} />
+            <span>{activeSession ? "Resume chanting" : "Start chanting"}</span>
+            <ArrowRight
+              className="size-4 shrink-0 transition-transform duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:translate-x-0.5"
+              strokeWidth={2}
+              aria-hidden={true}
+            />
+          </SadhanaGlowLink>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <Link
+        {/* 3 Clear Glowing Shortcut Cards */}
+        <nav
+          aria-label="Sadhana quick destinations"
+          className="mt-6 grid gap-3 border-t border-sandalwood-border/80 pt-5 sm:grid-cols-3"
+        >
+          <SadhanaGlowLink
             href="/sadhana/analytics"
-            className={buttonStyles({ variant: "secondary", size: "md" })}
+            tone="ivory"
+            className="ks-glow-secondary flex min-h-14 w-full items-center rounded-[14px] border border-sandalwood-border bg-linen/70 px-4 py-3 text-left text-ink hover:bg-paper"
           >
-            <CalendarDays
-              className="size-4"
-              strokeWidth={1.75}
-              aria-hidden={true}
-            />
-            <span>Heatmap &amp; Analytics</span>
-          </Link>
-          <Link
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-paper text-peacock-deep shadow-sacred-sm">
+              <CalendarDays className="size-5" strokeWidth={1.75} aria-hidden={true} />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-sm font-semibold text-ink">
+                Heatmap &amp; Analytics
+              </span>
+              <span className="block text-xs text-ink-muted">
+                See your year calendar
+              </span>
+            </span>
+          </SadhanaGlowLink>
+
+          <SadhanaGlowLink
             href="/account?tab=milestones"
-            className={buttonStyles({ variant: "secondary", size: "md" })}
+            tone="ivory"
+            className="ks-glow-secondary flex min-h-14 w-full items-center rounded-[14px] border border-sandalwood-border bg-linen/70 px-4 py-3 text-left text-ink hover:bg-paper"
           >
-            <Sparkles
-              className="size-4"
-              strokeWidth={1.75}
-              aria-hidden={true}
-            />
-            <span>Milestones</span>
-          </Link>
-          <Link
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-paper text-gold-ink shadow-sacred-sm">
+              <Award className="size-5" strokeWidth={1.75} aria-hidden={true} />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-sm font-semibold text-ink">
+                Milestones
+              </span>
+              <span className="block text-xs text-ink-muted">
+                View your earned badges
+              </span>
+            </span>
+          </SadhanaGlowLink>
+
+          <SadhanaGlowLink
             href="/onboarding?edit=1"
-            className={buttonStyles({ variant: "secondary", size: "md" })}
+            tone="ivory"
+            className="ks-glow-secondary flex min-h-14 w-full items-center rounded-[14px] border border-sandalwood-border bg-linen/70 px-4 py-3 text-left text-ink hover:bg-paper"
           >
-            <Settings2
-              className="size-4"
-              strokeWidth={1.75}
-              aria-hidden={true}
-            />
-            <span>Edit commitment</span>
-          </Link>
-          <Link
-            href="/sadhana/chant"
-            className={buttonStyles({ variant: "primary", size: "lg" })}
-          >
-            <Flame className="size-4" strokeWidth={1.75} aria-hidden={true} />
-            <span>{activeSession ? "Resume chanting" : "Start chanting"}</span>
-          </Link>
-        </div>
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-paper text-peacock-deep shadow-sacred-sm">
+              <Settings2 className="size-5" strokeWidth={1.75} aria-hidden={true} />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-sm font-semibold text-ink">
+                Edit commitment
+              </span>
+              <span className="block text-xs text-ink-muted tabular-nums">
+                Currently {metrics.originalTarget} rounds / day
+              </span>
+            </span>
+          </SadhanaGlowLink>
+        </nav>
       </header>
 
+      {/* Active Session Banner */}
       {activeSession && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[12px] border border-gold-border/40 bg-gold-wash px-4 py-3 text-sm text-ink">
-          <span>
-            Active{" "}
-            <strong className="font-medium">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-gold-border/50 bg-gold-wash px-5 py-3.5 text-sm text-ink shadow-sacred-sm">
+          <div className="flex items-center gap-2.5">
+            <Sparkles className="size-4 shrink-0 text-gold-ink" aria-hidden={true} />
+            <span>
+              You have an open{" "}
+              <strong className="font-semibold">
+                {activeSession.method === "japa_mala"
+                  ? "Digital Japa Mala"
+                  : "Manual Counter"}
+              </strong>{" "}
+              session ({activeSession.status}
               {activeSession.method === "japa_mala"
-                ? "Digital Japa Mala"
-                : "Manual Counter"}
-            </strong>{" "}
-            session ({activeSession.status}
-            {activeSession.method === "japa_mala"
-              ? ` · ${activeSession.current_bead_count}/${BEADS_PER_ROUND} beads`
-              : ""}
-            ).
-          </span>
-          <Link
+                ? ` · ${activeSession.current_bead_count}/${BEADS_PER_ROUND} beads saved`
+                : ""}
+              ).
+            </span>
+          </div>
+          <SadhanaGlowLink
             href="/sadhana/chant"
+            tone="gold"
             className={buttonStyles({ variant: "gold", size: "sm" })}
           >
-            Continue session
-          </Link>
+            <span>Continue session</span>
+            <ArrowRight className="size-3.5" aria-hidden={true} />
+          </SadhanaGlowLink>
         </div>
       )}
 
-      {/* Today's Commitment & Target Breakdown */}
-      <section aria-labelledby="today-commitment-heading" className="grid gap-6 lg:grid-cols-[1.25fr_0.75fr]">
+      {/* Kid-Friendly 3-Step Guide */}
+      <section
+        aria-label="Quick guide to chanting rounds"
+        className="grid gap-3 rounded-[16px] border border-sandalwood-border bg-linen/60 p-4 sm:grid-cols-3"
+      >
+        <div className="flex items-start gap-3">
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-peacock-deep text-xs font-semibold text-ink-on-dark tabular-nums">
+            1
+          </span>
+          <div>
+            <p className="text-xs font-semibold text-ink">
+              Tap &ldquo;Start chanting&rdquo;
+            </p>
+            <p className="mt-0.5 text-xs text-ink-muted">
+              Pick the 108-bead circle or the quick +1 round button.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-start gap-3">
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-gold-antique text-xs font-semibold text-krishna-midnight tabular-nums">
+            2
+          </span>
+          <div>
+            <p className="text-xs font-semibold text-ink">
+              108 beads = 1 full round
+            </p>
+            <p className="mt-0.5 text-xs text-ink-muted">
+              Each gentle tap lights up a Tulsi bead around the circle.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-start gap-3">
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-peacock-green text-xs font-semibold text-ink-on-dark tabular-nums">
+            3
+          </span>
+          <div>
+            <p className="text-xs font-semibold text-ink">
+              Saved automatically
+            </p>
+            <p className="mt-0.5 text-xs text-ink-muted">
+              Even if you pause partway, your beads wait safely for you.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Today's Commitment & Visual Progress */}
+      <section
+        aria-labelledby="today-commitment-heading"
+        className="grid gap-6 lg:grid-cols-[1.25fr_0.75fr]"
+      >
         <Card surface="elevated">
           <CardHeader>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <CardTitle id="today-commitment-heading">
                 Today&apos;s Sādhana
               </CardTitle>
-              {metrics.pendingRounds === 0 ? (
-                <Badge variant="peacock">Daily target completed</Badge>
+              {isDoneToday ? (
+                <Badge variant="peacock" className="gap-1">
+                  <CheckCircle2 className="size-3.5" aria-hidden={true} />
+                  <span>Daily target completed</span>
+                </Badge>
               ) : hasCarriedBalance ? (
                 <Badge variant="gold">
                   Includes {metrics.carriedForwardBalance} carried forward
@@ -159,20 +284,64 @@ export function PersonalSadhanaDashboard({
               )}
             </div>
             <CardDescription>
-              Original commitment, previous pending balance, and today&apos;s
-              effective target are tracked separately.
+              See what you have finished today, how many rounds remain, and how
+              your daily goal adds up.
             </CardDescription>
           </CardHeader>
 
           <CardContent className="space-y-6">
-            {/* Explicit Target Formula Strip */}
+            {/* Big Clear Progress Metrics (Completed / Remaining / Extra) */}
+            <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3">
+              <div className="rounded-[14px] border border-peacock-green/35 bg-tulsi-wash/60 p-4">
+                <p className="text-xs font-medium text-peacock-ink">
+                  Completed rounds
+                </p>
+                <p className="mt-1 font-serif text-3xl font-semibold text-peacock-deep tabular-nums">
+                  {metrics.completedRounds}
+                </p>
+                <p className="mt-0.5 text-[11px] text-ink-muted">Done today</p>
+              </div>
+
+              <div className="rounded-[14px] border border-sandalwood-border bg-paper p-4">
+                <p className="text-xs font-medium text-ink-muted">
+                  Remaining rounds
+                </p>
+                <p className="mt-1 font-serif text-3xl font-semibold text-ink tabular-nums">
+                  {metrics.pendingRounds}
+                </p>
+                <p className="mt-0.5 text-[11px] text-ink-muted">
+                  {isDoneToday ? "All done!" : "Left to finish"}
+                </p>
+              </div>
+
+              <div className="col-span-2 rounded-[14px] border border-sandalwood-border bg-paper p-4 sm:col-span-1">
+                <p className="text-xs font-medium text-ink-muted">
+                  Extra beyond target
+                </p>
+                <p className="mt-1 font-serif text-3xl font-semibold text-gold-ink tabular-nums">
+                  {metrics.extraRounds}
+                </p>
+                <p className="mt-0.5 text-[11px] text-ink-muted">Bonus rounds</p>
+              </div>
+            </div>
+
+            <ProgressBar
+              value={metrics.completedRounds}
+              max={metrics.effectiveTarget}
+              label="Today's completion"
+              tone={isDoneToday ? "peacock" : "gold"}
+            />
+
+            {/* Simple Goal Breakdown Strip */}
             <div className="grid gap-3 rounded-[12px] border border-sandalwood-border bg-linen p-4 sm:grid-cols-3">
               <div>
-                <p className="text-xs text-ink-muted">Today&apos;s original target</p>
+                <p className="text-xs text-ink-muted">
+                  Today&apos;s original target
+                </p>
                 <p className="mt-1 font-serif text-2xl font-semibold text-ink tabular-nums">
                   {metrics.originalTarget}
                 </p>
-                <p className="text-[11px] text-ink-muted">Committed daily base</p>
+                <p className="text-[11px] text-ink-muted">Your daily goal</p>
               </div>
 
               <div
@@ -182,7 +351,9 @@ export function PersonalSadhanaDashboard({
                     : ""
                 }
               >
-                <p className="text-xs text-ink-muted">Previous pending balance</p>
+                <p className="text-xs text-ink-muted">
+                  Previous pending balance
+                </p>
                 <p
                   className={
                     hasCarriedBalance
@@ -194,8 +365,8 @@ export function PersonalSadhanaDashboard({
                 </p>
                 <p className="text-[11px] text-ink-muted">
                   {hasCarriedBalance
-                    ? "Carried from prior day"
-                    : "No pending carry-forward"}
+                    ? "Carried from earlier day"
+                    : "None carried over"}
                 </p>
               </div>
 
@@ -210,37 +381,6 @@ export function PersonalSadhanaDashboard({
                 </p>
               </div>
             </div>
-
-            {/* Completed vs Remaining */}
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-              <div className="rounded-[12px] border border-sandalwood-border bg-paper p-3.5">
-                <p className="text-xs text-ink-muted">Completed rounds</p>
-                <p className="mt-1 font-serif text-2xl font-semibold text-peacock-ink tabular-nums">
-                  {metrics.completedRounds}
-                </p>
-              </div>
-
-              <div className="rounded-[12px] border border-sandalwood-border bg-paper p-3.5">
-                <p className="text-xs text-ink-muted">Remaining rounds</p>
-                <p className="mt-1 font-serif text-2xl font-semibold text-ink tabular-nums">
-                  {metrics.pendingRounds}
-                </p>
-              </div>
-
-              <div className="col-span-2 rounded-[12px] border border-sandalwood-border bg-paper p-3.5 sm:col-span-1">
-                <p className="text-xs text-ink-muted">Extra beyond target</p>
-                <p className="mt-1 font-serif text-2xl font-semibold text-gold-ink tabular-nums">
-                  {metrics.extraRounds}
-                </p>
-              </div>
-            </div>
-
-            <ProgressBar
-              value={metrics.completedRounds}
-              max={metrics.effectiveTarget}
-              label="Today's completion"
-              tone={metrics.pendingRounds === 0 ? "peacock" : "gold"}
-            />
           </CardContent>
         </Card>
 
@@ -249,7 +389,7 @@ export function PersonalSadhanaDashboard({
           <CardHeader>
             <CardTitle>Completion &amp; Consistency</CardTitle>
             <CardDescription>
-              Personal steady rhythm without competition.
+              Your own calm rhythm — no competition.
             </CardDescription>
           </CardHeader>
 
@@ -258,7 +398,7 @@ export function PersonalSadhanaDashboard({
               value={metrics.completedRounds}
               max={metrics.effectiveTarget}
               label="Today's completion percentage"
-              size={132}
+              size={136}
               strokeWidth={8}
             />
 
@@ -332,16 +472,17 @@ export function PersonalSadhanaDashboard({
                     <span className="font-medium text-ink tabular-nums">
                       {metrics.originalTarget} rounds
                     </span>{" "}
-                    is initialized in{" "}
-                    <span className="font-medium text-ink">{timezone}</span>.
-                    Open Chanting Space to count rounds manually or practice
-                    bead-by-bead with the 108-bead Digital Japa Mala.
+                    is ready in{" "}
+                    <span className="font-medium text-ink">{timezone}</span>. Tap
+                    below to practice with the 108-bead Japa circle or count
+                    rounds one by one.
                   </p>
                 </div>
               </div>
 
-              <Link
+              <SadhanaGlowLink
                 href="/sadhana/chant"
+                tone="peacock"
                 className={buttonStyles({ variant: "primary", size: "md" })}
               >
                 <Sparkles
@@ -350,15 +491,22 @@ export function PersonalSadhanaDashboard({
                   aria-hidden={true}
                 />
                 <span>Open Chanting Space</span>
-              </Link>
+              </SadhanaGlowLink>
             </CardContent>
           </Card>
         ) : (
           <div className="grid gap-6 lg:grid-cols-2">
             <Card surface="parchment">
               <CardHeader>
-                <CardTitle id="activity-heading" className="flex items-center gap-2">
-                  <Clock className="size-4 text-peacock-deep" strokeWidth={1.75} aria-hidden={true} />
+                <CardTitle
+                  id="activity-heading"
+                  className="flex items-center gap-2"
+                >
+                  <Clock
+                    className="size-4 text-peacock-deep"
+                    strokeWidth={1.75}
+                    aria-hidden={true}
+                  />
                   <span>Recent Chanting Sessions</span>
                 </CardTitle>
                 <CardDescription>
@@ -402,7 +550,11 @@ export function PersonalSadhanaDashboard({
             <Card surface="parchment">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Calendar className="size-4 text-peacock-deep" strokeWidth={1.75} aria-hidden={true} />
+                  <Calendar
+                    className="size-4 text-peacock-deep"
+                    strokeWidth={1.75}
+                    aria-hidden={true}
+                  />
                   <span>Recent Daily History</span>
                 </CardTitle>
                 <CardDescription>
@@ -446,4 +598,3 @@ export function PersonalSadhanaDashboard({
     </div>
   );
 }
-

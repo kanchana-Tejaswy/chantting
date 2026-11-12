@@ -36,15 +36,37 @@ const tiroDevanagari = Tiro_Devanagari_Sanskrit({
 });
 
 export const metadata: Metadata = {
-  title: "KRISHNA SĀDHANA — Devotion, Chanting & Bhagavad Gītā",
+  applicationName: "SMARAN",
+  title: {
+    default: "SMARAN (स्मरण) — Remember Him. Stay Connected.",
+    template: "%s · SMARAN",
+  },
   description:
-    "A standalone, non-profit devotional platform supporting daily chanting consistency, authentic Bhagavad Gītā study, and respectful spiritual community.",
+    "SMARAN (स्मरण) — Remember Him. Stay Connected. A quiet devotional platform supporting daily chanting consistency, authentic Bhagavad Gītā study, and respectful spiritual community.",
+  appleWebApp: {
+    capable: true,
+    title: "SMARAN",
+  },
+  openGraph: {
+    type: "website",
+    title: "SMARAN (स्मरण) — Remember Him. Stay Connected.",
+    description:
+      "Remember Him. Stay Connected. A quiet devotional sanctuary for daily Japa practice, authentic Bhagavad Gītā study, and respectful community.",
+    siteName: "SMARAN",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SMARAN (स्मरण) — Remember Him. Stay Connected.",
+    description:
+      "Remember Him. Stay Connected. A quiet devotional sanctuary for daily Japa practice, authentic Bhagavad Gītā study, and respectful community.",
+  },
 };
 
 export const viewport: Viewport = {
   themeColor: "#0C152B",
   width: "device-width",
   initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

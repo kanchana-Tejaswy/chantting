@@ -1,8 +1,17 @@
 import { NextResponse } from "next/server";
 import { gitaSearchQuerySchema } from "@/lib/gita/validation";
 import { searchGitaContent } from "@/lib/gita/queries";
+import { enforceApiRateLimit } from "@/lib/security/rate-limit";
 
 export async function GET(request: Request) {
+  const rateLimited = enforceApiRateLimit({
+    request,
+    bucket: "gita-search",
+    limit: 60,
+    windowMs: 60_000,
+  });
+  if (rateLimited) return rateLimited;
+
   const { searchParams } = new URL(request.url);
   const parsed = gitaSearchQuerySchema.safeParse({
     q: searchParams.get("q") ?? "",

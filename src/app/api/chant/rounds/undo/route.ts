@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { dailySadhanaSchema } from "@/lib/domain/sadhana";
 import { undoRoundApiInputSchema } from "@/lib/chant/validation";
+import { syncConsentedRoomActivity } from "@/lib/rooms/queries";
+import {
+  enforceApiRateLimit,
+  PRIVATE_NO_STORE_HEADERS,
+} from "@/lib/security/rate-limit";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -13,9 +19,18 @@ export async function POST(request: Request) {
   if (authError || !user) {
     return NextResponse.json(
       { error: "Authentication required." },
-      { status: 401 }
+      { status: 401, headers: PRIVATE_NO_STORE_HEADERS }
     );
   }
+
+  const rateLimited = enforceApiRateLimit({
+    request,
+    bucket: "chant-round-undo",
+    userId: user.id,
+    limit: 120,
+    windowMs: 60_000,
+  });
+  if (rateLimited) return rateLimited;
 
   let body: unknown;
   try {
@@ -60,12 +75,26 @@ export async function POST(request: Request) {
     session = sessRes.data;
   }
 
+  const parsedDaily = dailySadhanaSchema.safeParse(payload.daily_sadhana);
+  if (parsedDaily.success) {
+    try {
+      await syncConsentedRoomActivity(supabase, user.id, parsedDaily.data);
+    } catch {
+      // Never block personal round undo on room snapshot reconciliation
+    }
+  }
+
   revalidatePath("/sadhana");
   revalidatePath("/sadhana/chant");
+  revalidatePath("/rooms");
+  revalidatePath("/account");
 
-  return NextResponse.json({
-    ...payload,
-    session,
-  });
+  return NextResponse.json(
+    {
+      ...payload,
+      session,
+    },
+    { headers: PRIVATE_NO_STORE_HEADERS }
+  );
 }
 

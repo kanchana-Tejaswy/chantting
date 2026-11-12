@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   Download,
   Lock,
+  LogOut,
   ShieldAlert,
   Sparkles,
   Trash2,
@@ -277,7 +278,8 @@ export function AccountWorkspace({
 
   async function updateRoomPrivacy(
     roomId: string,
-    shareProgressMode: "full" | "completion_only" | "private"
+    shareProgressMode: "full" | "completion_only" | "private",
+    currentShareStreak: boolean
   ) {
     setBusy(true);
     setStatusMessage(null);
@@ -286,13 +288,22 @@ export function AccountWorkspace({
       const res = await fetch("/api/rooms/memberships", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roomId, shareProgressMode }),
+        body: JSON.stringify({
+          roomId,
+          shareProgressMode,
+          shareStreak:
+            shareProgressMode === "private" ? false : currentShareStreak,
+        }),
       });
       if (!res.ok) {
         const json = (await res.json()) as { error?: string };
         setErrorMessage(json.error ?? "Unable to update room privacy.");
       } else {
-        setStatusMessage("Room privacy mode updated.");
+        setStatusMessage(
+          shareProgressMode === "private"
+            ? "Room privacy set to Private — previously shared progress activity was removed from visibility."
+            : "Room privacy mode updated."
+        );
         router.refresh();
       }
     } finally {
@@ -341,6 +352,30 @@ export function AccountWorkspace({
         setStatusMessage("Left chanting room.");
         router.refresh();
       }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleSessionSignOut(scope: "local" | "global") {
+    setBusy(true);
+    setStatusMessage(null);
+    setErrorMessage(null);
+    try {
+      const res = await fetch("/api/account/sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scope }),
+      });
+      const json = (await res.json()) as { error?: string };
+      if (!res.ok) {
+        setErrorMessage(json.error ?? "Unable to sign out.");
+      } else {
+        router.push("/auth");
+        router.refresh();
+      }
+    } catch {
+      setErrorMessage("Network error while signing out.");
     } finally {
       setBusy(false);
     }
@@ -1056,7 +1091,8 @@ export function AccountWorkspace({
                               e.target.value as
                                 | "full"
                                 | "completion_only"
-                                | "private"
+                                | "private",
+                              m.share_streak
                             )
                           }
                         >
@@ -1103,6 +1139,52 @@ export function AccountWorkspace({
               </CardContent>
             </Card>
           </div>
+
+          {/* Session & Device Access Management */}
+          <Card surface="parchment">
+            <CardHeader>
+              <CardTitle className="font-display text-2xl">
+                Sessions &amp; Device Access
+              </CardTitle>
+              <CardDescription>
+                Manage your active authenticated browser session or revoke all
+                signed-in sessions across devices at once.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-wrap items-center justify-between gap-4">
+              <div className="space-y-1 text-sm">
+                <p className="font-medium text-ink">
+                  Authenticated as {userEmail ?? profile.display_name}
+                </p>
+                <p className="text-xs text-ink-muted">
+                  Signing out of all devices invalidates refresh tokens globally
+                  across mobile and desktop sessions.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2.5">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  disabled={busy}
+                  onClick={() => handleSessionSignOut("local")}
+                >
+                  <LogOut className="size-4" aria-hidden={true} />
+                  <span>Sign Out This Device</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={busy}
+                  onClick={() => handleSessionSignOut("global")}
+                >
+                  <LogOut className="size-4" aria-hidden={true} />
+                  <span>Sign Out All Devices</span>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Account Export & Secure Account Deletion */}
           <Card surface="linen">

@@ -6,10 +6,23 @@ import {
 } from "@/lib/gita/api-helpers";
 import { accountDeleteConfirmSchema } from "@/lib/account/validation";
 import { getServerEnv } from "@/lib/env";
+import {
+  enforceApiRateLimit,
+  PRIVATE_NO_STORE_HEADERS,
+} from "@/lib/security/rate-limit";
 
 export async function POST(request: Request) {
   const auth = await getAuthenticatedGitaContext();
   if (!auth.ok) return auth.response;
+
+  const rateLimited = enforceApiRateLimit({
+    request,
+    bucket: "account-delete",
+    userId: auth.user.id,
+    limit: 5,
+    windowMs: 15 * 60_000,
+  });
+  if (rateLimited) return rateLimited;
 
   const body = await parseJsonBody(request);
   if (!body.ok) return body.response;
@@ -73,9 +86,12 @@ export async function POST(request: Request) {
 
   await auth.supabase.auth.signOut({ scope: "global" });
 
-  return NextResponse.json({
-    deleted: true,
-    hardDeletedAuth: Boolean(result?.can_hard_delete_auth),
-  });
+  return NextResponse.json(
+    {
+      deleted: true,
+      hardDeletedAuth: Boolean(result?.can_hard_delete_auth),
+    },
+    { headers: PRIVATE_NO_STORE_HEADERS }
+  );
 }
 

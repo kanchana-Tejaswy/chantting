@@ -122,7 +122,7 @@ export default async function SadhanaDashboardPage() {
 
   return (
     <AppShell
-      pageTitle="Personal Sādhana"
+      pageTitle="Lakshya"
       userSummary={{
         displayName: result.profile.display_name,
         email: result.userEmail,

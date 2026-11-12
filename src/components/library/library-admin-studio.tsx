@@ -458,7 +458,7 @@ export function LibraryAdminStudio({
                     onChange={(e) => setIsOriginalContent(e.target.checked)}
                     className="size-4 accent-peacock-deep"
                   />
-                  <span>Original Krishna Sādhana work</span>
+                  <span>Original SMARAN work</span>
                 </label>
                 <label className="flex items-center gap-2">
                   <input

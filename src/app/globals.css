@@ -1,0 +1,145 @@
+@import "tailwindcss";
+
+:root {
+  /* Core Surfaces & Inks */
+  --ks-ivory: #faf6ec;
+  --ks-paper: #fffdf8;
+  --ks-linen: #f2ebd9;
+  --ks-border: #ddd1b8;
+  --ks-border-strong: #c4b496;
+
+  --ks-krishna-midnight: #0c152b;
+  --ks-krishna-elevated: #132244;
+  --ks-peacock-deep: #16325b;
+  --ks-peacock-slate: #214875;
+
+  --ks-peacock-green: #145b51;
+  --ks-peacock-ink: #114e45;
+  --ks-tulsi-wash: #e5efea;
+
+  --ks-gold-antique: #c79a3b;
+  --ks-gold-border: #b4862e;
+  --ks-gold-ink: #78520f;
+  --ks-gold-wash: #f5ecd8;
+
+  --ks-ink: #111b33;
+  --ks-ink-muted: #524b3e;
+  --ks-ink-on-dark: #f7f1e3;
+  --ks-ink-muted-dark: #c9beaa;
+
+  --ks-kumkum: #9e2f26;
+  --ks-kumkum-wash: #faece9;
+
+  /* Z-Index Scale */
+  --ks-z-base: 0;
+  --ks-z-raised: 10;
+  --ks-z-sticky: 20;
+  --ks-z-nav: 30;
+  --ks-z-overlay: 40;
+  --ks-z-modal: 50;
+  --ks-z-toast: 60;
+}
+
+@theme inline {
+  --font-sans: var(--font-noto-sans), system-ui, sans-serif;
+  --font-serif: var(--font-noto-serif), Georgia, serif;
+  --font-display: var(--font-cormorant), var(--font-noto-serif), Georgia, serif;
+  --font-devanagari: var(--font-tiro-devanagari), var(--font-noto-sans), serif;
+
+  --color-ivory: var(--ks-ivory);
+  --color-paper: var(--ks-paper);
+  --color-linen: var(--ks-linen);
+  --color-sandalwood-border: var(--ks-border);
+  --color-sandalwood-strong: var(--ks-border-strong);
+
+  --color-krishna-midnight: var(--ks-krishna-midnight);
+  --color-krishna-elevated: var(--ks-krishna-elevated);
+  --color-peacock-deep: var(--ks-peacock-deep);
+  --color-peacock-slate: var(--ks-peacock-slate);
+  --color-peacock-green: var(--ks-peacock-green);
+  --color-peacock-ink: var(--ks-peacock-ink);
+  --color-tulsi-wash: var(--ks-tulsi-wash);
+
+  --color-gold-antique: var(--ks-gold-antique);
+  --color-gold-border: var(--ks-gold-border);
+  --color-gold-ink: var(--ks-gold-ink);
+  --color-gold-wash: var(--ks-gold-wash);
+
+  --color-ink: var(--ks-ink);
+  --color-ink-muted: var(--ks-ink-muted);
+  --color-ink-on-dark: var(--ks-ink-on-dark);
+  --color-ink-muted-dark: var(--ks-ink-muted-dark);
+
+  --color-kumkum: var(--ks-kumkum);
+  --color-kumkum-wash: var(--ks-kumkum-wash);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--ks-ivory);
+  color: var(--ks-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Layered neutral elevation surfaces */
+.shadow-sacred-sm {
+  box-shadow:
+    0 2px 3px -1px rgba(17, 27, 51, 0.08),
+    0 1px 0 0 rgba(17, 27, 51, 0.03),
+    0 0 0 1px rgba(17, 27, 51, 0.07);
+}
+
+.shadow-sacred-md {
+  box-shadow:
+    0 0 0 1px rgba(17, 27, 51, 0.06),
+    0 1px 1px -0.5px rgba(17, 27, 51, 0.06),
+    0 3px 3px -1.5px rgba(17, 27, 51, 0.06),
+    0 6px 6px -3px rgba(17, 27, 51, 0.06),
+    0 12px 12px -6px rgba(17, 27, 51, 0.06),
+    0 24px 24px -12px rgba(17, 27, 51, 0.06);
+}
+
+.shadow-sacred-lg {
+  box-shadow:
+    0 2.8px 2.2px rgba(12, 21, 43, 0.04),
+    0 6.7px 5.3px rgba(12, 21, 43, 0.05),
+    0 12.5px 10px rgba(12, 21, 43, 0.065),
+    0 22.3px 17.9px rgba(12, 21, 43, 0.08),
+    0 41.8px 33.4px rgba(12, 21, 43, 0.095),
+    0 80px 64px rgba(12, 21, 43, 0.12);
+}
+
+/* Keyboard focus visibility */
+:focus-visible {
+  outline: 2px solid var(--ks-gold-antique);
+  outline-offset: 2px;
+}
+
+/* Respect reduced motion across all transitions and animations */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+[data-reduced-motion="true"] *,
+[data-reduced-motion="true"] *::before,
+[data-reduced-motion="true"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}

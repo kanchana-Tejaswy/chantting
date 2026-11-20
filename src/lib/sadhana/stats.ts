@@ -38,6 +38,12 @@ export interface PersonalDashboardMetrics {
   consistencyRatePct: number;
   averageDailyRounds: number;
   recentDays: HistoricalDaySummary[];
+  // Phase 4: Unified Chanting Statistics & Analytics
+  monthCompletedRounds?: number;
+  yearCompletedRounds?: number;
+  totalChantingDays?: number;
+  averageRoundsPerChantingDay?: number;
+  bestDay?: { date: string; rounds: number } | null;
 }
 
 /**
@@ -150,6 +156,38 @@ export function computePersonalDashboardMetrics(params: {
       ? Number((lifetimeRounds / recordedDays).toFixed(1))
       : 0;
 
+  const currentMonthStr = todayDate.slice(0, 7);
+  const currentYearStr = todayDate.slice(0, 4);
+
+  const monthCompletedRounds = sortedRows
+    .filter((r) => r.sadhana_date.startsWith(currentMonthStr))
+    .reduce((sum, r) => sum + r.completed_rounds, 0);
+
+  const yearCompletedRounds = sortedRows
+    .filter((r) => r.sadhana_date.startsWith(currentYearStr))
+    .reduce((sum, r) => sum + r.completed_rounds, 0);
+
+  const totalChantingDays = sortedRows.filter(
+    (r) => r.completed_rounds > 0
+  ).length;
+
+  const averageRoundsPerChantingDay =
+    totalChantingDays > 0
+      ? Number((lifetimeRounds / totalChantingDays).toFixed(1))
+      : 0;
+
+  let bestDay: { date: string; rounds: number } | null = null;
+  for (const r of sortedRows) {
+    if (r.completed_rounds <= 0) continue;
+    if (
+      !bestDay ||
+      r.completed_rounds > bestDay.rounds ||
+      (r.completed_rounds === bestDay.rounds && r.sadhana_date > bestDay.date)
+    ) {
+      bestDay = { date: r.sadhana_date, rounds: r.completed_rounds };
+    }
+  }
+
   const completionPercentage = Math.min(
     100,
     Math.round(
@@ -188,6 +226,11 @@ export function computePersonalDashboardMetrics(params: {
     consistencyRatePct,
     averageDailyRounds,
     recentDays,
+    monthCompletedRounds,
+    yearCompletedRounds,
+    totalChantingDays,
+    averageRoundsPerChantingDay,
+    bestDay,
   };
 }
 

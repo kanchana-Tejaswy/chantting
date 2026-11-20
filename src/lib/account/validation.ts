@@ -35,6 +35,15 @@ export const accountProfileUpdateSchema = z.object({
       (v) => v === null || /^[a-z0-9][a-z0-9_-]{2,30}[a-z0-9]$/.test(v),
       "Username must be 4–32 lowercase letters, numbers, hyphens, or underscores."
     ),
+  avatarUrl: z
+    .string()
+    .trim()
+    .url("Avatar URL must be a valid URL.")
+    .regex(/^https?:\/\//, "Avatar URL must start with http:// or https://")
+    .max(1024, "Avatar URL must be 1024 characters or fewer.")
+    .optional()
+    .nullable()
+    .transform((v) => (v && v.length > 0 ? v : null)),
   bio: z
     .string()
     .trim()
@@ -53,6 +62,25 @@ export const accountProfileUpdateSchema = z.object({
     .regex(/^[a-z]{2,8}(-[a-z]{2,8})?$/, "Invalid language code.")
     .default("en"),
 });
+
+export const accountPasswordUpdateSchema = z.discriminatedUnion("action", [
+  z
+    .object({
+      action: z.literal("update_password"),
+      password: z
+        .string()
+        .min(8, "Password must be at least 8 characters long.")
+        .max(128, "Password must be 128 characters or fewer."),
+      confirmPassword: z.string(),
+    })
+    .refine((d) => d.password === d.confirmPassword, {
+      message: "Passwords do not match.",
+      path: ["confirmPassword"],
+    }),
+  z.object({
+    action: z.literal("request_reset_link"),
+  }),
+]);
 
 export const accountPreferencesUpdateSchema = z.object({
   dailyRoundTarget: z.coerce

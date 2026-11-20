@@ -49,6 +49,27 @@ export async function POST(request: Request) {
     );
   }
 
+  if (parsed.data.scope === "global") {
+    try {
+      const notifClient = auth.supabase.from("notifications");
+      if (notifClient && typeof notifClient.insert === "function") {
+        await notifClient.insert({
+          user_id: auth.user.id,
+          type: "system_notice",
+          title: "Security Notice: All Sessions Revoked",
+          body: "You signed out of all active browser and mobile sessions across all devices.",
+          action_url: "/account?tab=security",
+          metadata: {
+            event: "sessions_revoked_global",
+            revoked_at: new Date().toISOString(),
+          },
+        });
+      }
+    } catch {
+      // Ignore background notification insertion failures safely
+    }
+  }
+
   revalidatePath("/", "layout");
   return NextResponse.json(
     { signedOut: true, scope: parsed.data.scope },

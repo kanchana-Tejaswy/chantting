@@ -91,11 +91,11 @@ export function JapaMalaWheel({
           aria-label={`Digital Japa Mala showing ${safeBead} of ${BEADS_PER_ROUND} beads completed in current round`}
         >
           <defs>
-            {/* Tulsi / Peacock-jade bead sheen */}
+            {/* Padmaraga / Royal Lotus Crimson bead sheen */}
             <radialGradient id={tulsiId} cx="35%" cy="30%" r="70%">
-              <stop offset="0%" stopColor="#3B9A8C" />
-              <stop offset="55%" stopColor="#1B645A" />
-              <stop offset="100%" stopColor="#0D3431" />
+              <stop offset="0%" stopColor="#C44D62" />
+              <stop offset="55%" stopColor="#8A253A" />
+              <stop offset="100%" stopColor="#4A101D" />
             </radialGradient>
 
             {/* Illuminated Antique Gold active bead */}
@@ -122,7 +122,7 @@ export function JapaMalaWheel({
             {/* Subtle thread arc gradient */}
             <linearGradient id={arcGradId} x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#C89B3C" stopOpacity="0.8" />
-              <stop offset="100%" stopColor="#1B645A" stopOpacity="0.85" />
+              <stop offset="100%" stopColor="#8A253A" stopOpacity="0.85" />
             </linearGradient>
           </defs>
 
@@ -164,39 +164,34 @@ export function JapaMalaWheel({
             className="transition-[stroke-dashoffset] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]"
           />
 
-          {/* Quarter-round markers & micro-numerals at 27, 54, 81 */}
+          {/* Quarter-round markers & circular micro-numerals at 27, 54, 81 */}
           {MALA_POINTS.filter((p) => QUARTER_BEADS.has(p.index)).map((point) => {
             const rad = (point.angleDeg * Math.PI) / 180;
-            const innerX = CENTER + (RING_RADIUS - 14) * Math.cos(rad);
-            const innerY = CENTER + (RING_RADIUS - 14) * Math.sin(rad);
-            const outerX = CENTER + (RING_RADIUS - 7) * Math.cos(rad);
-            const outerY = CENTER + (RING_RADIUS - 7) * Math.sin(rad);
-            const labelX = CENTER + (RING_RADIUS - 23) * Math.cos(rad);
-            const labelY = CENTER + (RING_RADIUS - 23) * Math.sin(rad);
+            const labelX = CENTER + (RING_RADIUS - 18) * Math.cos(rad);
+            const labelY = CENTER + (RING_RADIUS - 18) * Math.sin(rad);
             const reached = safeBead >= point.index;
 
             return (
               <g key={`q-${point.index}`}>
-                <line
-                  x1={innerX.toFixed(2)}
-                  y1={innerY.toFixed(2)}
-                  x2={outerX.toFixed(2)}
-                  y2={outerY.toFixed(2)}
-                  stroke="currentColor"
-                  strokeWidth={reached ? "2" : "1.35"}
-                  strokeLinecap="round"
+                <circle
+                  cx={labelX.toFixed(2)}
+                  cy={labelY.toFixed(2)}
+                  r={8}
                   className={cn(
-                    "transition-colors duration-200",
-                    reached ? "text-gold-antique" : "text-gold-antique/45"
+                    "transition-all duration-200",
+                    reached
+                      ? "fill-gold-wash stroke-gold-antique"
+                      : "fill-paper stroke-sandalwood-border"
                   )}
+                  strokeWidth="0.85"
                 />
                 <text
                   x={labelX.toFixed(2)}
-                  y={(labelY + 3).toFixed(2)}
+                  y={(labelY + 3.2).toFixed(2)}
                   textAnchor="middle"
                   className={cn(
-                    "font-serif text-[9px] tabular-nums transition-colors duration-200",
-                    reached ? "fill-gold-ink font-semibold" : "fill-ink-muted/65"
+                    "font-serif text-[9px] font-bold tabular-nums transition-colors duration-200",
+                    reached ? "fill-peacock-deep" : "fill-ink-muted"
                   )}
                 >
                   {point.index}
@@ -219,12 +214,23 @@ export function JapaMalaWheel({
                 className="animate-ks-sumaru-radiance motion-reduce:hidden"
               />
             )}
-            {/* Subtle ornamental tassel crown above Sumaru */}
+            {/* Sacred Silk Thread & Kalasha Cap connecting Meru bead */}
+            <line
+              x1={MALA_POINTS[0]!.x}
+              y1={MALA_POINTS[0]!.y - 6}
+              x2={MALA_POINTS[0]!.x}
+              y2={MALA_POINTS[0]!.y - 12}
+              stroke="#C29438"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+            />
             <circle
               cx={MALA_POINTS[0]!.x}
               cy={MALA_POINTS[0]!.y - 12.5}
-              r={2.1}
-              className="fill-gold-antique/85"
+              r={2.5}
+              fill="#C29438"
+              stroke="#FFF6D6"
+              strokeWidth="0.5"
             />
             <circle
               cx={MALA_POINTS[0]!.x}
@@ -302,7 +308,7 @@ export function JapaMalaWheel({
                     cy={point.y}
                     r={r}
                     fill={`url(#${tulsiId})`}
-                    stroke={isQuarter ? "#C89B3C" : "#0D3431"}
+                    stroke={isQuarter ? "#C89B3C" : "#5B1524"}
                     strokeWidth={isQuarter ? 0.9 : 0.45}
                   />
                   <circle
@@ -352,11 +358,11 @@ export function JapaMalaWheel({
                   : `Advance to bead ${Math.min(safeBead + 1, BEADS_PER_ROUND)} of ${BEADS_PER_ROUND}`
               }
               className={cn(
-                "pointer-events-auto relative flex size-full cursor-pointer flex-col items-center justify-center rounded-full border-2 text-center select-none",
-                "transition-[transform,background-color,border-color,box-shadow] duration-100 ease-[cubic-bezier(0.23,1,0.32,1)]",
+                "pointer-events-auto relative flex size-full cursor-pointer flex-col items-center justify-center rounded-full border-2 text-center select-none p-4",
+                "transition-[transform,background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)]",
                 isPaused
-                  ? "cursor-not-allowed border-sandalwood-strong bg-linen/95 text-ink-muted"
-                  : "border-gold-border/65 bg-gradient-to-b from-paper via-paper to-linen/70 text-ink shadow-sacred-md ring-1 ring-inset ring-gold-antique/20 hover:border-peacock-deep active:scale-[0.96]"
+                  ? "cursor-not-allowed border-sandalwood-strong bg-linen/95 text-ink-muted shadow-xs"
+                  : "border-gold-border/80 bg-gradient-to-b from-paper via-paper to-linen/60 text-ink shadow-sacred-md ring-4 ring-gold-antique/15 hover:border-peacock-deep hover:ring-peacock-green/20 active:scale-[0.96]"
               )}
             >
               {isPaused ? (
@@ -366,7 +372,7 @@ export function JapaMalaWheel({
                     strokeWidth={1.75}
                     aria-hidden={true}
                   />
-                  <span className="mt-2 text-sm font-medium text-ink">
+                  <span className="mt-2 text-sm font-semibold text-ink">
                     Session Paused
                   </span>
                   <span className="mt-0.5 text-xs text-ink-muted tabular-nums">
@@ -375,21 +381,21 @@ export function JapaMalaWheel({
                 </>
               ) : (
                 <>
-                  <span className="text-[11px] font-medium tracking-wide text-ink-muted">
+                  <span className="text-[10px] font-semibold tracking-wider uppercase text-ink-muted">
                     Bead Progress
                   </span>
-                  <span className="mt-1 font-serif text-4xl font-semibold text-ink tabular-nums">
+                  <span className="mt-1 font-serif text-4xl sm:text-5xl font-bold tracking-tight text-ink tabular-nums">
                     {safeBead}
-                    <span className="text-xl font-normal text-ink-muted">
+                    <span className="text-xl sm:text-2xl font-normal text-ink-muted">
                       /{BEADS_PER_ROUND}
                     </span>
                   </span>
-                  <span className="mt-1.5 text-xs font-medium text-peacock-ink tabular-nums">
+                  <span className="mt-1 text-xs font-semibold text-peacock-deep tabular-nums">
                     {remainingInRound === BEADS_PER_ROUND
                       ? "Tap to begin round"
                       : `${remainingInRound} remaining`}
                   </span>
-                  <span className="mt-2 rounded-full border border-sandalwood-border/80 bg-linen px-2.5 py-0.5 text-[11px] font-medium text-ink-muted tabular-nums">
+                  <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-sandalwood-border/90 bg-linen/90 px-3 py-0.5 text-[11px] font-semibold text-ink-muted tabular-nums shadow-2xs">
                     {todayRounds !== undefined
                       ? `Rounds today: ${displayRounds}`
                       : `Session rounds: ${sessionRounds}`}

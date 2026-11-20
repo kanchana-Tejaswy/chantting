@@ -239,7 +239,7 @@ describe("Automatic Carry-Forward Engine & Transactional Chanting RPCs", () => {
     ).rejects.toThrow();
 
     // Switch USER_POLICIES to optional policy and create tomorrow's row
-    const tomorrow = new Date(Date.now() + 86400_000).toISOString().slice(0, 10);
+    const tomorrow = new Date(Date.now() + 2 * 86400_000).toISOString().slice(0, 10);
 
     await asUser(testDb.db, USER_POLICIES, async (tx) => {
       await tx.query(

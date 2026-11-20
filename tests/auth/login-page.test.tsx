@@ -53,7 +53,7 @@ describe("SMARAN full-screen login page (/auth)", () => {
     expect(html).toContain("SMARAN");
     expect(html).toContain("स्मरण");
     expect(html).toContain("Remember Him. Stay Connected.");
-    expect(html).toContain("A space for chanting, learning and devotion.");
+    expect(html).toContain("A space for chanting, sadhana and devotion.");
     expect(html).toContain("Return to SMARAN");
 
     // Auth methods & callback error
@@ -65,9 +65,11 @@ describe("SMARAN full-screen login page (/auth)", () => {
     expect(html).toContain("Access denied by provider");
     expect(html).toContain('value="/sadhana/chant"');
 
-    // Footer links point only to valid existing routes
-    expect(html).toContain('href="/gita"');
-    expect(html).toContain('href="/library"');
+    // Dedicated auth page strictly excludes application navigation & reading resources
+    expect(html).not.toContain('href="/gita"');
+    expect(html).not.toContain('href="/library"');
+    expect(html).not.toContain("Bhagavad Gītā");
+    expect(html).not.toContain('aria-label="Primary navigation"');
   });
 
   it("supports signup and forgot-password initial modes cleanly", async () => {

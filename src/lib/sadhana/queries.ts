@@ -5,6 +5,10 @@ import type {
   ChantingSessionRecord,
   ChantWorkspacePayload,
 } from "@/lib/chant/types";
+import type { SankalpaRecord } from "@/lib/sankalpa/types";
+import type { MantraRecord, MantraHistoricalStat } from "@/lib/mantra/types";
+import type { ChantingReminderRecord } from "@/lib/reminders/types";
+import type { SessionNoteRecord } from "@/lib/notes/types";
 import {
   getPendingOptionalCarryOffer,
   getUnappliedPendingNotice,
@@ -43,6 +47,12 @@ export interface UserPreferencesRecord {
   public_profile_enabled: boolean;
   default_room_share_mode: "full" | "completion_only" | "private";
   share_streak_in_rooms: boolean;
+  preferred_mantra_id?: string | null;
+  ambient_mode_enabled?: boolean;
+  ambient_sound_enabled?: boolean;
+  ambient_sound_volume?: number;
+  pace_guidance_enabled?: boolean;
+  pace_seconds_per_bead?: number;
   created_at: string;
   updated_at: string;
 }
@@ -75,6 +85,8 @@ export type SadhanaLoadResult =
       carryForwardLedger: CarryForwardLedgerEntry[];
       pendingOptionalOffer: PendingOptionalCarryOffer | null;
       unappliedPendingNotice: UnappliedPendingNotice | null;
+      sankalpas: SankalpaRecord[];
+      activeSankalpa: SankalpaRecord | null;
     };
 
 export type ChantWorkspaceLoadResult =
@@ -118,6 +130,7 @@ export function isMissingSchemaError(
     code === "PGRST202" ||
     code === "42P01" ||
     code === "42883" ||
+    code === "42703" ||
     msg.includes("could not find the table") ||
     msg.includes("could not find the function") ||
     msg.includes("does not exist")
@@ -326,7 +339,7 @@ export async function loadPersonalSadhanaDashboard(): Promise<SadhanaLoadResult>
   }
 
   const recentSessions = (sessionsRes.data ?? []) as ChantingSessionSummary[];
-  const [activeSessionRes, ledgerRes] = await Promise.all([
+  const [activeSessionRes, ledgerRes, sankalpasRes] = await Promise.all([
     supabase
       .from("chanting_sessions")
       .select(
@@ -345,9 +358,17 @@ export async function loadPersonalSadhanaDashboard(): Promise<SadhanaLoadResult>
       .eq("user_id", user.id)
       .order("to_date", { ascending: false })
       .limit(14),
+    supabase
+      .from("sankalpas")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false }),
   ]);
 
   const carryForwardLedger = (ledgerRes.data ?? []) as CarryForwardLedgerEntry[];
+  const sankalpas = (sankalpasRes.data ?? []) as SankalpaRecord[];
+  const activeSankalpa = sankalpas.find((s) => s.status === "active") ?? null;
+
   const pendingOptionalOffer = getPendingOptionalCarryOffer({
     todayDate,
     policyApplied: parsedToday.data.policy_applied,
@@ -376,6 +397,8 @@ export async function loadPersonalSadhanaDashboard(): Promise<SadhanaLoadResult>
     carryForwardLedger,
     pendingOptionalOffer,
     unappliedPendingNotice,
+    sankalpas,
+    activeSankalpa,
   };
 }
 
@@ -473,46 +496,95 @@ export async function loadChantWorkspaceData(): Promise<ChantWorkspaceLoadResult
     };
   }
 
-  const [recoverableRes, todaySessionsRes, todayRecordsRes, ledgerRes] =
-    await Promise.all([
-      supabase
-        .from("chanting_sessions")
-        .select(
-          "id, user_id, sadhana_date, method, status, current_bead_count, rounds_completed, client_session_key, started_at, last_activity_at, paused_at, ended_at"
-        )
-        .eq("user_id", user.id)
-        .in("status", ["active", "paused"])
-        .order("last_activity_at", { ascending: false })
-        .limit(1)
-        .maybeSingle(),
-      supabase
-        .from("chanting_sessions")
-        .select(
-          "id, user_id, sadhana_date, method, status, current_bead_count, rounds_completed, client_session_key, started_at, last_activity_at, paused_at, ended_at"
-        )
-        .eq("user_id", user.id)
-        .eq("sadhana_date", todayDate)
-        .order("started_at", { ascending: false })
-        .limit(10),
-      supabase
-        .from("chanting_records")
-        .select(
-          "id, user_id, session_id, sadhana_date, method, round_delta, idempotency_key, recorded_at, client_recorded_at, timezone_snapshot, is_reverted"
-        )
-        .eq("user_id", user.id)
-        .eq("sadhana_date", todayDate)
-        .eq("is_reverted", false)
-        .order("recorded_at", { ascending: false })
-        .limit(25),
-      supabase
-        .from("carry_forward_ledger")
-        .select(
-          "id, from_date, to_date, policy_applied, source_remaining_balance, carried_amount, notes, created_at"
-        )
-        .eq("user_id", user.id)
-        .eq("to_date", todayDate)
-        .limit(1),
-    ]);
+  const [
+    recoverableRes,
+    todaySessionsRes,
+    todayRecordsRes,
+    ledgerRes,
+    sankalpaRes,
+    mantrasRes,
+    remindersRes,
+    notesRes,
+    mantraRoundsRes,
+  ] = await Promise.all([
+    supabase
+      .from("chanting_sessions")
+      .select(
+        "id, user_id, sadhana_date, method, status, current_bead_count, rounds_completed, client_session_key, started_at, last_activity_at, paused_at, ended_at, mantra_id"
+      )
+      .eq("user_id", user.id)
+      .in("status", ["active", "paused"])
+      .order("last_activity_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("chanting_sessions")
+      .select(
+        "id, user_id, sadhana_date, method, status, current_bead_count, rounds_completed, client_session_key, started_at, last_activity_at, paused_at, ended_at, mantra_id"
+      )
+      .eq("user_id", user.id)
+      .eq("sadhana_date", todayDate)
+      .order("started_at", { ascending: false })
+      .limit(10),
+    supabase
+      .from("chanting_records")
+      .select(
+        "id, user_id, session_id, sadhana_date, method, round_delta, idempotency_key, recorded_at, client_recorded_at, timezone_snapshot, is_reverted, mantra_id, sankalpa_id, sync_status"
+      )
+      .eq("user_id", user.id)
+      .eq("sadhana_date", todayDate)
+      .eq("is_reverted", false)
+      .order("recorded_at", { ascending: false })
+      .limit(25),
+    supabase
+      .from("carry_forward_ledger")
+      .select(
+        "id, from_date, to_date, policy_applied, source_remaining_balance, carried_amount, notes, created_at"
+      )
+      .eq("user_id", user.id)
+      .eq("to_date", todayDate)
+      .limit(1),
+    supabase
+      .from("sankalpas")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("mantras")
+      .select("*")
+      .or(`is_system.eq.true,user_id.eq.${user.id}`)
+      .order("is_system", { ascending: false })
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("chanting_reminders")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("time_of_day", { ascending: true }),
+    supabase
+      .from("chanting_session_notes")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(20),
+    supabase
+      .from("chanting_records")
+      .select("mantra_id, round_delta")
+      .eq("user_id", user.id)
+      .eq("is_reverted", false),
+  ]);
+
+  const rawRecords = ((todayRecordsRes.data ?? []) as ChantingRoundRecord[]).map(
+    (r) => ({
+      ...r,
+      sankalpa_id: (r as { sankalpa_id?: string | null }).sankalpa_id ?? null,
+      mantra_id: (r as { mantra_id?: string | null }).mantra_id ?? null,
+      sync_status: ((r as { sync_status?: "synced" | "offline_pending" })
+        .sync_status ?? "synced") as "synced" | "offline_pending",
+    })
+  );
 
   const workspaceErr =
     recoverableRes.error ??
@@ -520,6 +592,13 @@ export async function loadChantWorkspaceData(): Promise<ChantWorkspaceLoadResult
     todayRecordsRes.error ??
     ledgerRes.error;
   if (workspaceErr) {
+    if (isMissingSchemaError(workspaceErr)) {
+      return {
+        status: "schema_not_ready",
+        userEmail: user.email ?? null,
+        detail: workspaceErr.message,
+      };
+    }
     return {
       status: "error",
       userEmail: user.email ?? null,
@@ -535,6 +614,48 @@ export async function loadChantWorkspaceData(): Promise<ChantWorkspaceLoadResult
     ledger: todayLedger,
   });
 
+  const mantrasList = (mantrasRes.data ?? []) as MantraRecord[];
+  const roundTotalsByMantra = new Map<string | null, number>();
+  for (const r of (mantraRoundsRes.data ?? []) as {
+    mantra_id?: string | null;
+    round_delta?: number;
+  }[]) {
+    const mId = r.mantra_id ?? null;
+    roundTotalsByMantra.set(
+      mId,
+      (roundTotalsByMantra.get(mId) ?? 0) + (r.round_delta ?? 1)
+    );
+  }
+
+  const mantraStats: MantraHistoricalStat[] = [];
+  for (const m of mantrasList) {
+    mantraStats.push({
+      mantraId: m.id,
+      mantraName: m.name,
+      completedRounds: roundTotalsByMantra.get(m.id) ?? 0,
+      totalSessions: 0,
+    });
+  }
+  const untaggedRounds = roundTotalsByMantra.get(null) ?? 0;
+  if (untaggedRounds > 0) {
+    mantraStats.push({
+      mantraId: null,
+      mantraName: "General / Legacy (Hare Krishna Mahāmantra)",
+      completedRounds: untaggedRounds,
+      totalSessions: 0,
+    });
+  }
+
+  const activeMantraId =
+    (recoverableRes.data as ChantingSessionRecord | null)?.mantra_id ??
+    preferences.preferred_mantra_id ??
+    "00000000-0000-0000-0000-000000000001";
+
+  const activeMantra =
+    mantrasList.find((m) => m.id === activeMantraId) ??
+    mantrasList[0] ??
+    null;
+
   return {
     status: "ready",
     data: {
@@ -548,13 +669,25 @@ export async function loadChantWorkspaceData(): Promise<ChantWorkspaceLoadResult
         tactileFeedbackEnabled: preferences.tactile_feedback_enabled,
         soundFeedbackEnabled: preferences.sound_feedback_enabled,
         carryForwardPolicy: preferences.carry_forward_policy,
+        preferredMantraId: preferences.preferred_mantra_id ?? null,
+        ambientModeEnabled: Boolean(preferences.ambient_mode_enabled ?? false),
+        ambientSoundEnabled: Boolean(preferences.ambient_sound_enabled ?? false),
+        ambientSoundVolume: Number(preferences.ambient_sound_volume ?? 0.5),
+        paceGuidanceEnabled: Boolean(preferences.pace_guidance_enabled ?? false),
+        paceSecondsPerBead: Number(preferences.pace_seconds_per_bead ?? 7.0),
       },
       dailySadhana: parsedToday.data,
       pendingOptionalOffer,
       recoverableSession:
         (recoverableRes.data as ChantingSessionRecord | null) ?? null,
       todaySessions: (todaySessionsRes.data ?? []) as ChantingSessionRecord[],
-      todayRecords: (todayRecordsRes.data ?? []) as ChantingRoundRecord[],
+      todayRecords: (rawRecords ?? todayRecordsRes.data ?? []) as ChantingRoundRecord[],
+      activeSankalpa: (sankalpaRes?.data as SankalpaRecord | null) ?? null,
+      mantras: mantrasList,
+      activeMantra,
+      mantraStats,
+      reminders: (remindersRes.data ?? []) as ChantingReminderRecord[],
+      recentNotes: (notesRes.data ?? []) as SessionNoteRecord[],
     },
   };
 }
@@ -564,7 +697,8 @@ export async function loadChantWorkspaceData(): Promise<ChantWorkspaceLoadResult
  * plus initial detail for todayDate.
  */
 export async function loadSadhanaAnalyticsData(
-  selectedYear?: number
+  selectedYear?: number,
+  selectedMonth?: number
 ): Promise<AnalyticsLoadResult> {
   const supabase = await createClient();
   const {
@@ -664,6 +798,7 @@ export async function loadSadhanaAnalyticsData(
     rows: history,
     todayDate,
     selectedYear,
+    selectedMonth,
   });
 
   const [todaySessionsRes, todayRecordsRes, todayLedgerRes] = await Promise.all([

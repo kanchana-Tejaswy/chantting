@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { dailySadhanaSchema } from "@/lib/domain/sadhana";
 import { recordRoundApiInputSchema } from "@/lib/chant/validation";
+import { recordAuthoritativeRound } from "@/lib/chant/unified-engine";
 import { syncConsentedRoomActivity } from "@/lib/rooms/queries";
 import {
   enforceApiRateLimit,
@@ -47,33 +48,24 @@ export async function POST(request: Request) {
     );
   }
 
-  const rpcRes = await supabase.rpc("record_chanting_round", {
-    p_method: parsed.data.method,
-    p_idempotency_key: parsed.data.idempotencyKey,
-    p_session_id: parsed.data.sessionId ?? null,
-    p_client_recorded_at: parsed.data.clientRecordedAt ?? null,
-  });
-
-  if (rpcRes.error) {
-    return NextResponse.json({ error: rpcRes.error.message }, { status: 400 });
+  let result;
+  try {
+    result = await recordAuthoritativeRound(supabase, user.id, {
+      method: parsed.data.method,
+      idempotencyKey: parsed.data.idempotencyKey,
+      sessionId: parsed.data.sessionId ?? null,
+      clientRecordedAt: parsed.data.clientRecordedAt ?? null,
+      sankalpaId: parsed.data.sankalpaId ?? null,
+      mantraId: parsed.data.mantraId ?? null,
+    });
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Failed to record round." },
+      { status: 400 }
+    );
   }
 
-  let session: Record<string, unknown> | null = null;
-  if (parsed.data.sessionId) {
-    const sessRes = await supabase
-      .from("chanting_sessions")
-      .select(
-        "id, user_id, sadhana_date, method, status, current_bead_count, rounds_completed, client_session_key, started_at, last_activity_at, paused_at, ended_at"
-      )
-      .eq("id", parsed.data.sessionId)
-      .eq("user_id", user.id)
-      .maybeSingle();
-    session = sessRes.data;
-  }
-
-  const parsedDaily = dailySadhanaSchema.safeParse(
-    (rpcRes.data as { daily_sadhana?: unknown })?.daily_sadhana
-  );
+  const parsedDaily = dailySadhanaSchema.safeParse(result.daily_sadhana);
   if (parsedDaily.success) {
     try {
       await Promise.all([
@@ -91,8 +83,10 @@ export async function POST(request: Request) {
   revalidatePath("/account");
 
   return NextResponse.json({
-    ...(rpcRes.data as Record<string, unknown>),
-    session,
+    duplicate: result.duplicate,
+    record: result.record,
+    daily_sadhana: result.daily_sadhana,
+    sankalpa: result.sankalpa ?? null,
+    session: result.session ?? null,
   });
 }
-

@@ -31,6 +31,8 @@ export type AccountWorkspaceLoadResult =
   | {
       status: "ready";
       userEmail: string | null;
+      emailConfirmed: boolean;
+      accountCreatedAt: string;
       profile: AccountProfile;
       preferences: AccountPreferences;
       memberships: AccountRoomMembershipSummary[];
@@ -224,6 +226,8 @@ export async function loadAccountWorkspace(): Promise<AccountWorkspaceLoadResult
   return {
     status: "ready",
     userEmail: user.email ?? null,
+    emailConfirmed: Boolean(user.email_confirmed_at),
+    accountCreatedAt: user.created_at || profile.created_at,
     profile,
     preferences: prefsRes.data as AccountPreferences,
     memberships,

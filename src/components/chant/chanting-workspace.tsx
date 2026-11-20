@@ -4,18 +4,33 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  BarChart3,
+  Bell,
+  BookOpen,
   CheckCircle2,
+  Gauge,
   Minus,
   Pause,
   Play,
   Plus,
   RefreshCw,
   RotateCcw,
+  Sparkles,
   WifiOff,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { BEADS_PER_ROUND, type DailySadhana } from "@/lib/domain/sadhana";
 import { triggerBeadFeedback } from "@/lib/chant/feedback";
+import type { SankalpaRecord } from "@/lib/sankalpa/types";
+import type { MantraRecord, MantraHistoricalStat } from "@/lib/mantra/types";
+import type { ChantingReminderRecord } from "@/lib/reminders/types";
+import type { SessionNoteRecord } from "@/lib/notes/types";
+import { MantraSelectorDialog } from "@/components/chant/mantra-selector-dialog";
+import { InWorkspaceAnalytics } from "@/components/chant/in-workspace-analytics";
+import { ChantingRemindersModal } from "@/components/chant/chanting-reminders-modal";
+import { DrishtiAmbientMode } from "@/components/chant/drishti-ambient-mode";
+import { SessionNotesModal } from "@/components/chant/session-notes-modal";
+import { ChantingPaceGuidance } from "@/components/chant/chanting-pace-guidance";
 import {
   enqueueOfflineRound,
   readDraftBeadState,
@@ -101,14 +116,64 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
   const [todayRecords, setTodayRecords] = React.useState<ChantingRoundRecord[]>(
     initialData.todayRecords
   );
+  const [activeSankalpa, setActiveSankalpa] = React.useState<SankalpaRecord | null>(
+    initialData.activeSankalpa ?? null
+  );
+  const [dedicateToSankalpa, setDedicateToSankalpa] = React.useState<boolean>(
+    Boolean(initialData.activeSankalpa)
+  );
 
   const [method, setMethod] = React.useState<ChantingMethod>(
     initialData.recoverableSession?.method ??
-      initialData.preferences.defaultCountingMethod
+    initialData.preferences.defaultCountingMethod
   );
   const [beadCount, setBeadCount] = React.useState<number>(
     () => initialData.recoverableSession?.current_bead_count ?? 0
   );
+
+  // Mantras, reminders, analytics, notes, and ambient mode state
+  const [mantras, setMantras] = React.useState<MantraRecord[]>(
+    initialData.mantras ?? []
+  );
+  const [activeMantra, setActiveMantra] = React.useState<MantraRecord | null>(
+    initialData.activeMantra ?? initialData.mantras?.[0] ?? null
+  );
+  const [preferredMantraId, setPreferredMantraId] = React.useState<string | null>(
+    initialData.preferences.preferredMantraId ?? null
+  );
+  const [mantraStats] = React.useState<MantraHistoricalStat[]>(
+    initialData.mantraStats ?? []
+  );
+  const [reminders, setReminders] = React.useState<ChantingReminderRecord[]>(
+    initialData.reminders ?? []
+  );
+  const [recentNotes, setRecentNotes] = React.useState<SessionNoteRecord[]>(
+    initialData.recentNotes ?? []
+  );
+
+  const [isMantraDialogOpen, setIsMantraDialogOpen] = React.useState(false);
+  const [isAnalyticsOpen, setIsAnalyticsOpen] = React.useState(false);
+  const [isRemindersOpen, setIsRemindersOpen] = React.useState(false);
+  const [isPaceOpen, setIsPaceOpen] = React.useState(false);
+  const [isAmbientMode, setIsAmbientMode] = React.useState(
+    Boolean(initialData.preferences.ambientModeEnabled)
+  );
+  const [ambientSound, setAmbientSound] = React.useState(
+    Boolean(initialData.preferences.ambientSoundEnabled)
+  );
+  const [ambientVolume, setAmbientVolume] = React.useState(
+    Number(initialData.preferences.ambientSoundVolume ?? 0.5)
+  );
+  const [paceGuidanceEnabled, setPaceGuidanceEnabled] = React.useState(
+    Boolean(initialData.preferences.paceGuidanceEnabled)
+  );
+  const [paceSecondsPerBead, setPaceSecondsPerBead] = React.useState(
+    Number(initialData.preferences.paceSecondsPerBead ?? 7.0)
+  );
+
+  const [isNotesModalOpen, setIsNotesModalOpen] = React.useState(false);
+  const [sessionForNote, setSessionForNote] =
+    React.useState<ChantingSessionRecord | null>(null);
 
   const [soundEnabled, setSoundEnabled] = React.useState(
     initialData.preferences.soundFeedbackEnabled
@@ -129,11 +194,10 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
   const [isSessionBusy, setIsSessionBusy] = React.useState(false);
   const [statusMessage, setStatusMessage] = React.useState<string | null>(
     initialData.recoverableSession
-      ? `Recovered ${initialData.recoverableSession.status} ${
-          initialData.recoverableSession.method === "japa_mala"
-            ? "Japa Mala"
-            : "manual"
-        } session.`
+      ? `Recovered ${initialData.recoverableSession.status} ${initialData.recoverableSession.method === "japa_mala"
+        ? "Japa Mala"
+        : "manual"
+      } session.`
       : null
   );
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
@@ -245,6 +309,7 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
             body: JSON.stringify({
               method: targetMethod,
               clientSessionKey: makeClientKey("sess"),
+              mantraId: activeMantra?.id ?? null,
             }),
           });
           const json = (await res.json()) as {
@@ -276,7 +341,7 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
       inFlightSessionPromiseRef.current = promise;
       return promise;
     },
-    [activeSession]
+    [activeMantra, activeSession]
   );
 
   const submitRoundToServer = React.useCallback(
@@ -291,6 +356,7 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
         duplicate?: boolean;
         record?: ChantingRoundRecord;
         daily_sadhana?: DailySadhana;
+        sankalpa?: SankalpaRecord | null;
         session?: ChantingSessionRecord | null;
         error?: string;
       };
@@ -300,6 +366,14 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
       }
 
       setDailySadhana(json.daily_sadhana);
+      if (json.sankalpa) {
+        if (json.sankalpa.status === "completed") {
+          setActiveSankalpa(null);
+          setDedicateToSankalpa(false);
+        } else {
+          setActiveSankalpa(json.sankalpa);
+        }
+      }
       const savedRecord = json.record;
       setTodayRecords((prev) =>
         prev.some((r) => r.id === savedRecord.id)
@@ -389,6 +463,8 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
           method: targetMethod,
           sessionId: session?.id ?? null,
           clientRecordedAt: new Date().toISOString(),
+          sankalpaId: dedicateToSankalpa && activeSankalpa ? activeSankalpa.id : null,
+          mantraId: activeMantra?.id ?? null,
         };
 
         if (typeof navigator !== "undefined" && !navigator.onLine) {
@@ -419,7 +495,14 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
         setIsSubmittingRound(false);
       }
     },
-    [ensureActiveSession, initialData.userId, submitRoundToServer]
+    [
+      activeMantra,
+      activeSankalpa,
+      dedicateToSankalpa,
+      ensureActiveSession,
+      initialData.userId,
+      submitRoundToServer,
+    ]
   );
 
   const handleAdvanceBead = React.useCallback(async () => {
@@ -501,6 +584,7 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
         });
         const json = (await res.json()) as {
           daily_sadhana?: DailySadhana;
+          sankalpa?: SankalpaRecord | null;
           session?: ChantingSessionRecord | null;
           error?: string;
         };
@@ -508,6 +592,9 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
           throw new Error(json.error ?? "Unable to undo round.");
         }
         setDailySadhana(json.daily_sadhana);
+        if (json.sankalpa) {
+          setActiveSankalpa(json.sankalpa);
+        }
         setTodayRecords((prev) => prev.filter((r) => r.id !== recordId));
         if (json.session) {
           const updated = json.session;
@@ -561,6 +648,8 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
           setBeadCount(0);
           writeDraftBeadState(initialData.userId, null);
           setStatusMessage("Session finished and saved to today's history.");
+          setSessionForNote(updated);
+          setIsNotesModalOpen(true);
         } else {
           setActiveSession(updated);
           setStatusMessage(
@@ -597,6 +686,46 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
       }
     },
     [activeSession, ensureActiveSession, handleSessionStatus, initialData.userId]
+  );
+
+  const handleSelectMantra = React.useCallback(
+    async (mantra: MantraRecord) => {
+      setActiveMantra(mantra);
+      if (activeSession) {
+        try {
+          await fetch("/api/chant/sessions", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              sessionId: activeSession.id,
+              mantraId: mantra.id,
+            }),
+          });
+          setActiveSession((curr) =>
+            curr ? { ...curr, mantra_id: mantra.id } : null
+          );
+        } catch {
+          // non-blocking
+        }
+      }
+    },
+    [activeSession]
+  );
+
+  const handleSetPreferredMantra = React.useCallback(
+    async (mantraId: string) => {
+      setPreferredMantraId(mantraId);
+      try {
+        await fetch("/api/chant/preferences", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ preferredMantraId: mantraId }),
+        });
+      } catch {
+        // non-blocking
+      }
+    },
+    []
   );
 
   const handleTogglePreference = React.useCallback(
@@ -644,7 +773,7 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ defaultCountingMethod: nextMethod }),
-      }).catch(() => {});
+      }).catch(() => { });
     },
     [activeSession, beadCount, method]
   );
@@ -668,6 +797,68 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
         <ChantingSectionTabs active="japa" />
 
         <div className="flex flex-wrap items-center gap-2">
+          {/* Drishti Ambient Mode */}
+          <DrishtiAmbientMode
+            isAmbientMode={isAmbientMode}
+            onToggleAmbientMode={() => setIsAmbientMode((prev) => !prev)}
+            ambientSoundEnabled={ambientSound}
+            ambientVolume={ambientVolume}
+            onSavePreferences={(sound, vol) => {
+              setAmbientSound(sound);
+              setAmbientVolume(vol);
+              void fetch("/api/chant/preferences", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  ambientModeEnabled: isAmbientMode,
+                  ambientSoundEnabled: sound,
+                  ambientSoundVolume: vol,
+                }),
+              });
+            }}
+          />
+
+          {/* Pace Guidance */}
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setIsPaceOpen(true)}
+            className="flex items-center gap-1.5 text-xs rounded-xl border border-sandalwood-border/80 bg-paper hover:border-gold-border/70 hover:shadow-xs px-3 py-1.5 text-ink transition-all"
+            title="Chanting Pace Cadence"
+          >
+            <Gauge className="size-3.5 text-gold-antique" />
+            <span className="hidden sm:inline">Pace</span>
+          </Button>
+
+          {/* Reminders */}
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setIsRemindersOpen(true)}
+            className="flex items-center gap-1.5 text-xs rounded-xl border border-sandalwood-border/80 bg-paper hover:border-gold-border/70 hover:shadow-xs px-3 py-1.5 text-ink transition-all"
+            title="Sadhana Reminders"
+          >
+            <Bell className="size-3.5 text-gold-antique" />
+            <span className="hidden sm:inline">Reminders</span>
+            {reminders.filter((r) => r.is_enabled).length > 0 && (
+              <span className="ml-0.5 px-1.5 py-0.5 text-[10px] bg-gold-wash border border-gold-border/50 text-gold-ink font-semibold rounded-full">
+                {reminders.filter((r) => r.is_enabled).length}
+              </span>
+            )}
+          </Button>
+
+          {/* Spiritual Analytics */}
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setIsAnalyticsOpen(true)}
+            className="flex items-center gap-1.5 text-xs rounded-xl border border-sandalwood-border/80 bg-paper hover:border-gold-border/70 hover:shadow-xs px-3 py-1.5 text-ink transition-all"
+            title="Spiritual Analytics & Insights"
+          >
+            <BarChart3 className="size-3.5 text-peacock-deep" />
+            <span className="hidden sm:inline">Insights</span>
+          </Button>
+
           {!isOnline && (
             <Badge variant="gold">
               <WifiOff className="size-3.5" aria-hidden={true} />
@@ -692,23 +883,82 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
         </div>
       </div>
 
-      {/* Slim Daily Goal Overview Strip (keeps interactive Mala above the fold) */}
-      <div className="rounded-[16px] border border-sandalwood-border bg-paper px-4 py-3.5 shadow-sacred-sm sm:px-5">
-        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-          <div className="flex flex-wrap items-baseline gap-2">
-            <span className="font-serif text-xl font-semibold text-peacock-deep tabular-nums sm:text-2xl">
+      {/* Active Mantra Banner */}
+      <div className="flex items-center justify-between gap-3 rounded-2xl border border-sandalwood-border/80 bg-paper px-4 py-3.5 text-xs text-ink shadow-xs sm:px-5">
+        <div className="flex items-center gap-3 overflow-hidden">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-gold-wash border border-gold-border/60 text-gold-ink shadow-2xs">
+            <Sparkles className="size-4" aria-hidden={true} />
+          </span>
+          <div className="truncate space-y-0.5">
+            <p className="font-semibold text-ink truncate text-sm">
+              {activeMantra?.name ?? "Hare Krishna Mahāmantra"}
+            </p>
+            <p className="text-xs font-devanagari text-peacock-deep truncate leading-tight font-medium">
+              {activeMantra?.sanskrit ??
+                "हरे कृष्ण हरे कृष्ण कृष्ण कृष्ण हरे हरे । हरे राम हरे राम राम राम हरे हरे ॥"}
+            </p>
+          </div>
+        </div>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setIsMantraDialogOpen(true)}
+          className="shrink-0 text-xs rounded-xl border-sandalwood-border/80 bg-paper hover:border-gold-border px-3 py-1.5"
+        >
+          Change Mantra
+        </Button>
+      </div>
+
+      {/* Active Sankalpa Banner & Attribution Toggle */}
+      {activeSankalpa && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-peacock-green/30 bg-tulsi-wash/70 px-4 py-3.5 text-xs text-ink shadow-xs sm:px-5">
+          <div className="flex items-center gap-3">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-paper border border-peacock-green/30 text-peacock-deep shadow-2xs">
+              <Sparkles className="size-4" aria-hidden={true} />
+            </span>
+            <div className="space-y-0.5">
+              <p className="font-semibold text-ink text-sm">
+                Active Sankalpa: {activeSankalpa.title}
+              </p>
+              <p className="text-xs text-ink-muted tabular-nums">
+                {activeSankalpa.completed_rounds} / {activeSankalpa.target_rounds} rounds completed
+                {activeSankalpa.status === "completed"
+                  ? " · Vow Completed! 🎉"
+                  : ` · ${Math.max(0, activeSankalpa.target_rounds - activeSankalpa.completed_rounds)} remaining`}
+              </p>
+            </div>
+          </div>
+
+          <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-ink bg-paper/80 border border-peacock-green/20 rounded-xl px-3 py-1.5 hover:bg-paper transition-colors">
+            <input
+              type="checkbox"
+              checked={dedicateToSankalpa}
+              onChange={(e) => setDedicateToSankalpa(e.target.checked)}
+              className="size-4 rounded accent-peacock-deep"
+            />
+            <span>Offer rounds to this Sankalpa</span>
+          </label>
+        </div>
+      )}
+
+      {/* Daily Goal Overview Strip */}
+      <div className="rounded-2xl border border-sandalwood-border/80 bg-paper p-5 sm:p-6 shadow-xs">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1.5">
+          <div className="flex flex-wrap items-baseline gap-2.5">
+            <span className="font-serif text-2xl font-bold text-ink tabular-nums sm:text-3xl">
               {dailySadhana.completed_rounds} /{" "}
               {dailySadhana.effective_daily_target}
             </span>
             <span className="text-xs font-medium text-ink-muted">
-              rounds done today
+              rounds completed today
             </span>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 text-xs text-ink-muted tabular-nums">
-            <span>
+            <span className="font-medium text-ink">
               {dailySadhana.remaining_balance === 0
-                ? "Daily goal completed"
+                ? "Daily target completed 🎉"
                 : `${dailySadhana.remaining_balance} remaining`}
             </span>
             {dailySadhana.extra_rounds > 0 && (
@@ -723,15 +973,15 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
           label="Today's progress"
           showValueLabel={false}
           tone={dailySadhana.remaining_balance === 0 ? "peacock" : "gold"}
-          className="mt-2.5"
+          className="mt-3.5"
         />
       </div>
 
-      {/* Simple Mode Switcher with Friendly Subtitles */}
+      {/* Mode Switcher with Tactile Concentric Pills */}
       <div
         role="tablist"
         aria-label="Chanting counting method"
-        className="mx-auto grid max-w-lg grid-cols-2 gap-1.5 rounded-[14px] border border-sandalwood-border bg-linen p-1.5"
+        className="mx-auto grid max-w-md grid-cols-2 gap-1.5 rounded-2xl border border-sandalwood-border/80 bg-linen/70 p-1.5"
       >
         {(
           [
@@ -756,14 +1006,14 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
               aria-selected={active}
               onClick={() => void handleSwitchMethod(tab.id)}
               className={cn(
-                "flex min-h-12 cursor-pointer flex-col items-center justify-center rounded-[10px] px-3 py-1.5 text-center transition-[transform,background-color,color,box-shadow] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.97]",
+                "flex min-h-12 cursor-pointer flex-col items-center justify-center rounded-xl px-3 py-2 text-center transition-all duration-150 active:scale-[0.97]",
                 active
-                  ? "bg-paper text-ink shadow-sacred-sm ring-1 ring-gold-border/35"
-                  : "text-ink-muted hover:bg-paper/60 hover:text-ink ks-glow-ghost"
+                  ? "bg-paper text-ink shadow-xs border border-sandalwood-border/60 font-semibold"
+                  : "text-ink-muted hover:bg-paper/60 hover:text-ink"
               )}
             >
               <span className="text-sm font-semibold">{tab.label}</span>
-              <span className="text-[11px] opacity-80">{tab.hint}</span>
+              <span className="text-[11px] opacity-75">{tab.hint}</span>
             </button>
           );
         })}
@@ -814,24 +1064,29 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
             {/* Visual Quarter-Round Cadence Strip */}
             <div
               aria-label="Current round milestones"
-              className="mx-auto grid max-w-md grid-cols-4 gap-2"
+              className="mx-auto grid max-w-md grid-cols-4 gap-1.5 rounded-2xl border border-sandalwood-border/80 bg-linen/60 p-1.5 shadow-2xs"
             >
               {quarterMilestones.map((step) => {
                 const reached = beadCount >= step.target;
+                const isCurrent =
+                  !reached &&
+                  (step.target === 27 ? beadCount < 27 : beadCount >= step.target - 27);
                 return (
                   <div
                     key={step.target}
                     className={cn(
-                      "rounded-[10px] border px-2 py-1.5 text-center transition-colors duration-200",
+                      "rounded-xl border px-2 py-2 text-center transition-all duration-200",
                       reached
-                        ? "border-gold-border/60 bg-gold-wash text-gold-ink"
-                        : "border-sandalwood-border/80 bg-linen/60 text-ink-muted"
+                        ? "border-peacock-green/40 bg-paper text-peacock-deep shadow-xs font-semibold"
+                        : isCurrent
+                        ? "border-gold-border/80 bg-paper text-ink shadow-xs ring-1 ring-gold-antique/30"
+                        : "border-transparent bg-transparent text-ink-muted/70"
                     )}
                   >
-                    <p className="font-serif text-sm font-semibold tabular-nums">
+                    <p className="font-serif text-sm sm:text-base font-bold tabular-nums">
                       {step.target}
                     </p>
-                    <p className="text-[10px] font-medium">{step.label}</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider">{step.label}</p>
                   </div>
                 );
               })}
@@ -847,21 +1102,20 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
             />
 
             <p className="mx-auto max-w-md text-center text-xs leading-relaxed text-ink-muted">
-              Tap the center circle (or button below) for each chant. Partial
-              bead progress does not count toward completed rounds until bead{" "}
+              Touch the center sphere or tap below for each sacred mantra. Partial bead progress does not count toward completed rounds until bead{" "}
               {BEADS_PER_ROUND} is reached.
             </p>
 
             {/* Clear Primary & Undo Controls */}
-            <div className="flex flex-wrap items-center justify-center gap-3">
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
               <Button
-                variant="gold"
+                variant="primary"
                 size="lg"
                 disabled={isPaused || isSubmittingRound}
                 onClick={() => void handleAdvanceBead()}
-                className="min-w-44"
+                className="min-w-48 rounded-2xl px-8 py-3.5 text-sm font-bold shadow-xs active:scale-[0.96]"
               >
-                <Plus className="size-4" strokeWidth={2} aria-hidden={true} />
+                <Plus className="size-4 mr-1.5" strokeWidth={2.2} aria-hidden={true} />
                 <span>Next bead ({Math.min(beadCount + 1, BEADS_PER_ROUND)})</span>
               </Button>
 
@@ -870,8 +1124,9 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
                 size="lg"
                 disabled={beadCount === 0 || isPaused}
                 onClick={() => void handleUndoBead()}
+                className="rounded-2xl border border-sandalwood-border/80 bg-paper hover:bg-linen/70 px-5 py-3.5 text-sm font-semibold shadow-2xs active:scale-[0.97]"
               >
-                <RotateCcw className="size-4" strokeWidth={1.75} aria-hidden={true} />
+                <RotateCcw className="size-4 mr-1.5" strokeWidth={1.75} aria-hidden={true} />
                 <span>Undo bead</span>
               </Button>
 
@@ -882,8 +1137,9 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
                       variant="outline"
                       size="md"
                       disabled={isSubmittingRound}
+                      className="rounded-xl border-sandalwood-border/80 bg-paper hover:bg-linen/70 px-4 py-2.5 text-xs text-ink-muted hover:text-ink active:scale-[0.97]"
                     >
-                      <Minus className="size-4" strokeWidth={1.75} aria-hidden={true} />
+                      <Minus className="size-3.5 mr-1" strokeWidth={1.75} aria-hidden={true} />
                       <span>Undo last round</span>
                     </Button>
                   </AlertDialogTrigger>
@@ -899,17 +1155,18 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
             </div>
 
             {/* Session Pause / Resume / Finish / New Controls (Japa Mala only) */}
-            <div className="mt-7 flex flex-wrap items-center justify-center gap-3 border-t border-sandalwood-border pt-5">
-              {activeSession && (
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3 border-t border-sandalwood-border/60 pt-6">
+              {activeSession ? (
                 <>
                   {isPaused ? (
                     <Button
-                      variant="gold"
+                      variant="primary"
                       size="md"
                       loading={isSessionBusy}
                       onClick={() => void handleSessionStatus("active")}
+                      className="rounded-xl px-4 py-2 text-xs font-bold"
                     >
-                      <Play className="size-4" strokeWidth={1.75} aria-hidden={true} />
+                      <Play className="size-3.5 mr-1.5 fill-current" strokeWidth={1.75} aria-hidden={true} />
                       <span>Resume session</span>
                     </Button>
                   ) : (
@@ -918,8 +1175,9 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
                       size="md"
                       loading={isSessionBusy}
                       onClick={() => void handleSessionStatus("paused")}
+                      className="rounded-xl border border-sandalwood-border/80 bg-paper px-4 py-2 text-xs font-semibold text-ink hover:border-gold-border"
                     >
-                      <Pause className="size-4" strokeWidth={1.75} aria-hidden={true} />
+                      <Pause className="size-3.5 mr-1.5" strokeWidth={1.75} aria-hidden={true} />
                       <span>Pause session</span>
                     </Button>
                   )}
@@ -929,21 +1187,34 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
                     size="md"
                     loading={isSessionBusy}
                     onClick={() => void handleSessionStatus("completed")}
+                    className="rounded-xl border border-sandalwood-border/80 bg-paper px-4 py-2 text-xs font-medium text-ink-muted hover:text-ink hover:border-sandalwood-strong"
                   >
                     <span>Finish session</span>
                   </Button>
-                </>
-              )}
 
-              <Button
-                variant="ghost"
-                size="md"
-                disabled={isSessionBusy}
-                onClick={() => void handleStartNewSession(method)}
-              >
-                <Plus className="size-4" strokeWidth={1.75} aria-hidden={true} />
-                <span>Start new session</span>
-              </Button>
+                  <Button
+                    variant="ghost"
+                    size="md"
+                    disabled={isSessionBusy}
+                    onClick={() => void handleStartNewSession(method)}
+                    className="rounded-xl px-3 py-2 text-xs text-ink-muted hover:text-ink"
+                  >
+                    <Plus className="size-3.5 mr-1" strokeWidth={1.75} aria-hidden={true} />
+                    <span>New session</span>
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="md"
+                  disabled={isSessionBusy}
+                  onClick={() => void handleStartNewSession(method)}
+                  className="rounded-xl border border-sandalwood-border/80 bg-paper px-4 py-2 text-xs font-semibold text-peacock-deep hover:border-gold-border hover:shadow-xs transition-all"
+                >
+                  <Plus className="size-3.5 mr-1.5 text-gold-antique" strokeWidth={2} aria-hidden={true} />
+                  <span>Start New Chanting Session</span>
+                </Button>
+              )}
             </div>
           </div>
         ) : (
@@ -1064,33 +1335,143 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
               </p>
             ) : (
               <ul className="divide-y divide-sandalwood-border">
-                {todaySessions.slice(0, 5).map((s) => (
-                  <li
-                    key={s.id}
-                    className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-ink">
-                        {s.method === "japa_mala" ? "Japa Mala" : "Manual"} session
-                      </p>
-                      <p className="text-xs text-ink-muted tabular-nums">
-                        Started {s.started_at.slice(11, 16)} UTC · {s.status}
-                        {s.method === "japa_mala" && s.current_bead_count > 0
-                          ? ` (${s.current_bead_count}/${BEADS_PER_ROUND})`
-                          : ""}
-                      </p>
-                    </div>
-                    <Badge variant="peacock">
-                      {s.rounds_completed}{" "}
-                      {s.rounds_completed === 1 ? "round" : "rounds"}
-                    </Badge>
-                  </li>
-                ))}
+                {todaySessions.slice(0, 5).map((s) => {
+                  const existingNote = recentNotes.find((n) => n.session_id === s.id);
+                  return (
+                    <li
+                      key={s.id}
+                      className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
+                    >
+                      <div>
+                        <p className="text-sm font-medium text-ink flex items-center gap-1.5">
+                          <span>{s.method === "japa_mala" ? "Japa Mala" : "Manual"} session</span>
+                          {existingNote && (
+                            <span title="Devotional reflection recorded" className="text-gold">
+                              <BookOpen className="size-3.5 inline" />
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-xs text-ink-muted tabular-nums">
+                          Started {s.started_at.slice(11, 16)} UTC · {s.status}
+                          {s.method === "japa_mala" && s.current_bead_count > 0
+                            ? ` (${s.current_bead_count}/${BEADS_PER_ROUND})`
+                            : ""}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setSessionForNote(s);
+                            setIsNotesModalOpen(true);
+                          }}
+                          className="text-xs px-2 py-1 h-auto text-ink-muted hover:text-gold"
+                          title="Add or view devotional reflection"
+                        >
+                          <BookOpen className="size-3.5 mr-1" />
+                          {existingNote ? "View Note" : "Reflect"}
+                        </Button>
+                        <Badge variant="peacock">
+                          {s.rounds_completed}{" "}
+                          {s.rounds_completed === 1 ? "round" : "rounds"}
+                        </Badge>
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </CardContent>
         </Card>
       </div>
+
+      {/* Mantra Selector Dialog */}
+      <MantraSelectorDialog
+        isOpen={isMantraDialogOpen}
+        onClose={() => setIsMantraDialogOpen(false)}
+        mantras={mantras}
+        activeMantra={activeMantra}
+        preferredMantraId={preferredMantraId}
+        onSelectMantra={handleSelectMantra}
+        onSetPreferredMantra={handleSetPreferredMantra}
+        onMantraCreated={(m) => setMantras((prev) => [...prev, m])}
+        onMantraUpdated={(m) =>
+          setMantras((prev) => prev.map((item) => (item.id === m.id ? m : item)))
+        }
+        onMantraDeleted={(id) =>
+          setMantras((prev) => prev.filter((item) => item.id !== id))
+        }
+      />
+
+      {/* In-Workspace Analytics Modal */}
+      <InWorkspaceAnalytics
+        isOpen={isAnalyticsOpen}
+        onClose={() => setIsAnalyticsOpen(false)}
+        dailySadhana={dailySadhana}
+        todaySessions={todaySessions}
+        todayRecords={todayRecords}
+        mantraStats={mantraStats}
+      />
+
+      {/* Chanting Reminders Modal */}
+      <ChantingRemindersModal
+        isOpen={isRemindersOpen}
+        onClose={() => setIsRemindersOpen(false)}
+        reminders={reminders}
+        userTimezone={initialData.timezone}
+        onReminderAdded={(r) => setReminders((prev) => [...prev, r])}
+        onReminderUpdated={(r) =>
+          setReminders((prev) => prev.map((item) => (item.id === r.id ? r : item)))
+        }
+        onReminderDeleted={(id) =>
+          setReminders((prev) => prev.filter((item) => item.id !== id))
+        }
+      />
+
+      {/* Pace Guidance Modal */}
+      <ChantingPaceGuidance
+        isOpen={isPaceOpen}
+        onClose={() => setIsPaceOpen(false)}
+        initialEnabled={paceGuidanceEnabled}
+        initialSecondsPerBead={paceSecondsPerBead}
+        onSavePreferences={(enabled, secs) => {
+          setPaceGuidanceEnabled(enabled);
+          setPaceSecondsPerBead(secs);
+          void fetch("/api/chant/preferences", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              paceGuidanceEnabled: enabled,
+              paceSecondsPerBead: secs,
+            }),
+          });
+        }}
+      />
+
+      {/* Session Reflection Notes Modal */}
+      {sessionForNote && (
+        <SessionNotesModal
+          isOpen={isNotesModalOpen}
+          onClose={() => {
+            setIsNotesModalOpen(false);
+            setSessionForNote(null);
+          }}
+          sessionId={sessionForNote.id}
+          sessionRounds={sessionForNote.rounds_completed}
+          sessionDate={sessionForNote.sadhana_date}
+          initialNote={
+            recentNotes.find((n) => n.session_id === sessionForNote.id) ?? null
+          }
+          onNoteSaved={(note) => {
+            setRecentNotes((prev) => [
+              note,
+              ...prev.filter((n) => n.session_id !== note.session_id),
+            ]);
+            setStatusMessage("Devotional reflection saved to your sanctuary.");
+          }}
+        />
+      )}
     </div>
   );
 }

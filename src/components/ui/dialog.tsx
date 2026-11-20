@@ -29,6 +29,7 @@ export function DialogContent({
       <DialogPrimitive.Content
         className={cn(
           "fixed top-1/2 left-1/2 z-50 w-[calc(100vw-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2",
+          "max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3.5rem)] overflow-y-auto overscroll-contain",
           "rounded-[16px] border border-sandalwood-border bg-ivory p-6 text-ink shadow-sacred-lg",
           "focus-visible:outline-none",
           className
@@ -88,6 +89,7 @@ export function AlertDialogContent({
       <AlertDialogPrimitive.Content
         className={cn(
           "fixed top-1/2 left-1/2 z-50 w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2",
+          "max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3.5rem)] overflow-y-auto overscroll-contain",
           "rounded-[16px] border border-sandalwood-border bg-ivory p-6 text-ink shadow-sacred-lg",
           className
         )}

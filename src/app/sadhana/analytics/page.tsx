@@ -19,7 +19,7 @@ export const dynamic = "force-dynamic";
 export default async function SadhanaAnalyticsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ year?: string }>;
+  searchParams: Promise<{ year?: string; month?: string }>;
 }) {
   const params = await searchParams;
   const parsedYear = params.year ? Number.parseInt(params.year, 10) : undefined;
@@ -31,7 +31,22 @@ export default async function SadhanaAnalyticsPage({
       ? parsedYear
       : undefined;
 
-  const result = await loadSadhanaAnalyticsData(validYear);
+  const parsedMonth = params.month ? Number.parseInt(params.month, 10) : undefined;
+  // month in query param is 1-based (1..12) or 0-based (0..11)
+  const validMonth =
+    parsedMonth !== undefined &&
+    Number.isInteger(parsedMonth) &&
+    parsedMonth >= 1 &&
+    parsedMonth <= 12
+      ? parsedMonth - 1
+      : parsedMonth !== undefined &&
+          Number.isInteger(parsedMonth) &&
+          parsedMonth >= 0 &&
+          parsedMonth <= 11
+        ? parsedMonth
+        : undefined;
+
+  const result = await loadSadhanaAnalyticsData(validYear, validMonth);
 
   if (result.status === "unauthenticated") {
     redirect("/auth?next=/sadhana/analytics");
@@ -61,7 +76,7 @@ export default async function SadhanaAnalyticsPage({
               </CardTitle>
               <CardDescription>
                 Apply <code className="text-ink">supabase/migrations/0001</code>{" "}
-                through <code className="text-ink">0009</code> before viewing
+                through <code className="text-ink">0015</code> before viewing
                 analytics.
               </CardDescription>
             </CardHeader>

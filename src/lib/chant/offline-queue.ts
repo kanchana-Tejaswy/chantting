@@ -5,6 +5,8 @@ export interface QueuedRoundSubmission {
   method: ChantingMethod;
   sessionId: string | null;
   clientRecordedAt: string;
+  sankalpaId?: string | null;
+  mantraId?: string | null;
 }
 
 export interface LocalDraftBeadState {
@@ -16,14 +18,25 @@ export interface LocalDraftBeadState {
 const QUEUE_PREFIX = "ks:offline-rounds:v1:";
 const DRAFT_PREFIX = "ks:draft-beads:v1:";
 
-function hasStorage(): boolean {
-  return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+function getStorage(): Storage | null {
+  if (typeof window !== "undefined" && typeof window.localStorage !== "undefined") {
+    return window.localStorage;
+  }
+  if (typeof localStorage !== "undefined") {
+    return localStorage;
+  }
+  return null;
+}
+
+export function hasStorage(): boolean {
+  return getStorage() !== null;
 }
 
 export function readOfflineRoundQueue(userId: string): QueuedRoundSubmission[] {
-  if (!hasStorage()) return [];
+  const storage = getStorage();
+  if (!storage) return [];
   try {
-    const raw = window.localStorage.getItem(`${QUEUE_PREFIX}${userId}`);
+    const raw = storage.getItem(`${QUEUE_PREFIX}${userId}`);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
@@ -44,12 +57,13 @@ export function writeOfflineRoundQueue(
   userId: string,
   queue: QueuedRoundSubmission[]
 ): void {
-  if (!hasStorage()) return;
+  const storage = getStorage();
+  if (!storage) return;
   try {
     if (queue.length === 0) {
-      window.localStorage.removeItem(`${QUEUE_PREFIX}${userId}`);
+      storage.removeItem(`${QUEUE_PREFIX}${userId}`);
     } else {
-      window.localStorage.setItem(`${QUEUE_PREFIX}${userId}`, JSON.stringify(queue));
+      storage.setItem(`${QUEUE_PREFIX}${userId}`, JSON.stringify(queue));
     }
   } catch {
     // Ignore storage quota issues safely
@@ -79,10 +93,21 @@ export function removeOfflineRound(
   return next;
 }
 
-export function readDraftBeadState(userId: string): LocalDraftBeadState | null {
-  if (!hasStorage()) return null;
+export function clearOfflineRoundQueue(userId: string): void {
+  const storage = getStorage();
+  if (!storage) return;
   try {
-    const raw = window.localStorage.getItem(`${DRAFT_PREFIX}${userId}`);
+    storage.removeItem(`${QUEUE_PREFIX}${userId}`);
+  } catch {
+    // Ignore storage errors safely
+  }
+}
+
+export function readDraftBeadState(userId: string): LocalDraftBeadState | null {
+  const storage = getStorage();
+  if (!storage) return null;
+  try {
+    const raw = storage.getItem(`${DRAFT_PREFIX}${userId}`);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<LocalDraftBeadState>;
     if (
@@ -107,12 +132,13 @@ export function writeDraftBeadState(
   userId: string,
   draft: LocalDraftBeadState | null
 ): void {
-  if (!hasStorage()) return;
+  const storage = getStorage();
+  if (!storage) return;
   try {
     if (!draft) {
-      window.localStorage.removeItem(`${DRAFT_PREFIX}${userId}`);
+      storage.removeItem(`${DRAFT_PREFIX}${userId}`);
     } else {
-      window.localStorage.setItem(`${DRAFT_PREFIX}${userId}`, JSON.stringify(draft));
+      storage.setItem(`${DRAFT_PREFIX}${userId}`, JSON.stringify(draft));
     }
   } catch {
     // Ignore storage quota issues safely

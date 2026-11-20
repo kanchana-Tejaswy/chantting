@@ -1,5 +1,9 @@
 import type { DailySadhana } from "@/lib/domain/sadhana";
 import type { PendingOptionalCarryOffer } from "@/lib/sadhana/carry-forward";
+import type { SankalpaRecord } from "@/lib/sankalpa/types";
+import type { MantraHistoricalStat, MantraRecord } from "@/lib/mantra/types";
+import type { ChantingReminderRecord } from "@/lib/reminders/types";
+import type { SessionNoteRecord } from "@/lib/notes/types";
 
 export type ChantingMethod = "manual" | "japa_mala";
 export type SessionStatus = "active" | "paused" | "completed" | "abandoned";
@@ -17,6 +21,7 @@ export interface ChantingSessionRecord {
   last_activity_at: string;
   paused_at: string | null;
   ended_at: string | null;
+  mantra_id?: string | null;
 }
 
 export interface ChantingRoundRecord {
@@ -31,6 +36,9 @@ export interface ChantingRoundRecord {
   client_recorded_at: string | null;
   timezone_snapshot: string;
   is_reverted: boolean;
+  sankalpa_id?: string | null;
+  mantra_id?: string | null;
+  sync_status?: "synced" | "offline_pending";
 }
 
 export interface ChantWorkspacePayload {
@@ -44,11 +52,22 @@ export interface ChantWorkspacePayload {
     tactileFeedbackEnabled: boolean;
     soundFeedbackEnabled: boolean;
     carryForwardPolicy: "automatic" | "optional" | "fresh_daily" | "custom";
+    preferredMantraId?: string | null;
+    ambientModeEnabled?: boolean;
+    ambientSoundEnabled?: boolean;
+    ambientSoundVolume?: number;
+    paceGuidanceEnabled?: boolean;
+    paceSecondsPerBead?: number;
   };
   dailySadhana: DailySadhana;
   pendingOptionalOffer: PendingOptionalCarryOffer | null;
   recoverableSession: ChantingSessionRecord | null;
   todaySessions: ChantingSessionRecord[];
   todayRecords: ChantingRoundRecord[];
+  activeSankalpa?: SankalpaRecord | null;
+  mantras?: MantraRecord[];
+  activeMantra?: MantraRecord | null;
+  mantraStats?: MantraHistoricalStat[];
+  reminders?: ChantingReminderRecord[];
+  recentNotes?: SessionNoteRecord[];
 }
-

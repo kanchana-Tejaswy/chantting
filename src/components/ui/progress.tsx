@@ -80,12 +80,15 @@ export interface SacredRingProgressProps {
   label: string;
   size?: number;
   strokeWidth?: number;
+  showInnerLabel?: boolean;
+  darkSurface?: boolean;
   className?: string;
 }
 
 /**
  * Calm circular ring progress indicator with tabular numerals.
  * Uses SVG stroke-dashoffset with reduced-motion safe transitions.
+ * Supports compact mode (size < 64) and darkSurface mode for seamless contrast.
  */
 export function SacredRingProgress({
   value,
@@ -93,6 +96,8 @@ export function SacredRingProgress({
   label,
   size = 112,
   strokeWidth = 7,
+  showInnerLabel = true,
+  darkSurface = false,
   className,
 }: SacredRingProgressProps) {
   const safeMax = Math.max(1, max);
@@ -101,6 +106,7 @@ export function SacredRingProgress({
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference * (1 - ratio);
+  const isCompact = size < 64;
 
   return (
     <div
@@ -109,7 +115,7 @@ export function SacredRingProgress({
       aria-valuemin={0}
       aria-valuemax={safeMax}
       aria-valuenow={clamped}
-      className={cn("relative inline-flex items-center justify-center", className)}
+      className={cn("relative inline-flex items-center justify-center shrink-0 select-none", className)}
       style={{ width: size, height: size }}
     >
       <svg
@@ -126,7 +132,7 @@ export function SacredRingProgress({
           fill="none"
           stroke="currentColor"
           strokeWidth={strokeWidth}
-          className="text-sandalwood-border"
+          className={darkSurface ? "text-white/15" : "text-sandalwood-border"}
         />
         <circle
           cx={size / 2}
@@ -141,14 +147,40 @@ export function SacredRingProgress({
           className="text-peacock-green transition-[stroke-dashoffset] duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]"
         />
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-        <span className="font-serif text-xl font-semibold text-ink tabular-nums">
-          {Math.round(ratio * 100)}%
-        </span>
-        <span className="text-[11px] text-ink-muted tabular-nums">
-          {clamped}/{safeMax}
-        </span>
-      </div>
+      {showInnerLabel && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+          {isCompact ? (
+            <span
+              className={cn(
+                "font-serif font-bold tabular-nums leading-none",
+                size <= 48 ? "text-[11px]" : "text-xs",
+                darkSurface ? "text-white" : "text-ink"
+              )}
+            >
+              {Math.round(ratio * 100)}%
+            </span>
+          ) : (
+            <>
+              <span
+                className={cn(
+                  "font-serif text-xl font-semibold tabular-nums",
+                  darkSurface ? "text-white" : "text-ink"
+                )}
+              >
+                {Math.round(ratio * 100)}%
+              </span>
+              <span
+                className={cn(
+                  "text-[11px] tabular-nums",
+                  darkSurface ? "text-slate-400" : "text-ink-muted"
+                )}
+              >
+                {clamped}/{safeMax}
+              </span>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }

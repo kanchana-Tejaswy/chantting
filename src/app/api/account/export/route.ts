@@ -30,6 +30,7 @@ export async function GET(request: Request) {
     ledgerRes,
     sessionsRes,
     recordsRes,
+    sankalpasRes,
     membershipsRes,
     gitaBmRes,
     gitaNotesRes,
@@ -62,6 +63,11 @@ export async function GET(request: Request) {
       .select("*")
       .eq("user_id", uid)
       .order("recorded_at", { ascending: false }),
+    db
+      .from("sankalpas")
+      .select("*")
+      .eq("user_id", uid)
+      .order("created_at", { ascending: false }),
     db.from("room_memberships").select("*").eq("user_id", uid),
     db.from("gita_bookmarks").select("*").eq("user_id", uid),
     db.from("gita_notes").select("*").eq("user_id", uid),
@@ -102,6 +108,7 @@ export async function GET(request: Request) {
     carryForwardLedger: ledgerRes.data ?? [],
     chantingSessions: sessionsRes.data ?? [],
     chantingRecords: recordsRes.data ?? [],
+    sankalpas: sankalpasRes.data ?? [],
     roomMemberships: membershipsRes.data ?? [],
     gitaBookmarks: gitaBmRes.data ?? [],
     gitaNotes: gitaNotesRes.data ?? [],

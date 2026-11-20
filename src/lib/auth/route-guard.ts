@@ -4,6 +4,9 @@ export const PROTECTED_ROUTE_PREFIXES = [
   "/sadhana",
   "/onboarding",
   "/account",
+  "/rooms",
+  "/drsti",
+  "/dristi",
 ] as const;
 
 export function isProtectedRoute(pathname: string): boolean {

@@ -122,6 +122,7 @@ describe("Phase 3 auth validation, redirects, and protected routes", () => {
     expect(isProtectedRoute("/sadhana")).toBe(true);
     expect(isProtectedRoute("/sadhana/chant")).toBe(true);
     expect(isProtectedRoute("/onboarding")).toBe(true);
+    expect(isProtectedRoute("/rooms")).toBe(true);
     expect(isProtectedRoute("/")).toBe(false);
     expect(isProtectedRoute("/auth")).toBe(false);
     expect(isProtectedRoute("/design-system")).toBe(false);
@@ -155,6 +156,21 @@ describe("Phase 3 auth validation, redirects, and protected routes", () => {
     const req = new NextRequest("http://localhost:3000/sadhana");
     const res = await updateSession(req);
     expect(res.status).toBe(200);
+
+    // Authenticated visitors on "/" can view the public landing page (status 200)
+    const homeReq = new NextRequest("http://localhost:3000/");
+    const homeRes = await updateSession(homeReq);
+    expect(homeRes.status).toBe(200);
+
+    // Authenticated visitors on "/auth?next=..." redirect to the next target
+    const authReq = new NextRequest(
+      "http://localhost:3000/auth?next=%2Fsadhana%2Fchant"
+    );
+    const authRes = await updateSession(authReq);
+    expect(authRes.status).toBe(307);
+    expect(authRes.headers.get("location")).toBe(
+      "http://localhost:3000/sadhana/chant"
+    );
   });
 
   it("handles sign-up verification, unconfirmed sign-in, password reset, and sign-out", async () => {

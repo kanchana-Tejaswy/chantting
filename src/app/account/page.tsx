@@ -63,7 +63,7 @@ export default async function AccountPage({
                 Database Setup Required
               </Badge>
               <CardTitle className="mt-2 font-display text-3xl">
-                Migrations 0001–0012 must be applied first
+                Migrations 0001–0015 must be applied first
               </CardTitle>
             </CardHeader>
             <CardContent className="text-xs text-ink-muted">
@@ -94,9 +94,11 @@ export default async function AccountPage({
 
   const validTabs = [
     "profile",
+    "privacy",
+    "security",
+    "data",
     "notifications",
     "milestones",
-    "privacy",
   ] as const;
   const initialTab = validTabs.includes(
     sp.tab as (typeof validTabs)[number]
@@ -110,11 +112,14 @@ export default async function AccountPage({
       userSummary={{
         displayName: result.profile.display_name,
         email: result.userEmail,
+        unreadNotificationsCount: result.unreadNotificationCount,
       }}
       reducedMotion={result.preferences.reduced_motion_preference}
     >
       <AccountWorkspace
         userEmail={result.userEmail}
+        emailConfirmed={result.emailConfirmed}
+        accountCreatedAt={result.accountCreatedAt}
         profile={result.profile}
         preferences={result.preferences}
         memberships={result.memberships}

@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { dailySadhanaSchema } from "@/lib/domain/sadhana";
 import { undoRoundApiInputSchema } from "@/lib/chant/validation";
+import { undoAuthoritativeRound } from "@/lib/chant/unified-engine";
 import { syncConsentedRoomActivity } from "@/lib/rooms/queries";
 import {
   enforceApiRateLimit,
@@ -47,35 +48,20 @@ export async function POST(request: Request) {
     );
   }
 
-  const rpcRes = await supabase.rpc("undo_chanting_round", {
-    p_record_id: parsed.data.recordId,
-    p_reason: parsed.data.reason ?? "user_undo",
-  });
-
-  if (rpcRes.error) {
-    return NextResponse.json({ error: rpcRes.error.message }, { status: 400 });
+  let result;
+  try {
+    result = await undoAuthoritativeRound(supabase, user.id, {
+      recordId: parsed.data.recordId,
+      reason: parsed.data.reason ?? "user_undo",
+    });
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Failed to undo round." },
+      { status: 400 }
+    );
   }
 
-  const payload = rpcRes.data as {
-    already_reverted: boolean;
-    record: { session_id?: string | null };
-    daily_sadhana: Record<string, unknown>;
-  };
-
-  let session: Record<string, unknown> | null = null;
-  if (payload.record?.session_id) {
-    const sessRes = await supabase
-      .from("chanting_sessions")
-      .select(
-        "id, user_id, sadhana_date, method, status, current_bead_count, rounds_completed, client_session_key, started_at, last_activity_at, paused_at, ended_at"
-      )
-      .eq("id", payload.record.session_id)
-      .eq("user_id", user.id)
-      .maybeSingle();
-    session = sessRes.data;
-  }
-
-  const parsedDaily = dailySadhanaSchema.safeParse(payload.daily_sadhana);
+  const parsedDaily = dailySadhanaSchema.safeParse(result.daily_sadhana);
   if (parsedDaily.success) {
     try {
       await syncConsentedRoomActivity(supabase, user.id, parsedDaily.data);
@@ -91,10 +77,12 @@ export async function POST(request: Request) {
 
   return NextResponse.json(
     {
-      ...payload,
-      session,
+      already_reverted: result.already_reverted,
+      record: result.record,
+      daily_sadhana: result.daily_sadhana,
+      sankalpa: result.sankalpa ?? null,
+      session: result.session ?? null,
     },
     { headers: PRIVATE_NO_STORE_HEADERS }
   );
 }
-

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft, BookOpen, Compass, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { sanitizeRedirectPath } from "@/lib/auth/validation";
 import { LotusEmblem } from "@/components/sacred/ornaments";
@@ -52,14 +52,14 @@ export default async function AuthPage({
           className="absolute inset-0 hidden lg:block"
           style={{
             background:
-              "linear-gradient(102deg, rgba(22, 15, 10, 0.80) 0%, rgba(28, 19, 12, 0.58) 44%, rgba(24, 17, 11, 0.34) 72%, rgba(20, 14, 9, 0.44) 100%)",
+              "linear-gradient(102deg, rgba(22, 15, 10, 0.82) 0%, rgba(28, 19, 12, 0.62) 44%, rgba(24, 17, 11, 0.40) 72%, rgba(20, 14, 9, 0.50) 100%)",
           }}
         />
         <div
           className="absolute inset-0 lg:hidden"
           style={{
             background:
-              "linear-gradient(180deg, rgba(20, 14, 9, 0.78) 0%, rgba(22, 15, 10, 0.56) 42%, rgba(20, 14, 9, 0.72) 100%)",
+              "linear-gradient(180deg, rgba(20, 14, 9, 0.82) 0%, rgba(22, 15, 10, 0.65) 42%, rgba(20, 14, 9, 0.78) 100%)",
           }}
         />
         <div
@@ -71,7 +71,7 @@ export default async function AuthPage({
         />
       </div>
 
-      {/* Minimal Top Navigation */}
+      {/* Minimal Top Navigation — Return to SMARAN */}
       <header className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between px-5 pt-5 sm:px-8 sm:pt-7">
         <Link
           href="/"
@@ -84,23 +84,6 @@ export default async function AuthPage({
           />
           <span>Return to SMARAN</span>
         </Link>
-
-        <div className="hidden items-center gap-4 text-xs text-[#E8DEC9]/85 sm:flex">
-          <Link
-            href="/gita"
-            className="inline-flex items-center gap-1.5 transition-colors hover:text-[#E5BF73]"
-          >
-            <BookOpen className="size-3.5" strokeWidth={1.6} aria-hidden="true" />
-            <span>Bhagavad Gītā</span>
-          </Link>
-          <Link
-            href="/library"
-            className="inline-flex items-center gap-1.5 transition-colors hover:text-[#E5BF73]"
-          >
-            <Compass className="size-3.5" strokeWidth={1.6} aria-hidden="true" />
-            <span>Library</span>
-          </Link>
-        </div>
       </header>
 
       {/* Main Balanced Immersive Composition */}
@@ -129,11 +112,11 @@ export default async function AuthPage({
                 Remember Him. Stay Connected.
               </h1>
               <p className="max-w-lg text-base leading-relaxed text-[#F2E8D5]/92 sm:text-lg">
-                A space for chanting, learning and devotion.
+                A space for chanting, sadhana and devotion.
               </p>
               <p className="max-w-md text-sm leading-relaxed text-[#DECDB1]/82">
-                Continue your personal Japa rounds, study Bhagavad Gītā verses,
-                and maintain quiet remembrance with peaceful privacy defaults.
+                Continue your personal Japa rounds, maintain your daily target carry-forward,
+                and deepen your devotional discipline in quiet peace.
               </p>
             </div>
 
@@ -170,7 +153,7 @@ export default async function AuthPage({
         </div>
       </main>
 
-      {/* Minimal Footer */}
+      {/* Minimal Dedicated Auth Footer — No Application Navigation */}
       <footer className="relative z-10 mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 border-t border-[#E5BF73]/18 px-5 py-4 text-xs text-[#E4D6BE]/78 sm:px-8">
         <p>
           <span className="font-medium text-[#FBF7EE]">SMARAN</span>{" "}
@@ -179,20 +162,9 @@ export default async function AuthPage({
           </span>{" "}
           · Remember Him. Stay Connected.
         </p>
-        <nav aria-label="Sanctuary links" className="flex items-center gap-4">
-          <Link href="/" className="transition-colors hover:text-[#FBF7EE]">
-            Home
-          </Link>
-          <Link href="/gita" className="transition-colors hover:text-[#FBF7EE]">
-            Gītā
-          </Link>
-          <Link
-            href="/library"
-            className="transition-colors hover:text-[#FBF7EE]"
-          >
-            Library
-          </Link>
-        </nav>
+        <p className="text-[#DECDB1]/70">
+          Private by default · Devotional sanctuary
+        </p>
       </footer>
     </div>
   );

@@ -47,7 +47,7 @@ export default async function ChantPage() {
               </CardTitle>
               <CardDescription>
                 Apply <code className="text-ink">supabase/migrations/0001</code>{" "}
-                through <code className="text-ink">0008</code> before recording
+                through <code className="text-ink">0015</code> before recording
                 chanting rounds.
               </CardDescription>
             </CardHeader>

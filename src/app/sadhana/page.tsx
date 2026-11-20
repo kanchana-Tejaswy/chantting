@@ -54,7 +54,7 @@ export default async function SadhanaDashboardPage() {
             <CardContent className="space-y-2 text-sm text-ink-muted">
               <p>
                 Apply <code className="text-ink">supabase/migrations/0001</code>{" "}
-                through <code className="text-ink">0013</code> via{" "}
+                through <code className="text-ink">0015</code> via{" "}
                 <code className="text-ink">npm run db:push</code> (using the
                 IPv4 Session Pooler URL) or the Supabase SQL Editor, then refresh
                 this page.
@@ -139,6 +139,8 @@ export default async function SadhanaDashboardPage() {
         carryForwardLedger={result.carryForwardLedger}
         pendingOptionalOffer={result.pendingOptionalOffer}
         unappliedPendingNotice={result.unappliedPendingNotice}
+        sankalpas={result.sankalpas}
+        activeSankalpa={result.activeSankalpa}
       />
     </AppShell>
   );

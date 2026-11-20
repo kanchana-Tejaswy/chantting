@@ -26,6 +26,7 @@ export async function PATCH(request: Request) {
     .update({
       display_name: parsed.data.displayName,
       username: parsed.data.username,
+      avatar_url: parsed.data.avatarUrl,
       bio: parsed.data.bio,
       timezone: parsed.data.timezone,
       preferred_language: parsed.data.preferredLanguage,

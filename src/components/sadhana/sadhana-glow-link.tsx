@@ -64,7 +64,7 @@ export function SadhanaGlowLink({
           spotlightColor
         )}
       />
-      <span className="relative z-10 inline-flex items-center gap-2.5">
+      <span className="relative z-10 flex w-full items-center justify-inherit gap-2.5">
         {children}
       </span>
     </Link>

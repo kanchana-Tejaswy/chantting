@@ -6,11 +6,15 @@ import { useRouter } from "next/navigation";
 import {
   Award,
   Bell,
+  Calendar,
   CheckCheck,
   CheckCircle2,
   Download,
+  KeyRound,
   Lock,
   LogOut,
+  Mail,
+  Shield,
   ShieldAlert,
   Sparkles,
   Trash2,
@@ -38,8 +42,29 @@ import type {
 import type { AccountRoomMembershipSummary } from "@/lib/account/queries";
 import { SUPPORTED_LANGUAGES } from "@/lib/account/validation";
 
+export const DEVOTIONAL_AVATARS = [
+  {
+    name: "Sacred Lotus",
+    url: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=200&auto=format&fit=crop&q=80",
+  },
+  {
+    name: "Peacock Plume",
+    url: "https://images.unsplash.com/photo-1548681528-6a5c45b66b42?w=200&auto=format&fit=crop&q=80",
+  },
+  {
+    name: "Vrindavan Tulsi",
+    url: "https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=200&auto=format&fit=crop&q=80",
+  },
+  {
+    name: "Govardhan Dawn",
+    url: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=200&auto=format&fit=crop&q=80",
+  },
+] as const;
+
 export interface AccountWorkspaceProps {
   userEmail: string | null;
+  emailConfirmed?: boolean;
+  accountCreatedAt?: string;
   profile: AccountProfile;
   preferences: AccountPreferences;
   memberships: AccountRoomMembershipSummary[];
@@ -47,11 +72,19 @@ export interface AccountWorkspaceProps {
   unreadNotificationCount: number;
   milestones: MilestoneDisplayItem[];
   milestoneStats: VerifiedMilestoneStats;
-  initialTab?: "profile" | "notifications" | "milestones" | "privacy";
+  initialTab?:
+    | "profile"
+    | "notifications"
+    | "milestones"
+    | "privacy"
+    | "security"
+    | "data";
 }
 
 export function AccountWorkspace({
   userEmail,
+  emailConfirmed = true,
+  accountCreatedAt,
   profile,
   preferences,
   memberships,
@@ -70,11 +103,19 @@ export function AccountWorkspace({
   // Profile fields
   const [displayName, setDisplayName] = React.useState(profile.display_name);
   const [username, setUsername] = React.useState(profile.username ?? "");
+  const [avatarUrl, setAvatarUrl] = React.useState(profile.avatar_url ?? "");
   const [bio, setBio] = React.useState(profile.bio ?? "");
   const [timezone, setTimezone] = React.useState(profile.timezone);
   const [preferredLanguage, setPreferredLanguage] = React.useState(
     profile.preferred_language
   );
+
+  // Password Update fields
+  const [password, setPassword] = React.useState("");
+  const [confirmPassword, setConfirmPassword] = React.useState("");
+  const [passwordBusy, setPasswordBusy] = React.useState(false);
+  const [passwordStatus, setPasswordStatus] = React.useState<string | null>(null);
+  const [passwordError, setPasswordError] = React.useState<string | null>(null);
 
   // Sadhana, Accessibility & Notification preferences
   const [dailyRoundTarget, setDailyRoundTarget] = React.useState(
@@ -144,6 +185,20 @@ export function AccountWorkspace({
   const [deleteConfirmPhrase, setDeleteConfirmPhrase] = React.useState("");
   const [deleteConfirmEmail, setDeleteConfirmEmail] = React.useState("");
 
+  const formattedJoinDate = React.useMemo(() => {
+    try {
+      const dateStr = accountCreatedAt || profile.created_at;
+      if (!dateStr) return "Devotee";
+      return new Date(dateStr).toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      });
+    } catch {
+      return "Devotee";
+    }
+  }, [accountCreatedAt, profile.created_at]);
+
   async function saveProfile(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -156,6 +211,7 @@ export function AccountWorkspace({
         body: JSON.stringify({
           displayName,
           username: username || null,
+          avatarUrl: avatarUrl ? avatarUrl.trim() : null,
           bio: bio || null,
           timezone,
           preferredLanguage,
@@ -165,13 +221,83 @@ export function AccountWorkspace({
       if (!res.ok) {
         setErrorMessage(json.error ?? "Unable to update profile.");
       } else {
-        setStatusMessage("Profile and language details saved.");
+        setStatusMessage("Profile details and devotional settings saved.");
         router.refresh();
       }
     } catch {
       setErrorMessage("Network error saving profile.");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function handlePasswordUpdate(e: React.FormEvent) {
+    e.preventDefault();
+    setPasswordBusy(true);
+    setPasswordStatus(null);
+    setPasswordError(null);
+
+    if (password.length < 8) {
+      setPasswordError("New password must be at least 8 characters long.");
+      setPasswordBusy(false);
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setPasswordError("Passwords do not match.");
+      setPasswordBusy(false);
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/account/password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "update_password",
+          password,
+          confirmPassword,
+        }),
+      });
+      const json = (await res.json()) as { error?: string; message?: string };
+      if (!res.ok) {
+        setPasswordError(json.error ?? "Unable to update password.");
+      } else {
+        setPasswordStatus(json.message ?? "Password successfully updated.");
+        setPassword("");
+        setConfirmPassword("");
+      }
+    } catch {
+      setPasswordError("Network error updating password.");
+    } finally {
+      setPasswordBusy(false);
+    }
+  }
+
+  async function handleRequestResetLink() {
+    setPasswordBusy(true);
+    setPasswordStatus(null);
+    setPasswordError(null);
+    try {
+      const res = await fetch("/api/account/password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "request_reset_link",
+        }),
+      });
+      const json = (await res.json()) as { error?: string; message?: string };
+      if (!res.ok) {
+        setPasswordError(json.error ?? "Unable to send reset link.");
+      } else {
+        setPasswordStatus(
+          json.message ?? "Password reset link sent to your email."
+        );
+      }
+    } catch {
+      setPasswordError("Network error requesting reset link.");
+    } finally {
+      setPasswordBusy(false);
     }
   }
 
@@ -421,13 +547,18 @@ export function AccountWorkspace({
           <h1 className="mt-1 font-display text-3xl font-semibold text-ink sm:text-4xl">
             Account, Notifications &amp; Privacy
           </h1>
-          <p className="mt-1 text-sm text-ink-muted">
-            Signed in as{" "}
-            <strong className="font-medium text-ink">
-              {userEmail ?? profile.display_name}
-            </strong>{" "}
-            · {profile.timezone}
-          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-ink-muted">
+            <span className="font-medium text-ink">
+              {displayName || userEmail}
+            </span>
+            <span>·</span>
+            <span>{profile.timezone}</span>
+            <span>·</span>
+            <span className="inline-flex items-center gap-1">
+              <Calendar className="size-3.5" aria-hidden={true} />
+              Devotee since {formattedJoinDate}
+            </span>
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-2">
@@ -449,7 +580,10 @@ export function AccountWorkspace({
       >
         {(
           [
-            ["profile", "Profile & Sadhana", User],
+            ["profile", "My Profile", User],
+            ["privacy", "Privacy & Visibility", Shield],
+            ["security", "Account Security", Lock],
+            ["data", "Data & Account", Download],
             [
               "notifications",
               unreadNotificationCount > 0
@@ -462,7 +596,6 @@ export function AccountWorkspace({
               `Milestones (${unlockedCount}/${milestones.length})`,
               Award,
             ],
-            ["privacy", "Privacy & Data Rights", Lock],
           ] as const
         ).map(([key, label, Icon]) => (
           <Button
@@ -496,21 +629,116 @@ export function AccountWorkspace({
         </div>
       )}
 
-      {/* TAB 1: Profile & Sadhana Settings */}
+      {/* SECTION 1: My Profile */}
       {tab === "profile" && (
         <div className="grid gap-6 lg:grid-cols-2">
           <Card surface="parchment">
             <CardHeader>
               <CardTitle className="font-display text-2xl">
-                Identity &amp; Localization
+                Identity &amp; Devotional Avatar
               </CardTitle>
               <CardDescription>
-                Display name, timezone for daily transitions, and scriptural
-                language preference.
+                Customize your display name, devotional avatar, introduction, and
+                scriptural timezone.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={saveProfile} className="space-y-4">
+              <form onSubmit={saveProfile} className="space-y-5">
+                {/* Avatar Preview & Selection */}
+                <div className="rounded-[12px] border border-sandalwood-border bg-ivory p-4 space-y-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gold-ink">
+                    Devotional Avatar
+                  </p>
+                  <div className="flex items-center gap-4">
+                    <div className="relative size-16 shrink-0 overflow-hidden rounded-full border-2 border-gold-antique/50 bg-sandalwood-light shadow-sm">
+                      {avatarUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={avatarUrl}
+                          alt="Avatar Preview"
+                          className="size-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex size-full items-center justify-center font-display text-xl font-bold text-gold-ink">
+                          {displayName.trim().charAt(0).toUpperCase() || "D"}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 space-y-1.5">
+                      <p className="text-xs text-ink-muted">
+                        Select a sacred motif or paste an HTTPS image URL:
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {DEVOTIONAL_AVATARS.map((av) => (
+                          <button
+                            key={av.name}
+                            type="button"
+                            onClick={() => setAvatarUrl(av.url)}
+                            className={`cursor-pointer rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                              avatarUrl === av.url
+                                ? "border-gold-antique bg-gold-wash font-medium text-ink"
+                                : "border-sandalwood-border bg-paper text-ink-muted hover:border-gold-border"
+                            }`}
+                          >
+                            {av.name}
+                          </button>
+                        ))}
+                        {avatarUrl && (
+                          <button
+                            type="button"
+                            onClick={() => setAvatarUrl("")}
+                            className="cursor-pointer rounded-full border border-sandalwood-border bg-paper px-2.5 py-1 text-xs text-ink-muted hover:text-kumkum"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <FormField
+                    id="acc-avatar"
+                    label="Custom Image URL (Optional)"
+                    hint="Must begin with https:// and point to a secure image."
+                  >
+                    <Input
+                      id="acc-avatar"
+                      type="url"
+                      value={avatarUrl}
+                      onChange={(e) => setAvatarUrl(e.target.value)}
+                      placeholder="https://example.com/avatar.jpg"
+                    />
+                  </FormField>
+                </div>
+
+                {/* Account Details Box */}
+                <div className="grid gap-3 rounded-[12px] border border-sandalwood-border bg-ivory p-3.5 sm:grid-cols-2">
+                  <div>
+                    <span className="text-xs text-ink-muted">Registered Email</span>
+                    <div className="mt-1 flex items-center gap-1.5">
+                      <Mail className="size-3.5 text-ink-muted" aria-hidden={true} />
+                      <span className="text-xs font-medium text-ink truncate">
+                        {userEmail ?? "No email"}
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-xs text-ink-muted">Email Verification</span>
+                    <div className="mt-1 flex items-center gap-1.5">
+                      {emailConfirmed ? (
+                        <Badge variant="peacock">
+                          <CheckCircle2 className="size-3" aria-hidden={true} />
+                          <span>Verified</span>
+                        </Badge>
+                      ) : (
+                        <Badge variant="gold">
+                          <ShieldAlert className="size-3" aria-hidden={true} />
+                          <span>Pending Verification</span>
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
                 <FormField id="acc-name" label="Display Name" required>
                   <Input
                     id="acc-name"
@@ -558,13 +786,17 @@ export function AccountWorkspace({
                   </FormField>
                 </div>
 
-                <FormField id="acc-bio" label="Short Personal Bio (Optional)">
+                <FormField
+                  id="acc-bio"
+                  label="Devotional Introduction / Bio (Optional)"
+                  hint="Share your spiritual intentions, preferred slokas, or chanting focus."
+                >
                   <Textarea
                     id="acc-bio"
                     rows={3}
                     value={bio}
                     onChange={(e) => setBio(e.target.value)}
-                    placeholder="Shown only if you opt into a public profile..."
+                    placeholder="Chanting Hare Krishna with steady morning attention in Sri Vrindavan..."
                   />
                 </FormField>
 
@@ -581,8 +813,8 @@ export function AccountWorkspace({
                 Chanting, Carry-Forward &amp; Comfort
               </CardTitle>
               <CardDescription>
-                Tune daily round commitments, sound/tactile feedback, and reduced
-                motion.
+                Tune daily round commitments, counting methods, sound/tactile
+                feedback, and reduced motion.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -688,7 +920,503 @@ export function AccountWorkspace({
         </div>
       )}
 
-      {/* TAB 2: Notifications & Quiet Hours */}
+      {/* SECTION 2: Privacy & Visibility */}
+      {tab === "privacy" && (
+        <div className="space-y-6">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Card surface="parchment">
+              <CardHeader>
+                <CardTitle className="font-display text-2xl">
+                  Global Privacy &amp; Directory Visibility
+                </CardTitle>
+                <CardDescription>
+                  Personal chanting logs, Gītā notes, library history, and
+                  milestones always stay private regardless of room membership.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <SwitchField
+                  id="priv-public-dir"
+                  label="Show Basic Display Name in Public Directory"
+                  description="Off by default. Shares only display name & optional username—never chanting data."
+                  checked={publicProfileEnabled}
+                  onCheckedChange={setPublicProfileEnabled}
+                />
+                <FormField
+                  id="priv-room-default"
+                  label="Default Privacy Mode for Joining Rooms"
+                >
+                  <Select
+                    id="priv-room-default"
+                    value={defaultRoomShareMode}
+                    onChange={(e) =>
+                      setDefaultRoomShareMode(
+                        e.target.value as
+                          | "full"
+                          | "completion_only"
+                          | "private"
+                      )
+                    }
+                  >
+                    <option value="completion_only">
+                      Completion Only (Recommended conservative default)
+                    </option>
+                    <option value="private">Private (Visible only to you)</option>
+                    <option value="full">
+                      Full Shared Rounds (Manual consent)
+                    </option>
+                  </Select>
+                </FormField>
+                <SwitchField
+                  id="priv-streak"
+                  label="Allow Sharing Consistency Streak in Rooms"
+                  description="Off by default."
+                  checked={shareStreakInRooms}
+                  onCheckedChange={setShareStreakInRooms}
+                />
+
+                <Button
+                  type="button"
+                  variant="primary"
+                  disabled={busy}
+                  onClick={() =>
+                    savePreferences("Privacy defaults saved successfully.")
+                  }
+                >
+                  Save Privacy Defaults
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card surface="parchment">
+              <CardHeader>
+                <CardTitle className="font-display text-2xl">
+                  Room Sharing Consent ({memberships.length})
+                </CardTitle>
+                <CardDescription>
+                  Adjust visibility per room, purge previously shared room feed
+                  events, or leave any room.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {memberships.length === 0 ? (
+                  <p className="text-sm text-ink-muted">
+                    You have not joined any chanting rooms.
+                  </p>
+                ) : (
+                  memberships.map((m) => (
+                    <div
+                      key={m.id}
+                      className="rounded-[12px] border border-sandalwood-border bg-ivory p-3.5 text-xs space-y-2.5"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <Link
+                          href={`/rooms/${m.room_slug}`}
+                          className="font-semibold text-sm text-peacock-deep hover:underline"
+                        >
+                          {m.room_name}
+                        </Link>
+                        <Badge variant="neutral">{m.role}</Badge>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Select
+                          aria-label={`Privacy mode for ${m.room_name}`}
+                          value={m.share_progress_mode}
+                          disabled={busy}
+                          onChange={(e) =>
+                            updateRoomPrivacy(
+                              m.room_id,
+                              e.target.value as
+                                | "full"
+                                | "completion_only"
+                                | "private",
+                              m.share_streak
+                            )
+                          }
+                        >
+                          <option value="completion_only">Completion only</option>
+                          <option value="private">Private</option>
+                          <option value="full">Full rounds</option>
+                        </Select>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          disabled={busy}
+                          onClick={() => purgeRoomSharedActivity(m.room_id)}
+                        >
+                          Purge shared feed
+                        </Button>
+                        {m.role !== "owner" && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            disabled={busy}
+                            onClick={() => leaveRoom(m.room_id)}
+                          >
+                            Leave
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+
+                {memberships.length > 0 && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    disabled={busy}
+                    onClick={() => purgeRoomSharedActivity()}
+                  >
+                    Purge All Shared Room Activity Feed Entries
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Privacy & Data Rights Deletion Card */}
+          <Card surface="linen">
+            <CardHeader>
+              <CardTitle className="font-display text-2xl text-kumkum">
+                Data Rights &amp; Permanent Deletion
+              </CardTitle>
+              <CardDescription>
+                Export your personal archive or permanently scrub all data from
+                the platform.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <form
+                onSubmit={deleteAccount}
+                className="space-y-3 rounded-[14px] border border-kumkum/30 bg-paper p-4"
+              >
+                <p className="text-sm font-semibold text-kumkum">
+                  Delete Account &amp; Scrub Personal Data
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <FormField
+                    id="del-phrase-priv"
+                    label='Type "DELETE MY ACCOUNT" to confirm'
+                    required
+                  >
+                    <Input
+                      id="del-phrase-priv"
+                      value={deleteConfirmPhrase}
+                      onChange={(e) => setDeleteConfirmPhrase(e.target.value)}
+                      placeholder="DELETE MY ACCOUNT"
+                      required
+                    />
+                  </FormField>
+                  {userEmail && (
+                    <FormField
+                      id="del-email-priv"
+                      label="Verify Account Email"
+                      required
+                    >
+                      <Input
+                        id="del-email-priv"
+                        type="email"
+                        value={deleteConfirmEmail}
+                        onChange={(e) => setDeleteConfirmEmail(e.target.value)}
+                        placeholder={userEmail}
+                        required
+                      />
+                    </FormField>
+                  )}
+                </div>
+                <Button
+                  type="submit"
+                  variant="destructive"
+                  disabled={
+                    busy || deleteConfirmPhrase.trim() !== "DELETE MY ACCOUNT"
+                  }
+                >
+                  <Trash2 className="size-4" aria-hidden={true} />
+                  <span>Permanently Delete &amp; Scrub My Account</span>
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* SECTION 3: Account Security */}
+      {tab === "security" && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Change Password / Reset Password */}
+          <Card surface="parchment">
+            <CardHeader>
+              <CardTitle className="font-display text-2xl">
+                Password &amp; Authentication
+              </CardTitle>
+              <CardDescription>
+                Update your account password directly or send a secure password
+                reset link to your email.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              {passwordStatus && (
+                <div className="flex items-center gap-2 rounded-[12px] border border-peacock-green/35 bg-tulsi-wash px-4 py-3 text-sm text-peacock-ink">
+                  <CheckCircle2 className="size-4 shrink-0" aria-hidden={true} />
+                  <span>{passwordStatus}</span>
+                </div>
+              )}
+              {passwordError && (
+                <div
+                  role="alert"
+                  className="flex items-center gap-2 rounded-[12px] border border-kumkum/35 bg-kumkum-wash px-4 py-3 text-sm text-kumkum"
+                >
+                  <ShieldAlert className="size-4 shrink-0" aria-hidden={true} />
+                  <span>{passwordError}</span>
+                </div>
+              )}
+
+              <form onSubmit={handlePasswordUpdate} className="space-y-4">
+                <FormField
+                  id="acc-new-pwd"
+                  label="New Password"
+                  hint="Must be at least 8 characters long."
+                  required
+                >
+                  <Input
+                    id="acc-new-pwd"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </FormField>
+
+                <FormField
+                  id="acc-confirm-pwd"
+                  label="Confirm New Password"
+                  required
+                >
+                  <Input
+                    id="acc-confirm-pwd"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                  />
+                </FormField>
+
+                <Button
+                  type="submit"
+                  variant="primary"
+                  disabled={passwordBusy || !password || !confirmPassword}
+                >
+                  <KeyRound className="size-4" aria-hidden={true} />
+                  <span>Update Password</span>
+                </Button>
+              </form>
+
+              <div className="border-t border-sandalwood-border pt-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-gold-ink">
+                  Alternate Password Reset
+                </p>
+                <p className="mt-1 text-xs text-ink-muted">
+                  Send a one-click password reset token to your registered
+                  email address ({userEmail ?? "No email"}):
+                </p>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="mt-2.5"
+                  disabled={passwordBusy || !userEmail}
+                  onClick={handleRequestResetLink}
+                >
+                  <Mail className="size-4" aria-hidden={true} />
+                  <span>Send Password Reset Link to Email</span>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Sessions & Device Access */}
+          <Card surface="parchment">
+            <CardHeader>
+              <CardTitle className="font-display text-2xl">
+                Sessions &amp; Device Access
+              </CardTitle>
+              <CardDescription>
+                Manage your active authenticated browser session or revoke all
+                signed-in sessions across devices at once.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="rounded-[12px] border border-sandalwood-border bg-ivory p-4 space-y-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-ink">Active Session</span>
+                  <Badge variant="peacock">Current Browser</Badge>
+                </div>
+                <p className="text-xs text-ink-muted">
+                  Authenticated as <strong>{userEmail ?? profile.display_name}</strong>
+                </p>
+                <p className="text-xs text-ink-muted">
+                  Signing out of all devices invalidates refresh tokens globally
+                  across mobile and desktop sessions.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2.5 pt-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  disabled={busy}
+                  onClick={() => handleSessionSignOut("local")}
+                >
+                  <LogOut className="size-4" aria-hidden={true} />
+                  <span>Sign Out This Device</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={busy}
+                  onClick={() => handleSessionSignOut("global")}
+                >
+                  <LogOut className="size-4" aria-hidden={true} />
+                  <span>Sign Out All Devices</span>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* SECTION 4: Data & Account Management */}
+      {tab === "data" && (
+        <div className="space-y-6">
+          <Card surface="parchment">
+            <CardHeader>
+              <CardTitle className="font-display text-2xl">
+                Account Data Export
+              </CardTitle>
+              <CardDescription>
+                Download a complete, privacy-respecting JSON archive containing all
+                your personal devotional records.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-xs text-ink-muted leading-relaxed">
+                Your exported archive includes: daily sadhana counts, carry-forward
+                ledgers, completed rounds, Japa Mala sessions, active and past
+                Sankalpa commitments, Bhagavad Gītā bookmarks, notes and reading
+                history, library bookmarks, verified milestones, and in-app
+                notifications.
+              </p>
+              <a
+                href="/api/account/export"
+                className={buttonStyles({ variant: "secondary", size: "md" })}
+              >
+                <Download className="size-4" aria-hidden={true} />
+                <span>Download Complete JSON Data Archive</span>
+              </a>
+            </CardContent>
+          </Card>
+
+          <Card surface="linen">
+            <CardHeader>
+              <CardTitle className="font-display text-2xl text-kumkum">
+                Permanent Account Deletion Safeguards
+              </CardTitle>
+              <CardDescription>
+                Carefully review the irreversible consequences before initiating
+                account scrubbing.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div className="rounded-[12px] border border-kumkum/40 bg-kumkum-wash/60 p-4 text-xs text-kumkum space-y-1.5 leading-relaxed">
+                <p className="font-semibold text-sm">
+                  Please read carefully before proceeding:
+                </p>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>
+                    All personal chanting records, sessions, and daily sadhana
+                    history will be permanently erased.
+                  </li>
+                  <li>
+                    Active and completed Sankalpa vows will be permanently deleted.
+                  </li>
+                  <li>
+                    Your personal Bhagavad Gītā reflections, notes, reading history,
+                    and library bookmarks will be wiped.
+                  </li>
+                  <li>
+                    Your profile PII will be scrubbed, and you will be removed from
+                    all room member lists.
+                  </li>
+                  <li>
+                    Room ownership will be transferred to an administrator or the
+                    room will be archived.
+                  </li>
+                  <li>This action is irreversible and cannot be recovered.</li>
+                </ul>
+              </div>
+
+              <form
+                onSubmit={deleteAccount}
+                className="space-y-3 rounded-[14px] border border-kumkum/30 bg-paper p-4"
+              >
+                <p className="text-sm font-semibold text-kumkum">
+                  Confirm Permanent Scrubbing
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <FormField
+                    id="del-phrase-data"
+                    label='Type "DELETE MY ACCOUNT" to confirm'
+                    required
+                  >
+                    <Input
+                      id="del-phrase-data"
+                      value={deleteConfirmPhrase}
+                      onChange={(e) => setDeleteConfirmPhrase(e.target.value)}
+                      placeholder="DELETE MY ACCOUNT"
+                      required
+                    />
+                  </FormField>
+                  {userEmail && (
+                    <FormField
+                      id="del-email-data"
+                      label="Verify Account Email"
+                      required
+                    >
+                      <Input
+                        id="del-email-data"
+                        type="email"
+                        value={deleteConfirmEmail}
+                        onChange={(e) => setDeleteConfirmEmail(e.target.value)}
+                        placeholder={userEmail}
+                        required
+                      />
+                    </FormField>
+                  )}
+                </div>
+                <Button
+                  type="submit"
+                  variant="destructive"
+                  disabled={
+                    busy || deleteConfirmPhrase.trim() !== "DELETE MY ACCOUNT"
+                  }
+                >
+                  <Trash2 className="size-4" aria-hidden={true} />
+                  <span>Permanently Delete &amp; Scrub My Account</span>
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* SECTION 5: Notifications & Quiet Hours */}
       {tab === "notifications" && (
         <div className="grid gap-6 lg:grid-cols-2">
           <Card surface="parchment">
@@ -894,7 +1622,7 @@ export function AccountWorkspace({
         </div>
       )}
 
-      {/* TAB 3: Private Milestones */}
+      {/* SECTION 6: Private Milestones */}
       {tab === "milestones" && (
         <div className="space-y-6">
           <Card surface="sanctum">
@@ -980,290 +1708,6 @@ export function AccountWorkspace({
           </div>
         </div>
       )}
-
-      {/* TAB 4: Privacy, Rooms & Data Rights */}
-      {tab === "privacy" && (
-        <div className="space-y-6">
-          <div className="grid gap-6 lg:grid-cols-2">
-            <Card surface="parchment">
-              <CardHeader>
-                <CardTitle className="font-display text-2xl">
-                  Global Privacy &amp; Directory Visibility
-                </CardTitle>
-                <CardDescription>
-                  Personal chanting logs, Gītā notes, library history, and
-                  milestones always stay private regardless of room membership.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <SwitchField
-                  id="priv-public-dir"
-                  label="Show Basic Display Name in Public Directory"
-                  description="Off by default. Shares only display name & optional username—never chanting data."
-                  checked={publicProfileEnabled}
-                  onCheckedChange={setPublicProfileEnabled}
-                />
-                <FormField
-                  id="priv-room-default"
-                  label="Default Privacy Mode for Joining Rooms"
-                >
-                  <Select
-                    id="priv-room-default"
-                    value={defaultRoomShareMode}
-                    onChange={(e) =>
-                      setDefaultRoomShareMode(
-                        e.target.value as
-                          | "full"
-                          | "completion_only"
-                          | "private"
-                      )
-                    }
-                  >
-                    <option value="completion_only">
-                      Completion Only (Recommended conservative default)
-                    </option>
-                    <option value="private">Private (Visible only to you)</option>
-                    <option value="full">
-                      Full Shared Rounds (Manual consent)
-                    </option>
-                  </Select>
-                </FormField>
-                <SwitchField
-                  id="priv-streak"
-                  label="Allow Sharing Consistency Streak in Rooms"
-                  description="Off by default."
-                  checked={shareStreakInRooms}
-                  onCheckedChange={setShareStreakInRooms}
-                />
-
-                <Button
-                  type="button"
-                  variant="primary"
-                  disabled={busy}
-                  onClick={() =>
-                    savePreferences("Privacy defaults saved successfully.")
-                  }
-                >
-                  Save Privacy Defaults
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card surface="parchment">
-              <CardHeader>
-                <CardTitle className="font-display text-2xl">
-                  Room Sharing Consent ({memberships.length})
-                </CardTitle>
-                <CardDescription>
-                  Adjust visibility per room, purge previously shared room feed
-                  events, or leave any room.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {memberships.length === 0 ? (
-                  <p className="text-sm text-ink-muted">
-                    You have not joined any chanting rooms.
-                  </p>
-                ) : (
-                  memberships.map((m) => (
-                    <div
-                      key={m.id}
-                      className="rounded-[12px] border border-sandalwood-border bg-ivory p-3.5 text-xs space-y-2.5"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <Link
-                          href={`/rooms/${m.room_slug}`}
-                          className="font-semibold text-sm text-peacock-deep hover:underline"
-                        >
-                          {m.room_name}
-                        </Link>
-                        <Badge variant="neutral">{m.role}</Badge>
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Select
-                          aria-label={`Privacy mode for ${m.room_name}`}
-                          value={m.share_progress_mode}
-                          disabled={busy}
-                          onChange={(e) =>
-                            updateRoomPrivacy(
-                              m.room_id,
-                              e.target.value as
-                                | "full"
-                                | "completion_only"
-                                | "private",
-                              m.share_streak
-                            )
-                          }
-                        >
-                          <option value="completion_only">Completion only</option>
-                          <option value="private">Private</option>
-                          <option value="full">Full rounds</option>
-                        </Select>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="ghost"
-                          disabled={busy}
-                          onClick={() => purgeRoomSharedActivity(m.room_id)}
-                        >
-                          Purge shared feed
-                        </Button>
-                        {m.role !== "owner" && (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            disabled={busy}
-                            onClick={() => leaveRoom(m.room_id)}
-                          >
-                            Leave
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                )}
-
-                {memberships.length > 0 && (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="secondary"
-                    disabled={busy}
-                    onClick={() => purgeRoomSharedActivity()}
-                  >
-                    Purge All Shared Room Activity Feed Entries
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Session & Device Access Management */}
-          <Card surface="parchment">
-            <CardHeader>
-              <CardTitle className="font-display text-2xl">
-                Sessions &amp; Device Access
-              </CardTitle>
-              <CardDescription>
-                Manage your active authenticated browser session or revoke all
-                signed-in sessions across devices at once.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-wrap items-center justify-between gap-4">
-              <div className="space-y-1 text-sm">
-                <p className="font-medium text-ink">
-                  Authenticated as {userEmail ?? profile.display_name}
-                </p>
-                <p className="text-xs text-ink-muted">
-                  Signing out of all devices invalidates refresh tokens globally
-                  across mobile and desktop sessions.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2.5">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  disabled={busy}
-                  onClick={() => handleSessionSignOut("local")}
-                >
-                  <LogOut className="size-4" aria-hidden={true} />
-                  <span>Sign Out This Device</span>
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={busy}
-                  onClick={() => handleSessionSignOut("global")}
-                >
-                  <LogOut className="size-4" aria-hidden={true} />
-                  <span>Sign Out All Devices</span>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Account Export & Secure Account Deletion */}
-          <Card surface="linen">
-            <CardHeader>
-              <CardTitle className="font-display text-2xl text-kumkum">
-                Data Export &amp; Permanent Account Deletion
-              </CardTitle>
-              <CardDescription>
-                Export a complete JSON archive of your Sadhana, Gītā notes,
-                library bookmarks, and milestones at any time. Deleting your
-                account permanently removes your personal records and scrubs
-                profile PII while keeping community rooms clean.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              <div>
-                <a
-                  href="/api/account/export"
-                  className={buttonStyles({ variant: "secondary", size: "md" })}
-                >
-                  <Download className="size-4" aria-hidden={true} />
-                  <span>Download Complete JSON Data Archive</span>
-                </a>
-              </div>
-
-              <form
-                onSubmit={deleteAccount}
-                className="space-y-3 rounded-[14px] border border-kumkum/30 bg-paper p-4"
-              >
-                <p className="text-sm font-semibold text-kumkum">
-                  Delete Account &amp; Scrub Personal Data
-                </p>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <FormField
-                    id="del-phrase"
-                    label='Type "DELETE MY ACCOUNT" to confirm'
-                    required
-                  >
-                    <Input
-                      id="del-phrase"
-                      value={deleteConfirmPhrase}
-                      onChange={(e) => setDeleteConfirmPhrase(e.target.value)}
-                      placeholder="DELETE MY ACCOUNT"
-                      required
-                    />
-                  </FormField>
-                  {userEmail && (
-                    <FormField
-                      id="del-email"
-                      label="Verify Account Email"
-                      required
-                    >
-                      <Input
-                        id="del-email"
-                        type="email"
-                        value={deleteConfirmEmail}
-                        onChange={(e) => setDeleteConfirmEmail(e.target.value)}
-                        placeholder={userEmail}
-                        required
-                      />
-                    </FormField>
-                  )}
-                </div>
-                <Button
-                  type="submit"
-                  variant="destructive"
-                  disabled={
-                    busy || deleteConfirmPhrase.trim() !== "DELETE MY ACCOUNT"
-                  }
-                >
-                  <Trash2 className="size-4" aria-hidden={true} />
-                  <span>Permanently Delete &amp; Scrub My Account</span>
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      )}
     </div>
   );
 }
-

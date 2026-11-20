@@ -8,7 +8,7 @@ import {
 import { getLocalDateString } from "@/lib/sadhana/stats";
 
 const SESSION_SELECT =
-  "id, user_id, sadhana_date, method, status, current_bead_count, rounds_completed, client_session_key, started_at, last_activity_at, paused_at, ended_at";
+  "id, user_id, sadhana_date, method, status, current_bead_count, rounds_completed, client_session_key, started_at, last_activity_at, paused_at, ended_at, mantra_id";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -81,6 +81,7 @@ export async function POST(request: Request) {
       current_bead_count: 0,
       rounds_completed: 0,
       client_session_key: parsed.data.clientSessionKey,
+      mantra_id: parsed.data.mantraId ?? null,
     })
     .select(SESSION_SELECT)
     .single();
@@ -151,6 +152,10 @@ export async function PATCH(request: Request) {
     updatePayload.current_bead_count = parsed.data.currentBeadCount;
   }
 
+  if (parsed.data.mantraId !== undefined) {
+    updatePayload.mantra_id = parsed.data.mantraId;
+  }
+
   if (parsed.data.status !== undefined) {
     updatePayload.status = parsed.data.status;
     if (parsed.data.status === "paused") {
@@ -191,4 +196,3 @@ export async function PATCH(request: Request) {
 
   return NextResponse.json({ session: updateRes.data });
 }
-

@@ -6,6 +6,7 @@ import {
   Tiro_Devanagari_Sanskrit,
 } from "next/font/google";
 import "./globals.css";
+import { PwaRegister } from "@/components/pwa/pwa-register";
 
 const cormorant = Cormorant_Garamond({
   subsets: ["latin", "latin-ext"],
@@ -80,7 +81,10 @@ export default function RootLayout({
       data-scroll-behavior="smooth"
       className={`${cormorant.variable} ${notoSerif.variable} ${notoSans.variable} ${tiroDevanagari.variable}`}
     >
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <PwaRegister />
+        {children}
+      </body>
     </html>
   );
 }

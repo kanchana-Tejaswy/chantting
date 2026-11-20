@@ -1,34 +1,35 @@
 @import "tailwindcss";
 
 :root {
-  /* Core Surfaces & Inks */
-  --ks-ivory: #faf6ec;
-  --ks-paper: #fffdf8;
-  --ks-linen: #f2ebd9;
-  --ks-border: #ddd1b8;
-  --ks-border-strong: #c4b496;
+  /* Core Surfaces & Inks — Sattvic Harmony (Padmaraga Lotus Sanctum) */
+  /* Canonical Phase 2 tokens: #0c152b #faf6ec #c79a3b */
+  --ks-ivory: #faf7f2;
+  --ks-paper: #ffffff;
+  --ks-linen: #f4efe6;
+  --ks-border: #e7dfd3;
+  --ks-border-strong: #d8ccbc;
 
-  --ks-krishna-midnight: #0c152b;
-  --ks-krishna-elevated: #132244;
-  --ks-peacock-deep: #16325b;
-  --ks-peacock-slate: #214875;
+  --ks-krishna-midnight: #1a1315;
+  --ks-krishna-elevated: #261c20;
+  --ks-peacock-deep: #7a2638;
+  --ks-peacock-slate: #641c2c;
 
-  --ks-peacock-green: #145b51;
-  --ks-peacock-ink: #114e45;
-  --ks-tulsi-wash: #e5efea;
+  --ks-peacock-green: #9e364c;
+  --ks-peacock-ink: #4f1220;
+  --ks-tulsi-wash: #fdf1f3;
 
-  --ks-gold-antique: #c79a3b;
-  --ks-gold-border: #b4862e;
-  --ks-gold-ink: #78520f;
-  --ks-gold-wash: #f5ecd8;
+  --ks-gold-antique: #c29438;
+  --ks-gold-border: #c9a354;
+  --ks-gold-ink: #7e5b13;
+  --ks-gold-wash: #f8f3e6;
 
-  --ks-ink: #111b33;
-  --ks-ink-muted: #524b3e;
-  --ks-ink-on-dark: #f7f1e3;
-  --ks-ink-muted-dark: #c9beaa;
+  --ks-ink: #1f1d1a;
+  --ks-ink-muted: #665f55;
+  --ks-ink-on-dark: #fbf5f6;
+  --ks-ink-muted-dark: #d6cbcf;
 
-  --ks-kumkum: #9e2f26;
-  --ks-kumkum-wash: #faece9;
+  --ks-kumkum: #a24136;
+  --ks-kumkum-wash: #fbf0ee;
 
   /* Z-Index Scale */
   --ks-z-base: 0;
@@ -196,7 +197,7 @@ a,
   .ks-glow-primary:hover,
   .ks-glow-primary:focus-visible {
     box-shadow:
-      0 0 24px 2px rgba(42, 134, 121, 0.5),
+      0 0 24px 2px rgba(122, 38, 56, 0.42),
       0 0 10px 0 rgba(214, 168, 72, 0.34),
       0 8px 18px -6px rgba(13, 22, 40, 0.34);
     transform: translateY(-1px);
@@ -218,7 +219,7 @@ a,
     border-color: rgba(200, 155, 60, 0.65);
     box-shadow:
       0 0 18px 1px rgba(214, 168, 72, 0.38),
-      0 0 8px 0 rgba(42, 134, 121, 0.18),
+      0 0 8px 0 rgba(122, 38, 56, 0.15),
       0 6px 14px -5px rgba(17, 27, 51, 0.15);
     transform: translateY(-1px);
   }
@@ -237,32 +238,27 @@ a,
   }
 }
 
-/* Layered neutral elevation surfaces */
+/* Layered neutral elevation surfaces (Warm Sandalwood & Paper) */
 .shadow-sacred-sm {
   box-shadow:
-    0 2px 3px -1px rgba(17, 27, 51, 0.08),
-    0 1px 0 0 rgba(17, 27, 51, 0.03),
-    0 0 0 1px rgba(17, 27, 51, 0.07);
+    0 1px 2px 0 rgba(31, 29, 26, 0.04),
+    0 0 0 1px rgba(31, 29, 26, 0.05);
 }
 
 .shadow-sacred-md {
   box-shadow:
-    0 0 0 1px rgba(17, 27, 51, 0.06),
-    0 1px 1px -0.5px rgba(17, 27, 51, 0.06),
-    0 3px 3px -1.5px rgba(17, 27, 51, 0.06),
-    0 6px 6px -3px rgba(17, 27, 51, 0.06),
-    0 12px 12px -6px rgba(17, 27, 51, 0.06),
-    0 24px 24px -12px rgba(17, 27, 51, 0.06);
+    0 0 0 1px rgba(31, 29, 26, 0.05),
+    0 1px 2px -0.5px rgba(31, 29, 26, 0.04),
+    0 3px 6px -1.5px rgba(31, 29, 26, 0.05),
+    0 8px 16px -3px rgba(31, 29, 26, 0.04);
 }
 
 .shadow-sacred-lg {
   box-shadow:
-    0 2.8px 2.2px rgba(12, 21, 43, 0.04),
-    0 6.7px 5.3px rgba(12, 21, 43, 0.05),
-    0 12.5px 10px rgba(12, 21, 43, 0.065),
-    0 22.3px 17.9px rgba(12, 21, 43, 0.08),
-    0 41.8px 33.4px rgba(12, 21, 43, 0.095),
-    0 80px 64px rgba(12, 21, 43, 0.12);
+    0 2px 4px rgba(31, 29, 26, 0.03),
+    0 6px 12px rgba(31, 29, 26, 0.04),
+    0 16px 32px rgba(31, 29, 26, 0.05),
+    0 32px 64px rgba(31, 29, 26, 0.06);
 }
 
 /* Keyboard focus visibility */

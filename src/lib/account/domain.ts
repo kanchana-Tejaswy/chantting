@@ -161,6 +161,7 @@ export function buildAccountExportDocument(params: {
   carryForwardLedger: unknown[];
   chantingSessions: unknown[];
   chantingRecords: unknown[];
+  sankalpas?: unknown[];
   roomMemberships: unknown[];
   gitaBookmarks: unknown[];
   gitaNotes: unknown[];
@@ -185,6 +186,7 @@ export function buildAccountExportDocument(params: {
       carryForwardLedger: params.carryForwardLedger,
       chantingSessions: params.chantingSessions,
       chantingRecords: params.chantingRecords,
+      sankalpas: params.sankalpas ?? [],
     },
     communities: {
       roomMemberships: params.roomMemberships,

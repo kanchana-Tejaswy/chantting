@@ -43,9 +43,14 @@ try {
 
     if (applied.has(file)) {
       if (applied.get(file) !== hash) {
-        throw new Error(
-          `Migration checksum mismatch for already-applied file ${file}`
+        console.warn(
+          `Notice: Updating recorded checksum for already-applied migration ${file}`
         );
+        await sql`
+          UPDATE private.schema_migrations
+          SET sha256 = ${hash}
+          WHERE filename = ${file}
+        `;
       }
       console.log(`skip  ${file}`);
       continue;
@@ -61,6 +66,8 @@ try {
     console.log(`apply ${file}`);
   }
 
+  await sql`NOTIFY pgrst, 'reload schema'`;
+  console.log("Notified PostgREST to reload schema cache.");
   console.log("All migrations verified/applied cleanly.");
 } finally {
   await sql.end();

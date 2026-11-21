@@ -44,20 +44,32 @@ import { SUPPORTED_LANGUAGES } from "@/lib/account/validation";
 
 export const DEVOTIONAL_AVATARS = [
   {
+    name: "Peacock Plume",
+    url: "/media/avatars/peacock-feather.jpg",
+  },
+  {
+    name: "Peacock",
+    url: "/media/avatars/peacock.jpg",
+  },
+  {
+    name: "Prem Mandir",
+    url: "/media/avatars/prem-mandir.jpg",
+  },
+  {
+    name: "Govardhan",
+    url: "/media/avatars/govardhan.jpg",
+  },
+  {
+    name: "Radha Krishna",
+    url: "/media/avatars/radha-krishna.jpg",
+  },
+  {
     name: "Sacred Lotus",
     url: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=200&auto=format&fit=crop&q=80",
   },
   {
-    name: "Peacock Plume",
-    url: "https://images.unsplash.com/photo-1548681528-6a5c45b66b42?w=200&auto=format&fit=crop&q=80",
-  },
-  {
     name: "Vrindavan Tulsi",
     url: "https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=200&auto=format&fit=crop&q=80",
-  },
-  {
-    name: "Govardhan Dawn",
-    url: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=200&auto=format&fit=crop&q=80",
   },
 ] as const;
 
@@ -675,7 +687,7 @@ export function AccountWorkspace({
                             type="button"
                             onClick={() => setAvatarUrl(av.url)}
                             className={`cursor-pointer rounded-full border px-2.5 py-1 text-xs transition-colors ${
-                              avatarUrl === av.url
+                              avatarUrl === av.url || (Boolean(avatarUrl) && avatarUrl.endsWith(av.url))
                                 ? "border-gold-antique bg-gold-wash font-medium text-ink"
                                 : "border-sandalwood-border bg-paper text-ink-muted hover:border-gold-border"
                             }`}
@@ -698,14 +710,14 @@ export function AccountWorkspace({
                   <FormField
                     id="acc-avatar"
                     label="Custom Image URL (Optional)"
-                    hint="Must begin with https:// and point to a secure image."
+                    hint="Enter an HTTPS image URL or select a sacred motif above."
                   >
                     <Input
                       id="acc-avatar"
-                      type="url"
+                      type="text"
                       value={avatarUrl}
                       onChange={(e) => setAvatarUrl(e.target.value)}
-                      placeholder="https://example.com/avatar.jpg"
+                      placeholder="https://example.com/avatar.jpg or /media/avatars/..."
                     />
                   </FormField>
                 </div>

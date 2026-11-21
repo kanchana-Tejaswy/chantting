@@ -38,8 +38,14 @@ export const accountProfileUpdateSchema = z.object({
   avatarUrl: z
     .string()
     .trim()
-    .url("Avatar URL must be a valid URL.")
-    .regex(/^https?:\/\//, "Avatar URL must start with http:// or https://")
+    .refine(
+      (v) =>
+        !v ||
+        (v.startsWith("/") && !v.startsWith("//")) ||
+        ((v.startsWith("http://") || v.startsWith("https://")) &&
+          z.string().url().safeParse(v).success),
+      "Avatar URL must start with http://, https://, or be a valid internal image path (e.g. /media/...)."
+    )
     .max(1024, "Avatar URL must be 1024 characters or fewer.")
     .optional()
     .nullable()

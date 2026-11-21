@@ -117,7 +117,15 @@ export function ConsistencyHeatmap({
   const [isLoadingDetail, setIsLoadingDetail] = React.useState(false);
   const [detailError, setDetailError] = React.useState<string | null>(null);
   const [showGuide, setShowGuide] = React.useState(false);
-  const [hoveredCell, setHoveredCell] = React.useState<HeatmapDayCell | null>(null);
+  const [selectedCell, setSelectedCell] = React.useState<HeatmapDayCell | null>(
+    () => {
+      for (const week of weeks) {
+        const found = week.days.find((d) => d?.date === initialDayDetail.date);
+        if (found) return found;
+      }
+      return null;
+    }
+  );
 
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
   const todayButtonRef = React.useRef<HTMLButtonElement | null>(null);
@@ -211,6 +219,7 @@ export function ConsistencyHeatmap({
 
   const handleSelectDate = async (cell: HeatmapDayCell) => {
     if (cell.status === "future") return;
+    setSelectedCell(cell);
     setSelectedDate(cell.date);
     setIsLoadingDetail(true);
     setDetailError(null);
@@ -440,44 +449,53 @@ export function ConsistencyHeatmap({
             </div>
           </div>
 
-          {/* Heatmap Grid & Tooltip Section */}
+          {/* Heatmap Grid & Clicked Day Section */}
           <div className="relative">
-            {/* Live Hover Tooltip Card */}
-            {hoveredCell && (
+            {/* Clicked / Selected Day Summary Card (shown only on click, not hover) */}
+            {selectedCell && (
               <div
                 aria-live="polite"
-                className="mb-2 flex items-center justify-between rounded-xl border border-gold-border/70 bg-paper px-3.5 py-2 text-xs shadow-sm transition-all"
+                className="mb-2.5 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-gold-border/80 bg-paper px-3.5 py-2 text-xs shadow-2xs animate-in fade-in-50 duration-150"
               >
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="font-semibold text-ink">
-                    {formatReadableDate(hoveredCell.date)}
+                    {formatReadableDate(selectedCell.date)}
                   </span>
                   <span className="text-ink-muted">·</span>
-                  {hoveredCell.status === "future" ? (
+                  {selectedCell.status === "future" ? (
                     <span className="text-ink-muted">Upcoming date</span>
-                  ) : hoveredCell.status === "missing_data" ? (
+                  ) : selectedCell.status === "missing_data" ? (
                     <span className="text-ink-muted">No chanting record</span>
-                  ) : hoveredCell.status === "zero_activity" ? (
+                  ) : selectedCell.status === "zero_activity" ? (
                     <span className="text-ink-muted flex items-center gap-1.5 font-medium">
                       <span className="inline-flex size-3 items-center justify-center rounded-[2px] border border-[#A89F91] bg-[#DFD9CE]">
                         <span className="h-[2px] w-1.5 rounded-full bg-[#6B6357]" />
                       </span>
                       <span>Rest Day (0 rounds recorded)</span>
                     </span>
-                  ) : hoveredCell.targetMet ? (
-                    <span className="font-semibold text-peacock-green">
-                      🌸 Target Met ({hoveredCell.completedRounds} / {hoveredCell.effectiveTarget} rounds)
+                  ) : selectedCell.targetMet ? (
+                    <span className="font-semibold text-peacock-green flex items-center gap-1">
+                      <span>🌸 Target Met</span>
+                      <span>({selectedCell.completedRounds} / {selectedCell.effectiveTarget} rounds)</span>
                     </span>
                   ) : (
                     <span className="font-medium text-amber-900 flex items-center gap-1.5">
                       <span className="inline-block size-3 rounded-[2px] border border-[#D97706] bg-[#FBBF24]" />
-                      <span>Partial activity: {hoveredCell.completedRounds} of {hoveredCell.effectiveTarget} rounds</span>
+                      <span>Partial activity: {selectedCell.completedRounds} of {selectedCell.effectiveTarget} rounds</span>
                     </span>
                   )}
                 </div>
-                <span className="text-[11px] text-ink-muted hidden sm:inline">
-                  Click to inspect details below
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-medium text-gold-ink">
+                    Clicked Day
+                  </span>
+                  <a
+                    href="#daily-detail-panel"
+                    className="text-[11px] text-ink-muted hover:text-ink underline"
+                  >
+                    View details below ↓
+                  </a>
+                </div>
               </div>
             )}
 
@@ -561,11 +579,6 @@ export function ConsistencyHeatmap({
                               ref={isToday ? todayButtonRef : undefined}
                               disabled={cell.status === "future"}
                               onClick={() => void handleSelectDate(cell)}
-                              onMouseEnter={() => setHoveredCell(cell)}
-                              onMouseLeave={() => setHoveredCell(null)}
-                              onFocus={() => setHoveredCell(cell)}
-                              onBlur={() => setHoveredCell(null)}
-                              title={describeCellAria(cell)}
                               aria-label={describeCellAria(cell)}
                               aria-pressed={isSelected}
                               className={cn(
@@ -645,7 +658,7 @@ export function ConsistencyHeatmap({
       </Card>
 
       {/* Selected Date Detail Panel */}
-      <Card surface="elevated" className="border-gold-border/80 shadow-sm">
+      <Card id="daily-detail-panel" surface="elevated" className="border-gold-border/80 shadow-sm scroll-mt-6">
         <CardHeader className="flex flex-col gap-2 border-b border-sandalwood-border/40 pb-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="flex items-center gap-2">

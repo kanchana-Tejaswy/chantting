@@ -34,6 +34,8 @@ import { ProgressBar } from "@/components/ui/progress";
 import { SwitchField } from "@/components/ui/switch";
 import {
   DEVOTIONAL_THEMES,
+  FONT_SIZES,
+  useDevotionalFontSize,
   useDevotionalTheme,
 } from "@/lib/design/themes";
 import type {
@@ -210,6 +212,7 @@ export function AccountWorkspace({
   const [deleteConfirmPhrase, setDeleteConfirmPhrase] = React.useState("");
   const [deleteConfirmEmail, setDeleteConfirmEmail] = React.useState("");
   const [activeThemeId, setActiveThemeId] = useDevotionalTheme();
+  const [activeFontSize, setActiveFontSize] = useDevotionalFontSize();
 
   const formattedJoinDate = React.useMemo(() => {
     try {
@@ -983,6 +986,33 @@ export function AccountWorkspace({
                         </button>
                       );
                     })}
+                  </div>
+
+                  {/* Text Font Size Option */}
+                  <div className="pt-2">
+                    <p className="text-[11px] font-semibold text-ink mb-1.5">Text Font Size</p>
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                      {FONT_SIZES.map((size) => {
+                        const isSelected = activeFontSize === size.id;
+                        return (
+                          <button
+                            key={size.id}
+                            type="button"
+                            onClick={() => {
+                              setActiveFontSize(size.id);
+                              setStatusMessage(`Text font size set to ${size.label}.`);
+                            }}
+                            className={`flex flex-col items-center justify-center p-2 rounded-[8px] border text-center transition-all cursor-pointer ${
+                              isSelected
+                                ? "border-gold-antique bg-gold-wash/60 ring-1 ring-gold-antique font-bold text-ink"
+                                : "border-sandalwood-border bg-paper hover:bg-linen text-ink-muted hover:text-ink font-medium"
+                            }`}
+                          >
+                            <span className="text-xs">{size.shortLabel}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               </div>

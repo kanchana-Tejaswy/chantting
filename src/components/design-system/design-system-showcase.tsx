@@ -1,11 +1,21 @@
 "use client";
 
 import * as React from "react";
-import { Check, Info, Palette, ShieldAlert, Sparkles } from "lucide-react";
+import {
+  Check,
+  Info,
+  Palette,
+  RotateCcw,
+  ShieldAlert,
+  Sparkles,
+  Type,
+} from "lucide-react";
 import {
   DEVOTIONAL_THEMES,
-  previewTheme,
+  FONT_SIZES,
+  useDevotionalFontSize,
   useDevotionalTheme,
+  type DevotionalFontSize,
   type DevotionalThemeId,
 } from "@/lib/design/themes";
 import { ManuscriptDivider } from "@/components/sacred/ornaments";
@@ -34,10 +44,12 @@ import { SwitchField } from "@/components/ui/switch";
 
 export function DesignSystemShowcase() {
   const [activeTheme, setActiveTheme] = useDevotionalTheme();
-  const [previewThemeOverride, setPreviewThemeOverride] = React.useState<DevotionalThemeId | null>(null);
+  const [activeFontSize, setActiveFontSize] = useDevotionalFontSize();
   const [appliedFeedback, setAppliedFeedback] = React.useState<string | null>(null);
 
-  const previewThemeId = previewThemeOverride ?? activeTheme;
+  // Editable Preview Input States (User edits here to see live preview in the box!)
+  const [previewName, setPreviewName] = React.useState("Tejaswy Kanchana");
+  const [previewNote, setPreviewNote] = React.useState("Chanting before sunrise in quiet surrender.");
 
   // Form inputs demo state
   const [nameInput, setNameInput] = React.useState("");
@@ -52,16 +64,24 @@ export function DesignSystemShowcase() {
   const [sampleRounds, setSampleRounds] = React.useState(12);
 
   const handleSelectTheme = (themeId: DevotionalThemeId) => {
-    setPreviewThemeOverride(null);
     setActiveTheme(themeId);
     const found = DEVOTIONAL_THEMES.find((t) => t.id === themeId);
-    setAppliedFeedback(`Applied "${found?.name ?? themeId}" across the entire app.`);
-    setTimeout(() => setAppliedFeedback(null), 4000);
+    setAppliedFeedback(`Theme set to ${found?.name ?? themeId}`);
+    setTimeout(() => setAppliedFeedback(null), 3500);
   };
 
-  const handlePreviewTheme = (themeId: DevotionalThemeId) => {
-    setPreviewThemeOverride(themeId);
-    previewTheme(themeId);
+  const handleSelectFontSize = (sizeId: DevotionalFontSize) => {
+    setActiveFontSize(sizeId);
+    const found = FONT_SIZES.find((s) => s.id === sizeId);
+    setAppliedFeedback(`Font size adjusted to ${found?.label ?? sizeId}`);
+    setTimeout(() => setAppliedFeedback(null), 3500);
+  };
+
+  const handleResetToDefault = () => {
+    setActiveTheme("vrindavan-ivory");
+    setActiveFontSize("normal");
+    setAppliedFeedback("Reset to default Vrindavan Ivory theme & standard typography.");
+    setTimeout(() => setAppliedFeedback(null), 3500);
   };
 
   const handleIncrementBead = () => {
@@ -74,7 +94,7 @@ export function DesignSystemShowcase() {
   };
 
   const currentTheme =
-    DEVOTIONAL_THEMES.find((t) => t.id === previewThemeId) ?? DEVOTIONAL_THEMES[0]!;
+    DEVOTIONAL_THEMES.find((t) => t.id === activeTheme) ?? DEVOTIONAL_THEMES[0]!;
 
   const nameError =
     nameInput.length > 0 && nameInput.trim().length < 2
@@ -83,260 +103,324 @@ export function DesignSystemShowcase() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-12 px-5 py-8 sm:px-8 sm:py-12">
-      {/* Intro */}
-      <header className="max-w-3xl">
-        <Badge variant="gold">Phase 2 Design System</Badge>
-        <h1 className="mt-3 font-display text-3xl font-semibold text-ink text-balance sm:text-5xl">
-          {currentTheme.name}
-        </h1>
-        <p className="mt-2 font-devanagari text-base text-gold-ink font-normal">
-          {currentTheme.hindi}
-        </p>
-        <p className="mt-3 text-base leading-relaxed text-ink-muted text-pretty">
-          Canonical color tokens, Sanskrit-capable typography, elevation surfaces,
-          and accessible interactive primitives shared across SMARAN (स्मरण).
-        </p>
-      </header>
-
-      {/* Devotional Theme Selector & Live Previewer */}
-      <section aria-labelledby="theme-selector-heading" className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2">
-              <Palette className="size-5 text-gold-antique" aria-hidden={true} />
-              <h2
-                id="theme-selector-heading"
-                className="font-serif text-2xl font-semibold text-ink"
-              >
-                Devotional Atmosphere &amp; Theme Selector
-              </h2>
-            </div>
-            <p className="mt-1 text-sm text-ink-muted">
-              Choose from 4 sacred atmospheres crafted for different devotional moods and practice hours. Preview live and set your favorite theme.
-            </p>
-          </div>
-          {appliedFeedback && (
-            <div
-              role="status"
-              className="inline-flex items-center gap-1.5 rounded-full bg-tulsi-wash px-3.5 py-1 text-xs font-medium text-peacock-ink border border-peacock-green/30 animate-in fade-in"
-            >
-              <Check className="size-3.5" aria-hidden={true} />
-              <span>{appliedFeedback}</span>
-            </div>
-          )}
-        </div>
-
-        {/* 4 Theme Cards Grid */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {DEVOTIONAL_THEMES.map((theme) => {
-            const isActive = activeTheme === theme.id;
-            const isPreviewing = previewThemeId === theme.id;
-            return (
-              <div
-                key={theme.id}
-                className={`relative flex flex-col justify-between rounded-[16px] border p-4 transition-all duration-200 ${
-                  isPreviewing
-                    ? "border-gold-antique ring-2 ring-gold-antique/30 bg-paper shadow-sacred-md"
-                    : "border-sandalwood-border bg-paper/80 hover:border-gold-antique/50 hover:bg-paper"
-                }`}
-              >
-                <div>
-                  <div className="flex items-start justify-between gap-2">
-                    <Badge
-                      variant={
-                        theme.id === "yamuna-midnight"
-                          ? "sanctum"
-                          : theme.id === "padmaraga-lotus"
-                            ? "kumkum"
-                            : theme.id === "govardhan-dawn"
-                              ? "peacock"
-                              : "gold"
-                      }
-                      className="text-[11px]"
-                    >
-                      {theme.tag}
-                    </Badge>
-                    {isActive && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-gold-wash px-2 py-0.5 text-[10px] font-bold text-gold-ink border border-gold-border/40">
-                        <Check className="size-2.5" aria-hidden={true} />
-                        Active
-                      </span>
-                    )}
-                  </div>
-
-                  <h3 className="mt-3 font-display text-lg font-bold text-ink">
-                    {theme.name}
-                  </h3>
-                  <p className="font-devanagari text-xs text-ink-muted">
-                    {theme.hindi}
-                  </p>
-                  <p className="mt-2 text-xs leading-relaxed text-ink-muted">
-                    {theme.description}
-                  </p>
-
-                  {/* 6-Tone Color Ribbon Preview */}
-                  <div className="mt-3 flex h-5 w-full overflow-hidden rounded-full border border-sandalwood-border/60">
-                    {theme.previewColors.map((hex, i) => (
-                      <div
-                        key={i}
-                        className="flex-1 h-full"
-                        style={{ backgroundColor: hex }}
-                        title={hex}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                <div className="mt-5 flex items-center gap-2 pt-3 border-t border-sandalwood-border/60">
-                  <Button
-                    variant={isPreviewing ? "primary" : "secondary"}
-                    size="sm"
-                    className="flex-1 text-xs"
-                    onClick={() => handlePreviewTheme(theme.id)}
-                  >
-                    {isPreviewing ? "Previewing" : "Preview"}
-                  </Button>
-                  <Button
-                    variant={isActive ? "outline" : "gold"}
-                    size="sm"
-                    className="text-xs"
-                    onClick={() => handleSelectTheme(theme.id)}
-                  >
-                    {isActive ? "Selected" : "Set Active"}
-                  </Button>
-                </div>
+      {/* Top Hero Section: Side-by-Side Controls (Left) & Live Preview Box (Right) */}
+      <section aria-labelledby="theme-studio-heading" className="space-y-6">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-start">
+          {/* LEFT COLUMN: Controls, 4 Themes & Font Size Options */}
+          <div className="space-y-6 lg:col-span-7">
+            <div>
+              <div className="flex items-center gap-2">
+                <Badge variant="gold">Phase 2 Design System</Badge>
+                {activeTheme !== "vrindavan-ivory" && (
+                  <Badge variant="neutral">Customized Theme</Badge>
+                )}
               </div>
-            );
-          })}
-        </div>
+              <h1 className="mt-3 font-display text-3xl font-semibold text-ink text-balance sm:text-5xl">
+                {currentTheme.name}
+              </h1>
+              <p className="mt-1 font-devanagari text-base text-gold-ink font-normal">
+                {currentTheme.hindi}
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-ink-muted text-pretty">
+                Canonical color tokens, Sanskrit-capable typography, elevation surfaces,
+                and accessible interactive primitives shared across SMARAN (स्मरण).
+              </p>
+            </div>
 
-        {/* Live Interactive Mini Sadhana Practice Card Specimen */}
-        <Card surface="elevated" className="border-gold-antique/40 shadow-sacred-md">
-          <CardHeader>
-            <div className="flex items-center justify-between">
+            {/* Simple 4 Default Themes Selector */}
+            <div className="space-y-3 rounded-[16px] border border-sandalwood-border bg-paper p-5 shadow-sacred-sm">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Palette className="size-4 text-peacock-deep" aria-hidden={true} />
+                  <span className="text-sm font-semibold text-ink">
+                    Select Devotional Theme (4 Defaults)
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleResetToDefault}
+                  className="inline-flex cursor-pointer items-center gap-1 text-xs font-medium text-ink-muted hover:text-peacock-deep transition-colors"
+                  title="Reset to default theme & typography"
+                >
+                  <RotateCcw className="size-3" aria-hidden={true} />
+                  <span>Reset Default</span>
+                </button>
+              </div>
+
+              {/* Clean 4 Theme Grid */}
+              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-2">
+                {DEVOTIONAL_THEMES.map((theme) => {
+                  const isSelected = activeTheme === theme.id;
+                  const isDefault = theme.id === "vrindavan-ivory";
+                  return (
+                    <button
+                      key={theme.id}
+                      type="button"
+                      onClick={() => handleSelectTheme(theme.id)}
+                      className={`flex flex-col text-left p-3 rounded-[12px] border transition-all cursor-pointer ${
+                        isSelected
+                          ? "border-gold-antique bg-gold-wash/60 ring-2 ring-gold-antique/40 shadow-sacred-xs"
+                          : "border-sandalwood-border bg-paper hover:border-gold-antique/50 hover:bg-linen"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-1">
+                        <div className="flex items-center gap-1.5">
+                          <span
+                            className="size-3 rounded-full border border-black/10 shadow-xs shrink-0"
+                            style={{ backgroundColor: theme.previewColors[1] }}
+                          />
+                          <span className="text-xs font-bold text-ink truncate">
+                            {theme.name.split(" ")[0]} {theme.name.split(" ")[1] ?? ""}
+                          </span>
+                        </div>
+                        {isSelected && (
+                          <Check className="size-3.5 text-gold-ink shrink-0" aria-hidden={true} />
+                        )}
+                      </div>
+
+                      <div className="mt-1 flex items-center gap-1.5">
+                        <span className="text-[11px] text-ink-muted">
+                          {isDefault ? "Default Sattvic" : theme.tag}
+                        </span>
+                      </div>
+
+                      {/* Micro Palette Ribbon */}
+                      <div className="mt-2.5 flex h-2 w-full overflow-hidden rounded-full border border-sandalwood-border/50">
+                        {theme.previewColors.slice(0, 5).map((color, i) => (
+                          <div
+                            key={i}
+                            className="flex-1 h-full"
+                            style={{ backgroundColor: color }}
+                          />
+                        ))}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Text Font Size Option */}
+            <div className="space-y-3 rounded-[16px] border border-sandalwood-border bg-paper p-5 shadow-sacred-sm">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Type className="size-4 text-peacock-deep" aria-hidden={true} />
+                  <span className="text-sm font-semibold text-ink">
+                    Text Font Size Option
+                  </span>
+                </div>
+                <span className="text-xs font-medium text-ink-muted">
+                  Active: {FONT_SIZES.find((s) => s.id === activeFontSize)?.shortLabel}
+                </span>
+              </div>
+
+              {/* Font Size Pills */}
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {FONT_SIZES.map((size) => {
+                  const isSelected = activeFontSize === size.id;
+                  return (
+                    <button
+                      key={size.id}
+                      type="button"
+                      onClick={() => handleSelectFontSize(size.id)}
+                      className={`flex flex-col items-center justify-center p-2.5 rounded-[10px] border text-center transition-all cursor-pointer ${
+                        isSelected
+                          ? "border-gold-antique bg-gold-wash/60 ring-1 ring-gold-antique font-bold text-ink"
+                          : "border-sandalwood-border bg-paper hover:bg-linen text-ink-muted hover:text-ink font-medium"
+                      }`}
+                    >
+                      <span className="text-xs">{size.shortLabel}</span>
+                      <span className="text-[10px] opacity-75">{size.rem}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Interactive Inputs (Edit here to see live preview in the box on the right!) */}
+            <div className="space-y-3 rounded-[16px] border border-sandalwood-border bg-paper p-5 shadow-sacred-sm">
               <div className="flex items-center gap-2">
                 <Sparkles className="size-4 text-gold-antique" aria-hidden={true} />
-                <CardTitle className="text-base font-serif">
-                  Live Atmosphere Preview Specimen
-                </CardTitle>
+                <span className="text-sm font-semibold text-ink">
+                  Type Here to Preview Edits Live in the Box
+                </span>
               </div>
-              <Badge variant="gold">
-                Active Theme: {currentTheme.name}
-              </Badge>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <FormField id="live-name-input" label="Devotee Display Name">
+                  <Input
+                    id="live-name-input"
+                    value={previewName}
+                    onChange={(e) => setPreviewName(e.target.value)}
+                    placeholder="Enter practitioner name..."
+                  />
+                </FormField>
+                <FormField id="live-note-input" label="Personal Reflection / Sankalpa">
+                  <Input
+                    id="live-note-input"
+                    value={previewNote}
+                    onChange={(e) => setPreviewNote(e.target.value)}
+                    placeholder="Write a short reflection..."
+                  />
+                </FormField>
+              </div>
             </div>
-            <CardDescription>
-              Test interactive bead chanting, card elevation, and contrast under your selected theme.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {/* Mini Japa Mala Bead Counter */}
-              <div className="flex flex-col justify-between rounded-[12px] border border-sandalwood-border bg-paper p-4">
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-ink-muted uppercase tracking-wider">
-                      Japa Practice Specimen
-                    </span>
-                    <Badge variant="peacock">16 Target</Badge>
-                  </div>
-                  <div className="mt-4 flex items-baseline gap-2">
-                    <span className="font-display text-4xl font-bold text-ink tabular-nums">
-                      {sampleBead}
-                    </span>
-                    <span className="text-xs text-ink-muted">/ 108 beads</span>
-                  </div>
-                  <p className="mt-1 text-xs text-gold-ink font-medium">
-                    Round {sampleRounds} of 16 completed today
-                  </p>
-                  <div className="mt-3">
-                    <ProgressBar
-                      value={sampleBead}
-                      max={108}
-                      label="Bead progress in current round"
-                      tone="peacock"
-                    />
-                  </div>
+
+            {appliedFeedback && (
+              <div
+                role="status"
+                className="inline-flex items-center gap-1.5 rounded-full bg-tulsi-wash px-3.5 py-1.5 text-xs font-medium text-peacock-ink border border-peacock-green/30 animate-in fade-in"
+              >
+                <Check className="size-3.5" aria-hidden={true} />
+                <span>{appliedFeedback}</span>
+              </div>
+            )}
+          </div>
+
+          {/* RIGHT COLUMN: THE LIVE PREVIEW BOX (Where the user drew the red circle) */}
+          <div className="lg:col-span-5 lg:sticky lg:top-20">
+            <div className="overflow-hidden rounded-[20px] border-2 border-gold-antique/60 bg-paper shadow-sacred-lg transition-all duration-200">
+              {/* Preview Box Top Header */}
+              <div className="flex items-center justify-between border-b border-sandalwood-border bg-linen/80 px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <span className="relative flex size-2.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-peacock-green opacity-75" />
+                    <span className="relative inline-flex size-2.5 rounded-full bg-peacock-green" />
+                  </span>
+                  <span className="font-serif text-sm font-semibold text-ink">
+                    Live Preview Box
+                  </span>
                 </div>
-                <div className="mt-4 pt-3 border-t border-sandalwood-border/60">
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    className="w-full"
-                    onClick={handleIncrementBead}
-                  >
-                    +1 Bead (Tap to Test)
-                  </Button>
+                <div className="flex items-center gap-1.5">
+                  <Badge variant="gold" className="text-[10px]">
+                    {currentTheme.name.split(" ")[0]}
+                  </Badge>
+                  <Badge variant="neutral" className="text-[10px]">
+                    {FONT_SIZES.find((s) => s.id === activeFontSize)?.shortLabel}
+                  </Badge>
                 </div>
               </div>
 
-              {/* Mini Lakshya Daily Target & Streak Specimen */}
-              <div className="flex flex-col justify-between rounded-[12px] border border-sandalwood-border bg-linen p-4">
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-ink-muted uppercase tracking-wider">
-                      Lakshya Discipline
+              {/* Inside the Live Preview Box */}
+              <div className="space-y-4 p-5">
+                {/* Devotee Greeting */}
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-sandalwood-linen border border-gold-antique/60 font-display text-sm font-bold text-gold-ink shadow-sacred-xs">
+                      {previewName.trim().charAt(0).toUpperCase() || "D"}
                     </span>
-                    <Badge variant="gold">21-Day Vow</Badge>
-                  </div>
-                  <div className="mt-4 flex items-center gap-3">
-                    <SacredRingProgress
-                      value={sampleRounds}
-                      max={16}
-                      size={54}
-                      strokeWidth={5}
-                      label="Daily round completion ring"
-                    />
-                    <div>
-                      <p className="font-display text-xl font-bold text-ink tabular-nums">
-                        {Math.round((sampleRounds / 16) * 100)}%
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-medium text-ink-muted">Practice Sanctuary</p>
+                      <p className="font-display text-base font-bold text-ink truncate">
+                        {previewName.trim() || "Devotee"}
                       </p>
-                      <p className="text-xs text-ink-muted">Daily Target Fulfilled</p>
                     </div>
                   </div>
+                  <Badge variant="peacock">Active Vow</Badge>
                 </div>
-                <div className="mt-4 pt-3 border-t border-sandalwood-border/60">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => setSampleRounds((r) => (r >= 16 ? 0 : r + 1))}
-                  >
-                    Toggle Daily Completion
-                  </Button>
-                </div>
-              </div>
 
-              {/* Sacred Bhagavad Gita Study Quote Specimen */}
-              <div className="flex flex-col justify-between rounded-[12px] border border-sandalwood-border bg-sanctum p-4 text-ink-on-dark sm:col-span-2 lg:col-span-1">
-                <div>
+                {/* Live Chanting Mala Specimen */}
+                <div className="rounded-[14px] border border-sandalwood-border bg-ivory p-4 space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-ink-muted-dark uppercase tracking-wider">
-                      Gītā 12.8 · Śrī Bhagavān
+                    <span className="text-xs font-semibold text-ink-muted uppercase tracking-wider">
+                      Japa Practice
                     </span>
-                    <Badge variant="sanctum">Sattvic</Badge>
+                    <span className="text-xs font-bold text-gold-ink tabular-nums">
+                      Round {sampleRounds} of 16
+                    </span>
+                  </div>
+
+                  <div className="flex items-baseline justify-between">
+                    <div>
+                      <span className="font-display text-4xl font-bold text-ink tabular-nums">
+                        {sampleBead}
+                      </span>
+                      <span className="text-xs text-ink-muted ml-1">/ 108 beads</span>
+                    </div>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={handleIncrementBead}
+                      className="cursor-pointer"
+                    >
+                      +1 Bead
+                    </Button>
+                  </div>
+
+                  <ProgressBar
+                    value={sampleBead}
+                    max={108}
+                    label="Current round bead progress"
+                    tone="peacock"
+                  />
+                </div>
+
+                {/* Live Streak & Round Progress */}
+                <div className="flex items-center gap-3.5 rounded-[14px] border border-sandalwood-border bg-linen p-3.5">
+                  <SacredRingProgress
+                    value={sampleRounds}
+                    max={16}
+                    size={48}
+                    strokeWidth={4.5}
+                    label="Daily completion"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-display text-base font-bold text-ink tabular-nums">
+                      {Math.round((sampleRounds / 16) * 100)}% Fulfilled
+                    </p>
+                    <p className="text-xs text-ink-muted truncate">
+                      {sampleRounds >= 16 ? "Daily vow complete!" : `${16 - sampleRounds} rounds remaining today`}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Live Scripture Specimen (Scales with chosen font size!) */}
+                <div className="rounded-[14px] border border-sandalwood-border bg-sanctum p-4 text-ink-on-dark space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-ink-muted-dark uppercase tracking-wider">
+                      Bhagavad Gītā 12.8
+                    </span>
+                    <Badge variant="sanctum" className="text-[10px]">
+                      Sanskrit
+                    </Badge>
                   </div>
                   <p
                     lang="sa"
-                    className="mt-3 font-devanagari text-sm leading-relaxed text-gold-antique"
+                    className="font-devanagari leading-relaxed text-gold-antique"
                   >
                     मय्येव मन आधत्स्व मयि बुद्धिं निवेशय।
                   </p>
-                  <p className="mt-2 font-serif text-xs leading-relaxed text-ink-muted-dark">
+                  <p className="font-serif text-xs leading-relaxed text-ink-muted-dark">
                     &ldquo;Fix your mind on Me alone and place your intellect in Me; thereafter you will abide in Me without doubt.&rdquo;
                   </p>
+                  {previewNote.trim() && (
+                    <p className="pt-2 border-t border-white/10 text-[11px] italic text-gold-wash/90">
+                      &ldquo;{previewNote.trim()}&rdquo;
+                    </p>
+                  )}
                 </div>
-                <div className="mt-4 pt-3 border-t border-white/15 flex items-center justify-between">
-                  <span className="text-[11px] text-ink-muted-dark font-medium">
-                    Sanctum Surface Specimen
-                  </span>
+
+                {/* Live Buttons & Badges Specimen */}
+                <div className="pt-2 flex flex-wrap items-center gap-2">
+                  <Button variant="primary" size="sm" className="text-xs">
+                    Primary
+                  </Button>
+                  <Button variant="secondary" size="sm" className="text-xs">
+                    Secondary
+                  </Button>
+                  <Button variant="gold" size="sm" className="text-xs">
+                    Gold
+                  </Button>
                   <Badge variant="neutral" className="text-[10px]">
-                    Readiness
+                    Neutral
+                  </Badge>
+                  <Badge variant="kumkum" className="text-[10px]">
+                    Kumkum
                   </Badge>
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </section>
 
       <ManuscriptDivider />

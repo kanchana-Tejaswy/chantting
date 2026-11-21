@@ -187,6 +187,20 @@ html {
   overscroll-behavior-y: contain;
 }
 
+html[data-font-size="compact"] {
+  font-size: 14px;
+}
+html[data-font-size="normal"],
+html:not([data-font-size]) {
+  font-size: 16px;
+}
+html[data-font-size="large"] {
+  font-size: 18px;
+}
+html[data-font-size="serene"] {
+  font-size: 20px;
+}
+
 body {
   background-color: var(--ks-ivory);
   color: var(--ks-ink);

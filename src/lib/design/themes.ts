@@ -220,6 +220,73 @@ export function previewTheme(themeId: DevotionalThemeId): void {
   document.documentElement.setAttribute("data-theme", themeId);
 }
 
+export type DevotionalFontSize = "compact" | "normal" | "large" | "serene";
+
+export interface FontSizeOption {
+  id: DevotionalFontSize;
+  label: string;
+  shortLabel: string;
+  px: number;
+  rem: string;
+}
+
+export const FONT_SIZES: FontSizeOption[] = [
+  { id: "compact", label: "Compact (14px)", shortLabel: "14px", px: 14, rem: "0.875rem" },
+  { id: "normal", label: "Normal (16px · Default)", shortLabel: "16px · Default", px: 16, rem: "1rem" },
+  { id: "large", label: "Large (18px)", shortLabel: "18px", px: 18, rem: "1.125rem" },
+  { id: "serene", label: "Serene (20px)", shortLabel: "20px", px: 20, rem: "1.25rem" },
+];
+
+export const FONT_SIZE_STORAGE_KEY = "smaran-font-size";
+
+export function getStoredFontSize(): DevotionalFontSize {
+  if (typeof window === "undefined") return "normal";
+  try {
+    const raw = window.localStorage.getItem(FONT_SIZE_STORAGE_KEY);
+    if (raw === "compact" || raw === "normal" || raw === "large" || raw === "serene") {
+      return raw;
+    }
+  } catch {
+    // In restricted iframe or private mode
+  }
+  return "normal";
+}
+
+export function applyFontSize(size: DevotionalFontSize): void {
+  if (typeof document === "undefined") return;
+  document.documentElement.setAttribute("data-font-size", size);
+  try {
+    window.localStorage.setItem(FONT_SIZE_STORAGE_KEY, size);
+    window.dispatchEvent(
+      new CustomEvent("smaran:font-size-changed", { detail: { size } })
+    );
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+function subscribeToFontSize(callback: () => void): () => void {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener("smaran:font-size-changed", callback);
+  window.addEventListener("storage", callback);
+  return () => {
+    window.removeEventListener("smaran:font-size-changed", callback);
+    window.removeEventListener("storage", callback);
+  };
+}
+
+export function useDevotionalFontSize(): [
+  DevotionalFontSize,
+  (size: DevotionalFontSize) => void
+] {
+  const size = React.useSyncExternalStore<DevotionalFontSize>(
+    subscribeToFontSize,
+    getStoredFontSize,
+    (): DevotionalFontSize => "normal"
+  );
+  return [size, applyFontSize];
+}
+
 function subscribeToTheme(callback: () => void): () => void {
   if (typeof window === "undefined") return () => {};
   window.addEventListener("smaran:theme-changed", callback);

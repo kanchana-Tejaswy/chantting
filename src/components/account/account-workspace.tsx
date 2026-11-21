@@ -122,6 +122,15 @@ export function AccountWorkspace({
     profile.preferred_language
   );
 
+  const activeAvatarPreset = React.useMemo(() => {
+    if (!avatarUrl) return null;
+    return (
+      DEVOTIONAL_AVATARS.find(
+        (av) => avatarUrl === av.url || avatarUrl.endsWith(av.url)
+      ) ?? null
+    );
+  }, [avatarUrl]);
+
   // Password Update fields
   const [password, setPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
@@ -681,20 +690,25 @@ export function AccountWorkspace({
                         Select a sacred motif or paste an HTTPS image URL:
                       </p>
                       <div className="flex flex-wrap gap-1.5">
-                        {DEVOTIONAL_AVATARS.map((av) => (
-                          <button
-                            key={av.name}
-                            type="button"
-                            onClick={() => setAvatarUrl(av.url)}
-                            className={`cursor-pointer rounded-full border px-2.5 py-1 text-xs transition-colors ${
-                              avatarUrl === av.url || (Boolean(avatarUrl) && avatarUrl.endsWith(av.url))
-                                ? "border-gold-antique bg-gold-wash font-medium text-ink"
-                                : "border-sandalwood-border bg-paper text-ink-muted hover:border-gold-border"
-                            }`}
-                          >
-                            {av.name}
-                          </button>
-                        ))}
+                        {DEVOTIONAL_AVATARS.map((av) => {
+                          const isSelected =
+                            avatarUrl === av.url ||
+                            (Boolean(avatarUrl) && avatarUrl.endsWith(av.url));
+                          return (
+                            <button
+                              key={av.name}
+                              type="button"
+                              onClick={() => setAvatarUrl(av.url)}
+                              className={`cursor-pointer rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                                isSelected
+                                  ? "border-gold-antique bg-gold-wash font-medium text-ink"
+                                  : "border-sandalwood-border bg-paper text-ink-muted hover:border-gold-border"
+                              }`}
+                            >
+                              {av.name}
+                            </button>
+                          );
+                        })}
                         {avatarUrl && (
                           <button
                             type="button"
@@ -710,14 +724,22 @@ export function AccountWorkspace({
                   <FormField
                     id="acc-avatar"
                     label="Custom Image URL (Optional)"
-                    hint="Enter an HTTPS image URL or select a sacred motif above."
+                    hint={
+                      activeAvatarPreset
+                        ? `Active motif: ${activeAvatarPreset.name}. Paste an HTTPS URL only if you wish to override.`
+                        : "Must begin with https:// and point to a secure image."
+                    }
                   >
                     <Input
                       id="acc-avatar"
                       type="text"
-                      value={avatarUrl}
+                      value={activeAvatarPreset ? "" : avatarUrl}
                       onChange={(e) => setAvatarUrl(e.target.value)}
-                      placeholder="https://example.com/avatar.jpg or /media/avatars/..."
+                      placeholder={
+                        activeAvatarPreset
+                          ? `Using sacred motif: ${activeAvatarPreset.name}`
+                          : "https://example.com/avatar.jpg"
+                      }
                     />
                   </FormField>
                 </div>

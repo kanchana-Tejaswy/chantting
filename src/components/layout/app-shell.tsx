@@ -9,6 +9,7 @@ import {
   Flame,
   LogOut,
   Palette,
+  Settings,
   Target,
   User,
   Users,
@@ -268,22 +269,33 @@ export function AppShell({
         <div className="border-t border-sandalwood-border/60 px-5 py-4 text-xs leading-relaxed text-ink/75">
           <div className="mb-3 space-y-1">
             {userSummary && (
-              <Link
-                href="/account"
-                className="flex items-center gap-2 rounded-[8px] px-2 py-1.5 text-xs font-medium text-ink transition-colors hover:bg-white/55"
-              >
-                {userSummary.avatarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={userSummary.avatarUrl}
-                    alt=""
-                    className="size-4 shrink-0 rounded-full object-cover border border-gold-antique/50"
-                  />
-                ) : (
-                  <User className="size-3.5" aria-hidden={true} />
-                )}
-                <span>Account, Privacy &amp; Inbox</span>
-              </Link>
+              <>
+                <Link
+                  href="/account"
+                  className="flex items-center gap-2 rounded-[8px] px-2 py-1.5 text-xs font-medium text-ink transition-colors hover:bg-white/55"
+                >
+                  {userSummary.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={userSummary.avatarUrl}
+                      alt=""
+                      className="size-4 shrink-0 rounded-full object-cover border border-gold-antique/50"
+                    />
+                  ) : (
+                    <User className="size-3.5" aria-hidden={true} />
+                  )}
+                  <span>Account, Privacy &amp; Inbox</span>
+                </Link>
+                <form action={signOutAction}>
+                  <button
+                    type="submit"
+                    className="flex w-full cursor-pointer items-center gap-2 rounded-[8px] px-2 py-1.5 text-xs font-medium text-ink-muted transition-colors hover:bg-white/55 hover:text-kumkum"
+                  >
+                    <LogOut className="size-3.5" aria-hidden={true} />
+                    <span>Sign out</span>
+                  </button>
+                </form>
+              </>
             )}
             <Link
               href="/design-system"
@@ -370,19 +382,19 @@ export function AppShell({
                   )}
                   <span className="truncate">{userSummary.displayName}</span>
                 </Link>
-                <form action={signOutAction}>
-                  <button
-                    type="submit"
-                    className="inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-full border border-sandalwood-border bg-paper px-3 text-xs font-medium text-ink transition-colors duration-150 hover:bg-linen"
-                  >
-                    <LogOut
-                      className="size-3.5"
-                      strokeWidth={1.75}
-                      aria-hidden={true}
-                    />
-                    <span>Sign out</span>
-                  </button>
-                </form>
+                <Link
+                  href="/account"
+                  className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-sandalwood-border bg-paper px-3 text-xs font-medium text-ink transition-colors duration-150 hover:bg-linen hover:border-gold-antique/50"
+                  title="Settings & Privacy"
+                  aria-label="Settings & Privacy"
+                >
+                  <Settings
+                    className="size-3.5 text-peacock-deep"
+                    strokeWidth={1.75}
+                    aria-hidden={true}
+                  />
+                  <span>Settings</span>
+                </Link>
               </>
             ) : !pathname?.startsWith("/auth") ? (
               <Link

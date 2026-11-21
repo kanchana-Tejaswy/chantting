@@ -54,13 +54,13 @@ function getCellClass(status: HeatmapCellStatus): string {
     case "missing_data":
       return "border border-dashed border-sandalwood-strong/60 bg-transparent hover:border-gold-antique hover:bg-gold-wash/40";
     case "zero_activity":
-      return "border border-sandalwood-strong bg-linen hover:border-krishna-midnight hover:scale-110";
+      return "border border-[#A89F91] bg-[#DFD9CE] hover:border-krishna-midnight hover:scale-110 shadow-2xs";
     case "partial_low":
-      return "border border-gold-border/60 bg-gold-wash hover:border-gold-antique hover:scale-110 shadow-2xs";
+      return "border border-[#F59E0B] bg-[#FEF08A] hover:border-[#D97706] hover:scale-110 shadow-2xs";
     case "partial_medium":
-      return "border border-gold-border bg-gold-antique/50 hover:border-gold-antique hover:scale-110 shadow-2xs";
+      return "border border-[#D97706] bg-[#FBBF24] hover:border-[#B45309] hover:scale-110 shadow-2xs";
     case "partial_high":
-      return "border border-gold-border bg-gold-antique/80 hover:border-gold-antique hover:scale-110 shadow-2xs";
+      return "border border-[#B45309] bg-[#F59E0B] hover:border-krishna-midnight hover:scale-110 shadow-2xs";
     case "target_met":
       return "border border-peacock-ink bg-peacock-green hover:border-krishna-midnight hover:scale-110 shadow-xs";
   }
@@ -359,23 +359,23 @@ export function ConsistencyHeatmap({
                     </div>
 
                     <div className="flex items-center gap-2.5 rounded-xl border border-sandalwood-border/60 bg-paper p-2.5 shadow-2xs">
-                      <span className="flex size-4 items-center justify-center rounded-[4px] border border-sandalwood-strong bg-linen shrink-0">
-                        <span className="size-1 rounded-full bg-sandalwood-strong" />
+                      <span className="flex size-4 items-center justify-center rounded-[4px] border border-[#A89F91] bg-[#DFD9CE] shrink-0">
+                        <span className="h-[2px] w-2 rounded-full bg-[#6B6357]" />
                       </span>
                       <div>
-                        <span className="block font-semibold text-ink">2. Rest Day (0 Rounds)</span>
+                        <span className="block font-semibold text-ink">2. Rest Day (0 rounds recorded)</span>
                         <span className="text-[11px] text-ink-muted leading-tight block">
-                          Day was opened but 0 rounds completed.
+                          Muted ash-stone tile with dash · 0 rounds logged.
                         </span>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2.5 rounded-xl border border-gold-border/80 bg-paper p-2.5 shadow-2xs">
-                      <span className="size-4 rounded-[4px] border border-gold-border bg-gold-antique/60 shrink-0" />
+                      <span className="size-4 rounded-[4px] border border-[#D97706] bg-[#FBBF24] shadow-2xs shrink-0" />
                       <div>
-                        <span className="block font-semibold text-ink">3. Chanting Active</span>
+                        <span className="block font-semibold text-amber-900">3. Partial intensity (Active)</span>
                         <span className="text-[11px] text-ink-muted leading-tight block">
-                          Chanted rounds (deeper gold = more rounds).
+                          Radiant saffron gold · Chanted 1+ rounds!
                         </span>
                       </div>
                     </div>
@@ -458,14 +458,20 @@ export function ConsistencyHeatmap({
                   ) : hoveredCell.status === "missing_data" ? (
                     <span className="text-ink-muted">No chanting record</span>
                   ) : hoveredCell.status === "zero_activity" ? (
-                    <span className="text-ink-muted">Rest day (0 rounds)</span>
+                    <span className="text-ink-muted flex items-center gap-1.5 font-medium">
+                      <span className="inline-flex size-3 items-center justify-center rounded-[2px] border border-[#A89F91] bg-[#DFD9CE]">
+                        <span className="h-[2px] w-1.5 rounded-full bg-[#6B6357]" />
+                      </span>
+                      <span>Rest Day (0 rounds recorded)</span>
+                    </span>
                   ) : hoveredCell.targetMet ? (
                     <span className="font-semibold text-peacock-green">
                       🌸 Target Met ({hoveredCell.completedRounds} / {hoveredCell.effectiveTarget} rounds)
                     </span>
                   ) : (
-                    <span className="font-medium text-gold-ink">
-                      {hoveredCell.completedRounds} of {hoveredCell.effectiveTarget} rounds
+                    <span className="font-medium text-amber-900 flex items-center gap-1.5">
+                      <span className="inline-block size-3 rounded-[2px] border border-[#D97706] bg-[#FBBF24]" />
+                      <span>Partial activity: {hoveredCell.completedRounds} of {hoveredCell.effectiveTarget} rounds</span>
                     </span>
                   )}
                 </div>
@@ -574,7 +580,7 @@ export function ConsistencyHeatmap({
                               {cell.status === "zero_activity" && (
                                 <span
                                   aria-hidden="true"
-                                  className="size-1 rounded-full bg-sandalwood-strong"
+                                  className="h-[2px] w-1.5 rounded-full bg-[#6B6357]"
                                 />
                               )}
                               {cell.status === "target_met" && (
@@ -608,17 +614,19 @@ export function ConsistencyHeatmap({
               </span>
 
               <span className="inline-flex items-center gap-1.5" title="Day was opened but 0 rounds were completed">
-                <span className="inline-flex size-3.5 items-center justify-center rounded-[3px] border border-sandalwood-strong bg-linen">
-                  <span className="size-1 rounded-full bg-sandalwood-strong" />
+                <span className="inline-flex size-3.5 items-center justify-center rounded-[3px] border border-[#A89F91] bg-[#DFD9CE] shadow-2xs">
+                  <span className="h-[2px] w-1.5 rounded-full bg-[#6B6357]" />
                 </span>
-                <span>0 rounds recorded</span>
+                <span className="font-medium text-ink">0 rounds recorded</span>
+                <span className="text-[11px] text-ink-muted">(Rest day)</span>
               </span>
 
               <span className="inline-flex items-center gap-1.5" title="Chanted rounds toward daily goal">
-                <span className="inline-block size-3.5 rounded-[3px] border border-gold-border/40 bg-gold-wash" />
-                <span className="inline-block size-3.5 rounded-[3px] border border-gold-border/60 bg-gold-antique/45" />
-                <span className="inline-block size-3.5 rounded-[3px] border border-gold-border bg-gold-antique/75" />
-                <span>Partial intensity</span>
+                <span className="inline-block size-3.5 rounded-[3px] border border-[#F59E0B] bg-[#FEF08A] shadow-2xs" />
+                <span className="inline-block size-3.5 rounded-[3px] border border-[#D97706] bg-[#FBBF24] shadow-2xs" />
+                <span className="inline-block size-3.5 rounded-[3px] border border-[#B45309] bg-[#F59E0B] shadow-2xs" />
+                <span className="font-semibold text-amber-900">Partial intensity</span>
+                <span className="text-[11px] text-amber-800/80">(1+ rounds active)</span>
               </span>
 
               <span className="inline-flex items-center gap-1.5" title="Daily round commitment fully achieved">

@@ -70,4 +70,7 @@ export interface ChantWorkspacePayload {
   mantraStats?: MantraHistoricalStat[];
   reminders?: ChantingReminderRecord[];
   recentNotes?: SessionNoteRecord[];
+  currentStreak?: number;
+  longestStreak?: number;
+  lifetimeRounds?: number;
 }

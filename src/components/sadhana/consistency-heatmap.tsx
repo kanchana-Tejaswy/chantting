@@ -73,6 +73,7 @@ export interface ConsistencyHeatmapProps {
   todayDate: string;
   weeks: HeatmapWeekColumn[];
   initialDayDetail: SadhanaDayDetailPayload;
+  baseHref?: string;
 }
 
 export function ConsistencyHeatmap({
@@ -81,6 +82,7 @@ export function ConsistencyHeatmap({
   todayDate,
   weeks,
   initialDayDetail,
+  baseHref = "/sadhana/analytics",
 }: ConsistencyHeatmapProps) {
   const [selectedDate, setSelectedDate] = React.useState(initialDayDetail.date);
   const [detail, setDetail] =
@@ -151,7 +153,7 @@ export function ConsistencyHeatmap({
 
           <div className="flex items-center gap-2">
             <Link
-              href={`/sadhana/analytics?year=${selectedYear - 1}`}
+              href={`${baseHref}?year=${selectedYear - 1}`}
               aria-label={`View year ${selectedYear - 1}`}
               className={buttonStyles({ variant: "secondary", size: "sm" })}
             >
@@ -165,7 +167,7 @@ export function ConsistencyHeatmap({
 
             {selectedYear < currentYear ? (
               <Link
-                href={`/sadhana/analytics?year=${selectedYear + 1}`}
+                href={`${baseHref}?year=${selectedYear + 1}`}
                 aria-label={`View year ${selectedYear + 1}`}
                 className={buttonStyles({ variant: "secondary", size: "sm" })}
               >

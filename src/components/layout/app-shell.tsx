@@ -156,6 +156,7 @@ export function AppShell({
   reducedMotion = false,
 }: AppShellProps) {
   const pathname = usePathname();
+  const homeHref = userSummary ? "/sadhana" : "/";
 
   return (
     <div
@@ -186,8 +187,8 @@ export function AppShell({
           </div>
           <div className="min-w-0">
             <Link
-              href="/drsti"
-              className="block truncate font-display text-lg font-semibold tracking-wide text-ink"
+              href={homeHref}
+              className="block truncate font-display text-lg font-semibold tracking-wide text-ink hover:text-peacock-deep transition-colors"
             >
               SMARAN{" "}
               <span className="font-devanagari text-sm font-normal text-ink/75">
@@ -293,16 +294,19 @@ export function AppShell({
       <div className="flex min-h-dvh flex-col pb-20 lg:pb-0 lg:pl-64">
         <header className="sticky top-0 z-20 flex min-h-14 items-center justify-between border-b border-sandalwood-border/60 bg-ivory/72 px-4 backdrop-blur-xl backdrop-saturate-150 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2.5 lg:hidden">
-            <span className="flex size-8 items-center justify-center rounded-[8px] bg-krishna-midnight text-gold-antique">
-              <LotusEmblem size={18} />
-            </span>
             <Link
-              href="/"
-              className="font-display text-base font-semibold text-ink"
+              href={homeHref}
+              className="flex items-center gap-2.5 text-ink hover:text-peacock-deep transition-colors"
+              aria-label="SMARAN Home"
             >
-              SMARAN{" "}
-              <span className="font-devanagari text-xs font-normal text-ink-muted">
-                स्मरण
+              <span className="flex size-8 items-center justify-center rounded-[8px] bg-krishna-midnight text-gold-antique">
+                <LotusEmblem size={18} />
+              </span>
+              <span className="font-display text-base font-semibold">
+                SMARAN{" "}
+                <span className="font-devanagari text-xs font-normal text-ink-muted">
+                  स्मरण
+                </span>
               </span>
             </Link>
           </div>

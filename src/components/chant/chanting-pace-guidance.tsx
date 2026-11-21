@@ -3,7 +3,6 @@
 import * as React from "react";
 import { Gauge, Play, Square, Volume2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { ambientAudio } from "@/lib/chant/ambient-audio";
 
 interface ChantingPaceGuidanceProps {
@@ -170,7 +169,7 @@ export function ChantingPaceGuidance({
                   background: `linear-gradient(to right, #7A2638 0%, #7A2638 ${speedPercent}%, #E7DFD3 ${speedPercent}%, #E7DFD3 100%)`,
                 }}
                 aria-label="Cadence speed in seconds per bead"
-                className="h-2 w-full appearance-none rounded-full cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-peacock-deep/30 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:size-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-peacock-deep [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-paper [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:active:scale-110 [&::-moz-range-thumb]:size-5 [&::-moz-range-thumb]:border-none [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-peacock-deep [&::-moz-range-thumb]:shadow-md [&::-moz-range-thumb]:transition-transform [&::-moz-range-thumb]:active:scale-110"
+                className="sacred-slider focus:ring-2 focus:ring-peacock-deep/30"
               />
             </div>
 
@@ -208,7 +207,7 @@ export function ChantingPaceGuidance({
                   background: `linear-gradient(to right, #7A2638 0%, #7A2638 ${volumePercent}%, #E7DFD3 ${volumePercent}%, #E7DFD3 100%)`,
                 }}
                 aria-label="Tick volume percentage"
-                className="h-2 w-full appearance-none rounded-full cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-peacock-deep/30 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:size-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-peacock-deep [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-paper [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:active:scale-110 [&::-moz-range-thumb]:size-5 [&::-moz-range-thumb]:border-none [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-peacock-deep [&::-moz-range-thumb]:shadow-md [&::-moz-range-thumb]:transition-transform [&::-moz-range-thumb]:active:scale-110"
+                className="sacred-slider focus:ring-2 focus:ring-peacock-deep/30"
               />
             </div>
           </div>

@@ -1,5 +1,7 @@
 import type { DailySadhana } from "@/lib/domain/sadhana";
-import { shiftIsoDate } from "./stats";
+import { computeCurrentStreak, computeLongestStreak } from "./stats";
+
+export { computeLongestStreak };
 
 export type HeatmapCellStatus =
   | "future"
@@ -166,52 +168,6 @@ function classifyDayStatus(params: {
   return "partial_low";
 }
 
-function computeLongestStreak(rows: DailySadhana[]): number {
-  const metDates = Array.from(
-    new Set(
-      rows
-        .filter((r) => r.completed_rounds >= r.effective_daily_target)
-        .map((r) => r.sadhana_date)
-    )
-  ).sort();
-
-  let best = 0;
-  let current = 0;
-  let prevDate: string | null = null;
-
-  for (const date of metDates) {
-    if (prevDate && shiftIsoDate(prevDate, 1) === date) {
-      current += 1;
-    } else {
-      current = 1;
-    }
-    if (current > best) best = current;
-    prevDate = date;
-  }
-
-  return best;
-}
-
-function computeCurrentStreakFromMap(
-  byDate: Map<string, DailySadhana>,
-  todayDate: string
-): number {
-  const todayRow = byDate.get(todayDate);
-  const todayMet =
-    Boolean(todayRow) &&
-    todayRow!.completed_rounds >= todayRow!.effective_daily_target;
-
-  let cursor = todayMet ? todayDate : shiftIsoDate(todayDate, -1);
-  let streak = 0;
-  while (true) {
-    const row = byDate.get(cursor);
-    if (!row || row.completed_rounds < row.effective_daily_target) break;
-    streak += 1;
-    cursor = shiftIsoDate(cursor, -1);
-  }
-  return streak;
-}
-
 function isLeapYear(year: number): boolean {
   return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
 }
@@ -296,7 +252,7 @@ export function buildSadhanaAnalytics(params: {
       ? Number((lifetimeRounds / totalChantingDays).toFixed(1))
       : 0;
 
-  const currentStreak = computeCurrentStreakFromMap(byDate, todayDate);
+  const currentStreak = computeCurrentStreak(uniqueRows, todayDate);
   const longestStreak = computeLongestStreak(uniqueRows);
 
   const bestPersonalDay = findBestDay(uniqueRows);

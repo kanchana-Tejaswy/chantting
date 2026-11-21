@@ -172,7 +172,7 @@ export function DrishtiAmbientMode({
                 background: `linear-gradient(to right, #7A2638 0%, #7A2638 ${Math.round(((volume - 0.05) / 0.95) * 100)}%, #E7DFD3 ${Math.round(((volume - 0.05) / 0.95) * 100)}%, #E7DFD3 100%)`,
               }}
               aria-label="Tanpura Drone Volume"
-              className="h-2 w-full appearance-none rounded-full cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-peacock-deep/30 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:size-4.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-peacock-deep [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-paper [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-thumb]:size-4.5 [&::-moz-range-thumb]:border-none [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-peacock-deep [&::-moz-range-thumb]:shadow-md"
+              className="sacred-slider focus:ring-2 focus:ring-peacock-deep/30"
             />
           </div>
 

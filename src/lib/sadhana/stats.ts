@@ -32,6 +32,7 @@ export interface PersonalDashboardMetrics {
   extraRounds: number;
   completionPercentage: number;
   currentStreak: number;
+  longestStreak?: number;
   lifetimeRounds: number;
   recordedDays: number;
   targetMetDays: number;
@@ -120,6 +121,40 @@ export function computeCurrentStreak(
 }
 
 /**
+ * Computes the longest all-time consecutive streak meeting effective_daily_target.
+ */
+export function computeLongestStreak(
+  rows: Pick<
+    DailySadhana,
+    "sadhana_date" | "completed_rounds" | "effective_daily_target"
+  >[]
+): number {
+  const metDates = Array.from(
+    new Set(
+      rows
+        .filter((r) => r.completed_rounds >= r.effective_daily_target)
+        .map((r) => r.sadhana_date)
+    )
+  ).sort();
+
+  let best = 0;
+  let current = 0;
+  let prevDate: string | null = null;
+
+  for (const date of metDates) {
+    if (prevDate && shiftIsoDate(prevDate, 1) === date) {
+      current += 1;
+    } else {
+      current = 1;
+    }
+    if (current > best) best = current;
+    prevDate = date;
+  }
+
+  return best;
+}
+
+/**
  * Aggregates Module A personal dashboard metrics strictly from recorded Sadhana rows.
  */
 export function computePersonalDashboardMetrics(params: {
@@ -196,6 +231,7 @@ export function computePersonalDashboardMetrics(params: {
   );
 
   const currentStreak = computeCurrentStreak(sortedRows, todayDate);
+  const longestStreak = computeLongestStreak(sortedRows);
 
   const recentDays: HistoricalDaySummary[] = sortedRows
     .slice(0, 7)
@@ -220,6 +256,7 @@ export function computePersonalDashboardMetrics(params: {
     extraRounds: today.extra_rounds,
     completionPercentage,
     currentStreak,
+    longestStreak,
     lifetimeRounds,
     recordedDays,
     targetMetDays,

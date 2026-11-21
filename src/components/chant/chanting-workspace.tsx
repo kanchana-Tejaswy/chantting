@@ -1412,6 +1412,9 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
         todaySessions={todaySessions}
         todayRecords={todayRecords}
         mantraStats={mantraStats}
+        currentStreak={initialData.currentStreak ?? 0}
+        longestStreak={initialData.longestStreak ?? 0}
+        lifetimeRounds={initialData.lifetimeRounds}
       />
 
       {/* Chanting Reminders Modal */}

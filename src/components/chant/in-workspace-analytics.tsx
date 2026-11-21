@@ -34,8 +34,8 @@ export function InWorkspaceAnalytics({
   todaySessions,
   todayRecords,
   mantraStats,
-  currentStreak = 1,
-  longestStreak = 1,
+  currentStreak = 0,
+  longestStreak = 0,
   lifetimeRounds,
 }: InWorkspaceAnalyticsProps) {
   if (!isOpen) return null;

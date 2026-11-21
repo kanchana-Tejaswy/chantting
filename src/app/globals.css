@@ -192,6 +192,89 @@ a,
   animation: ks-login-panel-enter 520ms var(--ease-sanctum-out) 90ms both;
 }
 
+/* World-Class Devotional Landing Page Motion & Elevation */
+@keyframes ks-hero-fade-in-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 16px, 0) scale(0.99);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0px);
+  }
+}
+
+@keyframes ks-float-slow {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -6px, 0);
+  }
+}
+
+@keyframes ks-sacred-glow {
+  0%, 100% {
+    opacity: 0.16;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    opacity: 0.28;
+    transform: translate3d(0, 0, 0) scale(1.06);
+  }
+}
+
+@keyframes ks-sacred-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(158, 54, 76, 0.45);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.08);
+    box-shadow: 0 0 8px 3px rgba(158, 54, 76, 0.3);
+  }
+}
+
+@keyframes ks-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-hero-fade-in {
+  animation: ks-hero-fade-in-up 640ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: transform, opacity, filter;
+}
+
+.animate-float-slow {
+  animation: ks-float-slow 7s ease-in-out infinite;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.animate-sacred-glow {
+  animation: ks-sacred-glow 8s ease-in-out infinite;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}
+
+.animate-sacred-pulse {
+  animation: ks-sacred-pulse 4s ease-in-out infinite;
+  will-change: transform, box-shadow;
+}
+
+.animate-shimmer {
+  background-size: 200% 100%;
+  animation: ks-shimmer 3s ease-in-out infinite;
+}
+
 /* Luminous hover glow for pointer-capable devices (never sticks on touch screens) */
 @media (hover: hover) and (pointer: fine) {
   .ks-glow-primary:hover,
@@ -280,6 +363,63 @@ a,
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Custom Sacred Form Controls & Sliders — Universal Padmaraga accent */
+input[type="range"] {
+  accent-color: #7a2638;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: #7a2638;
+}
+
+.sacred-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 9999px;
+  cursor: pointer;
+  outline: none;
+}
+
+.sacred-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #7a2638;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s ease;
+  cursor: pointer;
+}
+
+.sacred-slider::-webkit-slider-thumb:active {
+  transform: scale(1.15);
+}
+
+.sacred-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #7a2638;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s ease;
+  cursor: pointer;
+}
+
+.sacred-slider::-moz-range-thumb:active {
+  transform: scale(1.15);
+}
+
+.sacred-slider::-moz-range-track {
+  background: transparent;
+  border: none;
 }
 
 [data-reduced-motion="true"] *,

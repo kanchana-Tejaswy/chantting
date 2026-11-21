@@ -625,8 +625,6 @@ export function SankalpaSection({
     }
   };
 
-  const pastSankalpas = sankalpas.filter((s) => s.id !== activeSankalpa?.id);
-
   return (
     <section aria-labelledby="sankalpa-section-heading" className="space-y-5">
       {/* Action Success Toast Banner */}

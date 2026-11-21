@@ -36,7 +36,7 @@ export interface AnalyticsViewProps {
   initialDayDetail: SadhanaDayDetailPayload;
 }
 
-function DailyTrendChart({
+export function DailyTrendChart({
   dailyTrends,
   monthLabel,
   year,
@@ -205,7 +205,7 @@ function DailyTrendChart({
   );
 }
 
-function MonthlyTrendChart({
+export function MonthlyTrendChart({
   monthlyTrends,
   selectedMonth,
   year,

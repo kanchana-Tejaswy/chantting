@@ -54,6 +54,24 @@ async function getRequestOrigin(): Promise<string> {
     }
   }
 
+  // Auto-detect Vercel deployment URLs if NEXT_PUBLIC_SITE_URL is not explicitly configured
+  const vercelEnvUrl =
+    process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim() ||
+    process.env.VERCEL_URL?.trim();
+  if (vercelEnvUrl) {
+    const candidate = vercelEnvUrl.startsWith("http")
+      ? vercelEnvUrl
+      : `https://${vercelEnvUrl}`;
+    try {
+      const parsed = new URL(candidate);
+      if (parsed.protocol === "https:" || parsed.protocol === "http:") {
+        return parsed.origin;
+      }
+    } catch {
+      // Fall through to request headers
+    }
+  }
+
   const headerStore = await headers();
   const rawHost =
     headerStore.get("x-forwarded-host") ??
@@ -66,11 +84,6 @@ async function getRequestOrigin(): Promise<string> {
     hostname === "localhost" ||
     hostname === "127.0.0.1" ||
     hostname === "[::1]";
-  const isTrustedPreview = hostname.endsWith(".vercel.app");
-
-  if (!isLocalHost && !isTrustedPreview) {
-    return "http://localhost:3000";
-  }
 
   const rawProto = headerStore.get("x-forwarded-proto") ?? (isLocalHost ? "http" : "https");
   const proto = rawProto === "https" ? "https" : "http";

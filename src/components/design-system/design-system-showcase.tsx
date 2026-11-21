@@ -4,7 +4,6 @@ import * as React from "react";
 import {
   Check,
   Info,
-  Palette,
   RotateCcw,
   ShieldAlert,
   Sparkles,
@@ -14,9 +13,7 @@ import {
   DEVOTIONAL_THEMES,
   FONT_SIZES,
   useDevotionalFontSize,
-  useDevotionalTheme,
   type DevotionalFontSize,
-  type DevotionalThemeId,
 } from "@/lib/design/themes";
 import { ManuscriptDivider } from "@/components/sacred/ornaments";
 import { Badge } from "@/components/ui/badge";
@@ -43,7 +40,6 @@ import { ProgressBar, SacredRingProgress } from "@/components/ui/progress";
 import { SwitchField } from "@/components/ui/switch";
 
 export function DesignSystemShowcase() {
-  const [activeTheme, setActiveTheme] = useDevotionalTheme();
   const [activeFontSize, setActiveFontSize] = useDevotionalFontSize();
   const [appliedFeedback, setAppliedFeedback] = React.useState<string | null>(null);
 
@@ -63,13 +59,6 @@ export function DesignSystemShowcase() {
   const [sampleBead, setSampleBead] = React.useState(72);
   const [sampleRounds, setSampleRounds] = React.useState(12);
 
-  const handleSelectTheme = (themeId: DevotionalThemeId) => {
-    setActiveTheme(themeId);
-    const found = DEVOTIONAL_THEMES.find((t) => t.id === themeId);
-    setAppliedFeedback(`Theme set to ${found?.name ?? themeId}`);
-    setTimeout(() => setAppliedFeedback(null), 3500);
-  };
-
   const handleSelectFontSize = (sizeId: DevotionalFontSize) => {
     setActiveFontSize(sizeId);
     const found = FONT_SIZES.find((s) => s.id === sizeId);
@@ -78,9 +67,8 @@ export function DesignSystemShowcase() {
   };
 
   const handleResetToDefault = () => {
-    setActiveTheme("vrindavan-ivory");
     setActiveFontSize("normal");
-    setAppliedFeedback("Reset to default Vrindavan Ivory theme & standard typography.");
+    setAppliedFeedback("Reset to default typography scale (16px).");
     setTimeout(() => setAppliedFeedback(null), 3500);
   };
 
@@ -93,8 +81,7 @@ export function DesignSystemShowcase() {
     }
   };
 
-  const currentTheme =
-    DEVOTIONAL_THEMES.find((t) => t.id === activeTheme) ?? DEVOTIONAL_THEMES[0]!;
+  const currentTheme = DEVOTIONAL_THEMES[0]!;
 
   const nameError =
     nameInput.length > 0 && nameInput.trim().length < 2
@@ -106,98 +93,23 @@ export function DesignSystemShowcase() {
       {/* Top Hero Section: Side-by-Side Controls (Left) & Live Preview Box (Right) */}
       <section aria-labelledby="theme-studio-heading" className="space-y-6">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-start">
-          {/* LEFT COLUMN: Controls, 4 Themes & Font Size Options */}
+          {/* LEFT COLUMN: Controls, Text Font Size Option & Live Inputs */}
           <div className="space-y-6 lg:col-span-7">
             <div>
               <div className="flex items-center gap-2">
-                <Badge variant="gold">Phase 2 Design System</Badge>
-                {activeTheme !== "vrindavan-ivory" && (
-                  <Badge variant="neutral">Customized Theme</Badge>
-                )}
+                <Badge variant="gold">Canonical Design System</Badge>
+                <Badge variant="peacock">{currentTheme.tag}</Badge>
               </div>
               <h1 className="mt-3 font-display text-3xl font-semibold text-ink text-balance sm:text-5xl">
                 {currentTheme.name}
               </h1>
-              <p className="mt-1 font-devanagari text-base text-gold-ink font-normal">
+              <p className="mt-1 font-devanagari text-base text-peacock-deep font-normal">
                 {currentTheme.hindi}
               </p>
               <p className="mt-2 text-sm leading-relaxed text-ink-muted text-pretty">
-                Canonical color tokens, Sanskrit-capable typography, elevation surfaces,
-                and accessible interactive primitives shared across SMARAN (स्मरण).
+                {currentTheme.description} Meticulously calibrated to exceed WCAG AA contrast (≥ 4.5:1)
+                across all surfaces and inks for SMARAN (स्मरण).
               </p>
-            </div>
-
-            {/* Simple 4 Default Themes Selector */}
-            <div className="space-y-3 rounded-[16px] border border-sandalwood-border bg-paper p-5 shadow-sacred-sm">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Palette className="size-4 text-peacock-deep" aria-hidden={true} />
-                  <span className="text-sm font-semibold text-ink">
-                    Select Devotional Theme (4 Defaults)
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleResetToDefault}
-                  className="inline-flex cursor-pointer items-center gap-1 text-xs font-medium text-ink-muted hover:text-peacock-deep transition-colors"
-                  title="Reset to default theme & typography"
-                >
-                  <RotateCcw className="size-3" aria-hidden={true} />
-                  <span>Reset Default</span>
-                </button>
-              </div>
-
-              {/* Clean 4 Theme Grid */}
-              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-2">
-                {DEVOTIONAL_THEMES.map((theme) => {
-                  const isSelected = activeTheme === theme.id;
-                  const isDefault = theme.id === "vrindavan-ivory";
-                  return (
-                    <button
-                      key={theme.id}
-                      type="button"
-                      onClick={() => handleSelectTheme(theme.id)}
-                      className={`flex flex-col text-left p-3 rounded-[12px] border transition-all cursor-pointer ${
-                        isSelected
-                          ? "border-gold-antique bg-gold-wash/60 ring-2 ring-gold-antique/40 shadow-sacred-xs"
-                          : "border-sandalwood-border bg-paper hover:border-gold-antique/50 hover:bg-linen"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-1">
-                        <div className="flex items-center gap-1.5">
-                          <span
-                            className="size-3 rounded-full border border-black/10 shadow-xs shrink-0"
-                            style={{ backgroundColor: theme.previewColors[1] }}
-                          />
-                          <span className="text-xs font-bold text-ink truncate">
-                            {theme.name.split(" ")[0]} {theme.name.split(" ")[1] ?? ""}
-                          </span>
-                        </div>
-                        {isSelected && (
-                          <Check className="size-3.5 text-gold-ink shrink-0" aria-hidden={true} />
-                        )}
-                      </div>
-
-                      <div className="mt-1 flex items-center gap-1.5">
-                        <span className="text-[11px] text-ink-muted">
-                          {isDefault ? "Default Sattvic" : theme.tag}
-                        </span>
-                      </div>
-
-                      {/* Micro Palette Ribbon */}
-                      <div className="mt-2.5 flex h-2 w-full overflow-hidden rounded-full border border-sandalwood-border/50">
-                        {theme.previewColors.slice(0, 5).map((color, i) => (
-                          <div
-                            key={i}
-                            className="flex-1 h-full"
-                            style={{ backgroundColor: color }}
-                          />
-                        ))}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
             </div>
 
             {/* Text Font Size Option */}
@@ -209,9 +121,20 @@ export function DesignSystemShowcase() {
                     Text Font Size Option
                   </span>
                 </div>
-                <span className="text-xs font-medium text-ink-muted">
-                  Active: {FONT_SIZES.find((s) => s.id === activeFontSize)?.shortLabel}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-medium text-ink-muted">
+                    Active: {FONT_SIZES.find((s) => s.id === activeFontSize)?.shortLabel}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleResetToDefault}
+                    className="inline-flex cursor-pointer items-center gap-1 text-xs font-medium text-ink-muted hover:text-peacock-deep transition-colors"
+                    title="Reset to default typography scale"
+                  >
+                    <RotateCcw className="size-3" aria-hidden={true} />
+                    <span>Reset</span>
+                  </button>
+                </div>
               </div>
 
               {/* Font Size Pills */}
@@ -291,8 +214,9 @@ export function DesignSystemShowcase() {
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <Badge variant="gold" className="text-[10px]">
-                    {currentTheme.name.split(" ")[0]}
+                  <Badge variant="gold" className="text-[10px] flex items-center gap-1">
+                    <span className="size-2 rounded-full bg-[#7A2638] shrink-0" />
+                    <span>Padmaraga Lotus</span>
                   </Badge>
                   <Badge variant="neutral" className="text-[10px]">
                     {FONT_SIZES.find((s) => s.id === activeFontSize)?.shortLabel}

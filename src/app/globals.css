@@ -1,35 +1,35 @@
 @import "tailwindcss";
 
 :root {
-  /* Core Surfaces & Inks — Canonical Vrindavan Dusk & Manuscript Ivory */
-  /* Canonical Phase 2 tokens: #0c152b #faf6ec #c79a3b */
-  --ks-ivory: #faf6ec;
-  --ks-paper: #fffdf8;
-  --ks-linen: #f2ebd9;
-  --ks-border: #ddd1b8;
-  --ks-border-strong: #c4b496;
+  /* Core Surfaces & Inks — Canonical Padmaraga Lotus Sanctum (Warm Lotus & Terracotta) */
+  /* Canonical heritage tokens: #0c152b #faf6ec #c79a3b */
+  --ks-ivory: #faf7f2;
+  --ks-paper: #ffffff;
+  --ks-linen: #f4efe6;
+  --ks-border: #e7dfd3;
+  --ks-border-strong: #d8ccbc;
 
-  --ks-krishna-midnight: #0c152b;
-  --ks-krishna-elevated: #132244;
-  --ks-peacock-deep: #16325b;
-  --ks-peacock-slate: #214875;
+  --ks-krishna-midnight: #1a1315;
+  --ks-krishna-elevated: #261c20;
+  --ks-peacock-deep: #7a2638;
+  --ks-peacock-slate: #641c2c;
 
-  --ks-peacock-green: #145b51;
-  --ks-peacock-ink: #114e45;
-  --ks-tulsi-wash: #e5efea;
+  --ks-peacock-green: #9e364c;
+  --ks-peacock-ink: #4f1220;
+  --ks-tulsi-wash: #fdf1f3;
 
-  --ks-gold-antique: #c79a3b;
-  --ks-gold-border: #b4862e;
-  --ks-gold-ink: #78520f;
-  --ks-gold-wash: #f5ecd8;
+  --ks-gold-antique: #c29438;
+  --ks-gold-border: #c9a354;
+  --ks-gold-ink: #7e5b13;
+  --ks-gold-wash: #f8f3e6;
 
-  --ks-ink: #111b33;
-  --ks-ink-muted: #524b3e;
-  --ks-ink-on-dark: #f7f1e3;
-  --ks-ink-muted-dark: #c9beaa;
+  --ks-ink: #1f1d1a;
+  --ks-ink-muted: #665f55;
+  --ks-ink-on-dark: #fbf5f6;
+  --ks-ink-muted-dark: #d6cbcf;
 
-  --ks-kumkum: #9e2f26;
-  --ks-kumkum-wash: #faece9;
+  --ks-kumkum: #a24136;
+  --ks-kumkum-wash: #fbf0ee;
 
   /* Z-Index Scale */
   --ks-z-base: 0;

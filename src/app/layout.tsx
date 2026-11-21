@@ -78,6 +78,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      data-theme="padmaraga-lotus"
       data-scroll-behavior="smooth"
       className={`${cormorant.variable} ${notoSerif.variable} ${notoSans.variable} ${tiroDevanagari.variable}`}
       suppressHydrationWarning
@@ -85,7 +86,7 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem("smaran-theme");if(t){document.documentElement.setAttribute("data-theme",t);}var f=localStorage.getItem("smaran-font-size");if(f){document.documentElement.setAttribute("data-font-size",f);}}catch(e){}})();`,
+            __html: `(function(){try{document.documentElement.setAttribute("data-theme","padmaraga-lotus");var f=localStorage.getItem("smaran-font-size");if(f){document.documentElement.setAttribute("data-font-size",f);}}catch(e){}})();`,
           }}
         />
       </head>

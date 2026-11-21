@@ -20,20 +20,14 @@ describe("Phase 2 design tokens & accessibility contrast", () => {
     }
   });
 
-  it("validates that all 4 devotional themes are defined and contrast-compliant", () => {
-    expect(DEVOTIONAL_THEMES).toHaveLength(4);
-    const themeIds = DEVOTIONAL_THEMES.map((t) => t.id);
-    expect(themeIds).toContain("vrindavan-ivory");
-    expect(themeIds).toContain("padmaraga-lotus");
-    expect(themeIds).toContain("yamuna-midnight");
-    expect(themeIds).toContain("govardhan-dawn");
-
-    for (const theme of DEVOTIONAL_THEMES) {
-      expect(theme.name.length).toBeGreaterThan(0);
-      expect(theme.previewColors).toHaveLength(6);
-      expect(theme.swatches.length).toBeGreaterThanOrEqual(8);
-      expect(theme.contrastPairs.length).toBeGreaterThanOrEqual(10);
-    }
+  it("validates that Padmaraga Lotus is the canonical application theme and contrast-compliant", () => {
+    expect(DEVOTIONAL_THEMES).toHaveLength(1);
+    const theme = DEVOTIONAL_THEMES[0]!;
+    expect(theme.id).toBe("padmaraga-lotus");
+    expect(theme.name).toBe("Padmaraga Lotus Sanctum");
+    expect(theme.previewColors).toHaveLength(6);
+    expect(theme.swatches.length).toBeGreaterThanOrEqual(8);
+    expect(theme.contrastPairs.length).toBeGreaterThanOrEqual(10);
   });
 
   it("maintains strictly monotonic z-index scale", () => {

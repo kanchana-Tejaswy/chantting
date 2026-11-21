@@ -114,7 +114,7 @@ describe("Phase 2 UI components & responsive AppShell routes", () => {
     expect(html).toContain("font-devanagari");
     expect(html).toContain("font-display");
     expect(html).toContain("font-serif");
-    expect(html).toContain("Vrindavan Dusk");
+    expect(html).toContain("Padmaraga Lotus");
   });
 
   it("renders uploaded sidebar images on DṚṢṬI, Japa, Lakshya, and Satsang in active vs hover-inactive states with Bhagavad Gītā hidden from navbar", () => {

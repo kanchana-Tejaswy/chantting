@@ -33,10 +33,8 @@ import { FormField, Input, Select, Textarea } from "@/components/ui/input";
 import { ProgressBar } from "@/components/ui/progress";
 import { SwitchField } from "@/components/ui/switch";
 import {
-  DEVOTIONAL_THEMES,
   FONT_SIZES,
   useDevotionalFontSize,
-  useDevotionalTheme,
 } from "@/lib/design/themes";
 import type {
   AccountNotification,
@@ -211,7 +209,6 @@ export function AccountWorkspace({
   // Account Deletion Confirmation
   const [deleteConfirmPhrase, setDeleteConfirmPhrase] = React.useState("");
   const [deleteConfirmEmail, setDeleteConfirmEmail] = React.useState("");
-  const [activeThemeId, setActiveThemeId] = useDevotionalTheme();
   const [activeFontSize, setActiveFontSize] = useDevotionalFontSize();
 
   const formattedJoinDate = React.useMemo(() => {
@@ -946,73 +943,39 @@ export function AccountWorkspace({
                   onCheckedChange={setReducedMotion}
                 />
 
+                {/* Text Font Size Option */}
                 <div className="space-y-2 pt-3 border-t border-sandalwood-border/60">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-semibold text-ink">Devotional Atmosphere &amp; Theme</p>
-                      <p className="text-[11px] text-ink-muted">Choose your preferred sacred color palette.</p>
+                      <p className="text-xs font-semibold text-ink">Text Font Size</p>
+                      <p className="text-[11px] text-ink-muted">Scale typography across your sanctuary for comfortable chanting.</p>
                     </div>
-                    <Link
-                      href="/design-system"
-                      className="text-xs font-medium text-peacock-deep hover:underline"
-                    >
-                      Theme Previewer &rarr;
-                    </Link>
+                    <span className="text-xs font-medium text-ink-muted">
+                      Active: {FONT_SIZES.find((s) => s.id === activeFontSize)?.shortLabel}
+                    </span>
                   </div>
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 pt-1">
-                    {DEVOTIONAL_THEMES.map((theme) => {
-                      const isSelected = activeThemeId === theme.id;
+                    {FONT_SIZES.map((size) => {
+                      const isSelected = activeFontSize === size.id;
                       return (
                         <button
-                          key={theme.id}
+                          key={size.id}
                           type="button"
                           onClick={() => {
-                            setActiveThemeId(theme.id);
-                            setStatusMessage(`Atmosphere changed to "${theme.name}".`);
+                            setActiveFontSize(size.id);
+                            setStatusMessage(`Text font size set to ${size.label}.`);
                           }}
-                          className={`flex flex-col text-left p-2.5 rounded-[10px] border transition-all cursor-pointer ${
+                          className={`flex flex-col items-center justify-center p-2 rounded-[8px] border text-center transition-all cursor-pointer ${
                             isSelected
-                              ? "border-gold-antique bg-gold-wash/50 ring-1 ring-gold-antique"
-                              : "border-sandalwood-border bg-paper hover:border-gold-antique/50 hover:bg-linen"
+                              ? "border-gold-antique bg-gold-wash/60 ring-1 ring-gold-antique font-bold text-ink"
+                              : "border-sandalwood-border bg-paper hover:bg-linen text-ink-muted hover:text-ink font-medium"
                           }`}
                         >
-                          <div className="flex h-3 w-full overflow-hidden rounded-full mb-2">
-                            {theme.previewColors.map((c, i) => (
-                              <div key={i} className="flex-1 h-full" style={{ backgroundColor: c }} />
-                            ))}
-                          </div>
-                          <span className="text-[11px] font-bold text-ink truncate">{theme.name.split(" ")[0]}</span>
-                          <span className="text-[10px] text-ink-muted truncate">{theme.tag}</span>
+                          <span className="text-xs">{size.shortLabel}</span>
+                          <span className="text-[10px] opacity-75">{size.rem}</span>
                         </button>
                       );
                     })}
-                  </div>
-
-                  {/* Text Font Size Option */}
-                  <div className="pt-2">
-                    <p className="text-[11px] font-semibold text-ink mb-1.5">Text Font Size</p>
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                      {FONT_SIZES.map((size) => {
-                        const isSelected = activeFontSize === size.id;
-                        return (
-                          <button
-                            key={size.id}
-                            type="button"
-                            onClick={() => {
-                              setActiveFontSize(size.id);
-                              setStatusMessage(`Text font size set to ${size.label}.`);
-                            }}
-                            className={`flex flex-col items-center justify-center p-2 rounded-[8px] border text-center transition-all cursor-pointer ${
-                              isSelected
-                                ? "border-gold-antique bg-gold-wash/60 ring-1 ring-gold-antique font-bold text-ink"
-                                : "border-sandalwood-border bg-paper hover:bg-linen text-ink-muted hover:text-ink font-medium"
-                            }`}
-                          >
-                            <span className="text-xs">{size.shortLabel}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
                   </div>
                 </div>
               </div>

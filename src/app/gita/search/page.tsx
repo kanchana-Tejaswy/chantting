@@ -57,7 +57,13 @@ export default async function GitaSearchRoute({
     <AppShell
       pageTitle="Search Bhagavad Gītā"
       userSummary={
-        viewer ? { displayName: viewer.displayName, email: viewer.email } : null
+        viewer
+          ? {
+              displayName: viewer.displayName,
+              email: viewer.email,
+              avatarUrl: viewer.avatarUrl,
+            }
+          : null
       }
     >
       <GitaSearchView

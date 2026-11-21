@@ -83,7 +83,11 @@ export default async function LibraryPage({
       pageTitle="Spiritual Library"
       userSummary={
         result.viewer
-          ? { displayName: result.viewer.displayName, email: result.viewer.email }
+          ? {
+              displayName: result.viewer.displayName,
+              email: result.viewer.email,
+              avatarUrl: result.viewer.avatarUrl,
+            }
           : null
       }
     >

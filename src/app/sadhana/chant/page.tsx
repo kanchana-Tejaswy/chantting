@@ -105,6 +105,7 @@ export default async function ChantPage() {
       userSummary={{
         displayName: result.data.displayName,
         email: result.data.userEmail,
+        avatarUrl: result.data.avatarUrl,
       }}
     >
       <ChantingWorkspace initialData={result.data} />

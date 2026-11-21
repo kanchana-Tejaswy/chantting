@@ -134,6 +134,7 @@ export default async function SadhanaAnalyticsPage({
       userSummary={{
         displayName: result.displayName,
         email: result.userEmail,
+        avatarUrl: result.avatarUrl,
       }}
     >
       <AnalyticsView

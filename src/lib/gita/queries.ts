@@ -39,6 +39,7 @@ export interface GitaViewerContext {
   timezone: string;
   isAdmin: boolean;
   adminRole: string | null;
+  avatarUrl?: string | null;
 }
 
 export interface GitaAdminAuditItem {
@@ -164,7 +165,7 @@ export async function getGitaViewerContext(
   const [profileRes, adminRes] = await Promise.all([
     supabase
       .from("profiles")
-      .select("display_name, timezone")
+      .select("display_name, timezone, avatar_url")
       .eq("id", user.id)
       .maybeSingle(),
     supabase
@@ -186,6 +187,7 @@ export async function getGitaViewerContext(
     timezone: profileRes.data?.timezone ?? "UTC",
     isAdmin: Boolean(adminRole),
     adminRole,
+    avatarUrl: profileRes.data?.avatar_url ?? null,
   };
 }
 

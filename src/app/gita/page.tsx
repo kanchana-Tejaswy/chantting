@@ -53,7 +53,11 @@ export default async function GitaPage() {
       pageTitle="Bhagavad Gītā"
       userSummary={
         result.viewer
-          ? { displayName: result.viewer.displayName, email: result.viewer.email }
+          ? {
+              displayName: result.viewer.displayName,
+              email: result.viewer.email,
+              avatarUrl: result.viewer.avatarUrl,
+            }
           : null
       }
     >

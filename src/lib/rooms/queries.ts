@@ -77,7 +77,7 @@ export type RoomsDirectoryLoadResult =
   | { status: "error"; message: string }
   | {
       status: "ready";
-      user: { id: string; email: string | null; displayName: string } | null;
+      user: { id: string; email: string | null; displayName: string; avatarUrl?: string | null } | null;
       myRooms: RoomListItem[];
       publicRooms: RoomListItem[];
     };
@@ -88,12 +88,12 @@ export type RoomDetailLoadResult =
   | { status: "error"; message: string }
   | {
       status: "public_preview";
-      user: { id: string; email: string | null; displayName: string } | null;
+      user: { id: string; email: string | null; displayName: string; avatarUrl?: string | null } | null;
       room: RoomListItem;
     }
   | {
       status: "member";
-      user: { id: string; email: string | null; displayName: string; timezone: string };
+      user: { id: string; email: string | null; displayName: string; timezone: string; avatarUrl?: string | null };
       room: RoomListItem;
       currentMembership: RoomMemberItem;
       members: RoomMemberItem[];
@@ -110,13 +110,13 @@ export async function loadRoomsDirectory(): Promise<RoomsDirectoryLoadResult> {
     data: { user },
   } = await supabase.auth.getUser();
 
-  let userSummary: { id: string; email: string | null; displayName: string } | null =
+  let userSummary: { id: string; email: string | null; displayName: string; avatarUrl?: string | null } | null =
     null;
 
   if (user) {
     const profileRes = await supabase
       .from("profiles")
-      .select("display_name")
+      .select("display_name, avatar_url")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -124,6 +124,7 @@ export async function loadRoomsDirectory(): Promise<RoomsDirectoryLoadResult> {
       id: user.id,
       email: user.email ?? null,
       displayName: profileRes.data?.display_name ?? user.email ?? "Devotee",
+      avatarUrl: profileRes.data?.avatar_url ?? null,
     };
   }
 
@@ -230,7 +231,7 @@ export async function loadRoomDetail(slug: string): Promise<RoomDetailLoadResult
 
   const profileRes = await supabase
     .from("profiles")
-    .select("display_name, timezone")
+    .select("display_name, timezone, avatar_url")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -239,6 +240,7 @@ export async function loadRoomDetail(slug: string): Promise<RoomDetailLoadResult
     email: user.email ?? null,
     displayName: profileRes.data?.display_name ?? user.email ?? "Devotee",
     timezone: profileRes.data?.timezone ?? "UTC",
+    avatarUrl: profileRes.data?.avatar_url ?? null,
   };
 
   const myMemRes = await supabase

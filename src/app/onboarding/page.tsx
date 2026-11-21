@@ -73,6 +73,7 @@ export default async function OnboardingPage({
       userSummary={{
         displayName: context.profile.display_name,
         email: context.userEmail,
+        avatarUrl: context.profile.avatar_url,
       }}
     >
       <OnboardingFlow

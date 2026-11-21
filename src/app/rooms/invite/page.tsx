@@ -28,11 +28,23 @@ export default async function RoomInvitePage({
     redirect(`/auth?next=${encodeURIComponent(nextUrl)}`);
   }
 
+  const profileRes = await supabase
+    .from("profiles")
+    .select("display_name, avatar_url")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const userSummary = {
+    displayName: profileRes.data?.display_name ?? user.email ?? "Devotee",
+    email: user.email ?? null,
+    avatarUrl: profileRes.data?.avatar_url ?? null,
+  };
+
   if (token.length < 16) {
     return (
       <AppShell
         pageTitle="Room Invitation"
-        userSummary={{ displayName: user.email ?? "Devotee", email: user.email }}
+        userSummary={userSummary}
       >
         <div className="mx-auto max-w-md px-5 py-12">
           <Card surface="parchment">
@@ -60,7 +72,7 @@ export default async function RoomInvitePage({
   return (
     <AppShell
       pageTitle="Room Invitation"
-      userSummary={{ displayName: user.email ?? "Devotee", email: user.email }}
+      userSummary={userSummary}
     >
       <InviteRedeemCard token={token} />
     </AppShell>

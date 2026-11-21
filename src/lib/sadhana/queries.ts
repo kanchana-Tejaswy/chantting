@@ -34,6 +34,7 @@ export type { PersonalDashboardMetrics, ChantingSessionSummary };
 export interface UserProfileRecord {
   id: string;
   display_name: string;
+  avatar_url?: string | null;
   timezone: string;
   preferred_language: string;
   created_at: string;
@@ -118,6 +119,7 @@ export type AnalyticsLoadResult =
       status: "ready";
       userEmail: string | null;
       displayName: string;
+      avatarUrl?: string | null;
       timezone: string;
       analytics: SadhanaAnalyticsSummary;
       initialDayDetail: SadhanaDayDetailPayload;
@@ -169,7 +171,7 @@ export async function loadOnboardingContext(): Promise<OnboardingContextResult> 
   const [profileRes, prefRes, countRes] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, display_name, timezone, preferred_language, created_at, updated_at")
+      .select("id, display_name, avatar_url, timezone, preferred_language, created_at, updated_at")
       .eq("id", user.id)
       .maybeSingle(),
     supabase
@@ -239,7 +241,7 @@ export async function loadPersonalSadhanaDashboard(): Promise<SadhanaLoadResult>
   const [profileRes, prefRes, historyRes, sessionsRes] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, display_name, timezone, preferred_language, created_at, updated_at")
+      .select("id, display_name, avatar_url, timezone, preferred_language, created_at, updated_at")
       .eq("id", user.id)
       .maybeSingle(),
     supabase
@@ -424,7 +426,7 @@ export async function loadChantWorkspaceData(): Promise<ChantWorkspaceLoadResult
   const [profileRes, prefRes, countRes] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, display_name, timezone, preferred_language, created_at, updated_at")
+      .select("id, display_name, avatar_url, timezone, preferred_language, created_at, updated_at")
       .eq("id", user.id)
       .maybeSingle(),
     supabase
@@ -680,6 +682,7 @@ export async function loadChantWorkspaceData(): Promise<ChantWorkspaceLoadResult
       userId: user.id,
       userEmail: user.email ?? null,
       displayName: profile.display_name,
+      avatarUrl: profile.avatar_url ?? null,
       timezone: profile.timezone,
       preferences: {
         dailyRoundTarget: preferences.daily_round_target,
@@ -734,7 +737,7 @@ export async function loadSadhanaAnalyticsData(
   const [profileRes, prefRes, historyRes] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, display_name, timezone, preferred_language, created_at, updated_at")
+      .select("id, display_name, avatar_url, timezone, preferred_language, created_at, updated_at")
       .eq("id", user.id)
       .maybeSingle(),
     supabase
@@ -863,6 +866,7 @@ export async function loadSadhanaAnalyticsData(
     status: "ready",
     userEmail: user.email ?? null,
     displayName: profile.display_name,
+    avatarUrl: profile.avatar_url ?? null,
     timezone: profile.timezone,
     analytics,
     initialDayDetail,
@@ -874,6 +878,7 @@ export type DrstiDashboardLoadResult =
       status: "ready";
       userEmail: string | null;
       displayName: string;
+      avatarUrl?: string | null;
       timezone: string;
       todayDate: string;
       todaySadhana: DailySadhana;
@@ -922,7 +927,7 @@ export async function loadDrstiDashboardData(
   const [profileRes, prefRes, historyRes, sankalpasRes] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, display_name, timezone, preferred_language, created_at, updated_at")
+      .select("id, display_name, avatar_url, timezone, preferred_language, created_at, updated_at")
       .eq("id", user.id)
       .maybeSingle(),
     supabase
@@ -1078,6 +1083,7 @@ export async function loadDrstiDashboardData(
     status: "ready",
     userEmail: user.email ?? null,
     displayName: profile.display_name,
+    avatarUrl: profile.avatar_url ?? null,
     timezone: profile.timezone,
     todayDate,
     todaySadhana: parsedToday.data,

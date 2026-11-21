@@ -53,7 +53,11 @@ export default async function RoomsPage() {
       pageTitle="Satsang"
       userSummary={
         result.user
-          ? { displayName: result.user.displayName, email: result.user.email }
+          ? {
+              displayName: result.user.displayName,
+              email: result.user.email,
+              avatarUrl: result.user.avatarUrl,
+            }
           : null
       }
     >

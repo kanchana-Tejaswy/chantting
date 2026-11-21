@@ -142,6 +142,7 @@ export default async function DrstiPage({
       userSummary={{
         displayName: result.displayName,
         email: result.userEmail,
+        avatarUrl: result.avatarUrl,
       }}
     >
       <DrstiDashboard

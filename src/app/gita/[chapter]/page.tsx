@@ -65,7 +65,11 @@ export default async function GitaChapterRoute({
       pageTitle={`Bhagavad Gītā · Chapter ${result.chapterNumber}`}
       userSummary={
         result.viewer
-          ? { displayName: result.viewer.displayName, email: result.viewer.email }
+          ? {
+              displayName: result.viewer.displayName,
+              email: result.viewer.email,
+              avatarUrl: result.viewer.avatarUrl,
+            }
           : null
       }
     >

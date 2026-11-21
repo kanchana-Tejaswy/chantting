@@ -68,7 +68,11 @@ export default async function RoomDetailPage({
         pageTitle={result.room.name}
         userSummary={
           result.user
-            ? { displayName: result.user.displayName, email: result.user.email }
+            ? {
+                displayName: result.user.displayName,
+                email: result.user.email,
+                avatarUrl: result.user.avatarUrl,
+              }
             : null
         }
       >
@@ -120,6 +124,7 @@ export default async function RoomDetailPage({
       userSummary={{
         displayName: result.user.displayName,
         email: result.user.email,
+        avatarUrl: result.user.avatarUrl,
       }}
     >
       <RoomDetailView

@@ -80,6 +80,7 @@ export default async function GitaVerseRoute({
             ? {
                 displayName: result.viewer.displayName,
                 email: result.viewer.email,
+                avatarUrl: result.viewer.avatarUrl,
               }
             : null
         }
@@ -130,7 +131,11 @@ export default async function GitaVerseRoute({
       pageTitle={`Bhagavad Gītā ${result.bundle.verse.verse_ref}`}
       userSummary={
         result.viewer
-          ? { displayName: result.viewer.displayName, email: result.viewer.email }
+          ? {
+              displayName: result.viewer.displayName,
+              email: result.viewer.email,
+              avatarUrl: result.viewer.avatarUrl,
+            }
           : null
       }
     >

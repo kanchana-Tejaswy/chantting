@@ -126,6 +126,7 @@ export default async function SadhanaDashboardPage() {
       userSummary={{
         displayName: result.profile.display_name,
         email: result.userEmail,
+        avatarUrl: result.profile.avatar_url,
       }}
     >
       <PersonalSadhanaDashboard

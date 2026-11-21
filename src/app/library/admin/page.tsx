@@ -107,6 +107,7 @@ export default async function LibraryAdminRoute() {
       userSummary={{
         displayName: result.viewer.displayName,
         email: result.viewer.email,
+        avatarUrl: result.viewer.avatarUrl,
       }}
     >
       <LibraryAdminStudio

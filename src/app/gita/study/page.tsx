@@ -59,6 +59,7 @@ export default async function GitaStudyRoute() {
       userSummary={{
         displayName: result.viewer.displayName,
         email: result.viewer.email,
+        avatarUrl: result.viewer.avatarUrl,
       }}
     >
       <GitaStudyView

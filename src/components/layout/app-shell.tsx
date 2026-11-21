@@ -140,6 +140,7 @@ export interface AppShellUserSummary {
   displayName: string;
   email?: string | null;
   unreadNotificationsCount?: number;
+  avatarUrl?: string | null;
 }
 
 export interface AppShellProps {
@@ -271,7 +272,16 @@ export function AppShell({
                 href="/account"
                 className="flex items-center gap-2 rounded-[8px] px-2 py-1.5 text-xs font-medium text-ink transition-colors hover:bg-white/55"
               >
-                <User className="size-3.5" aria-hidden={true} />
+                {userSummary.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={userSummary.avatarUrl}
+                    alt=""
+                    className="size-4 shrink-0 rounded-full object-cover border border-gold-antique/50"
+                  />
+                ) : (
+                  <User className="size-3.5" aria-hidden={true} />
+                )}
                 <span>Account, Privacy &amp; Inbox</span>
               </Link>
             )}
@@ -343,9 +353,21 @@ export function AppShell({
                 </Link>
                 <Link
                   href="/account"
-                  className="inline-flex min-h-9 max-w-44 items-center gap-1.5 rounded-full border border-sandalwood-border bg-paper px-3 text-xs font-medium text-ink transition-colors duration-150 hover:bg-linen"
+                  className="inline-flex min-h-9 max-w-48 items-center gap-2 rounded-full border border-sandalwood-border bg-paper py-1 pr-3 pl-1.5 text-xs font-medium text-ink transition-colors duration-150 hover:bg-linen"
+                  title="Devotee Profile & Account"
                 >
-                  <User className="size-3.5 shrink-0 text-peacock-ink" aria-hidden={true} />
+                  {userSummary.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={userSummary.avatarUrl}
+                      alt=""
+                      className="size-6 shrink-0 rounded-full object-cover border border-gold-antique/60 shadow-sacred-xs"
+                    />
+                  ) : (
+                    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-sandalwood-light border border-gold-antique/40 font-display text-[11px] font-bold text-gold-ink">
+                      {userSummary.displayName.trim().charAt(0).toUpperCase() || "D"}
+                    </span>
+                  )}
                   <span className="truncate">{userSummary.displayName}</span>
                 </Link>
                 <form action={signOutAction}>

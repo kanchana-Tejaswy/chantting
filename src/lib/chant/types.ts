@@ -45,6 +45,7 @@ export interface ChantWorkspacePayload {
   userId: string;
   userEmail: string | null;
   displayName: string;
+  avatarUrl?: string | null;
   timezone: string;
   preferences: {
     dailyRoundTarget: number;

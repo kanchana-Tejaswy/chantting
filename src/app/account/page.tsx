@@ -112,6 +112,7 @@ export default async function AccountPage({
       userSummary={{
         displayName: result.profile.display_name,
         email: result.userEmail,
+        avatarUrl: result.profile.avatar_url,
         unreadNotificationsCount: result.unreadNotificationCount,
       }}
       reducedMotion={result.preferences.reduced_motion_preference}

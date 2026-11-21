@@ -44,6 +44,10 @@ import { SUPPORTED_LANGUAGES } from "@/lib/account/validation";
 
 export const DEVOTIONAL_AVATARS = [
   {
+    name: "Sacred Lotus",
+    url: "/media/avatars/sacred-lotus.jpg",
+  },
+  {
     name: "Peacock Plume",
     url: "/media/avatars/peacock-feather.jpg",
   },
@@ -62,10 +66,6 @@ export const DEVOTIONAL_AVATARS = [
   {
     name: "Radha Krishna",
     url: "/media/avatars/radha-krishna.jpg",
-  },
-  {
-    name: "Sacred Lotus",
-    url: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=200&auto=format&fit=crop&q=80",
   },
   {
     name: "Vrindavan Tulsi",

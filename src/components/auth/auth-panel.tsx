@@ -22,6 +22,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { FormField, Input, PasswordInput } from "@/components/ui/input";
+import { useTranslation } from "@/lib/i18n/context";
 
 export type AuthMode = "signin" | "signup" | "forgot";
 
@@ -63,6 +64,7 @@ export function AuthPanel({
   callbackError?: string;
   initialMode?: AuthMode;
 }) {
+  const { t, language } = useTranslation();
   const [mode, setMode] = React.useState<AuthMode>(initialMode);
   const [dismissedTabNotice, setDismissedTabNotice] = React.useState(false);
   const [googlePending, setGooglePending] = React.useState(false);
@@ -149,9 +151,9 @@ export function AuthPanel({
   const activeError = dismissedTabNotice
     ? undefined
     : oauthError ??
-      resendState.error ??
-      activeState.error ??
-      (mode === "signin" ? callbackError : undefined);
+    resendState.error ??
+    activeState.error ??
+    (mode === "signin" ? callbackError : undefined);
 
   const activeMessage = dismissedTabNotice
     ? undefined
@@ -172,13 +174,17 @@ export function AuthPanel({
             <div>
               <CardTitle className="font-display text-2xl tracking-[-0.015em] text-[#2B1F15]">
                 {mode === "signin"
-                  ? "Sign in to SMARAN"
+                  ? t("auth.signInTitle", "Sign in to SMARAN")
                   : mode === "signup"
-                    ? "Create your SMARAN account"
-                    : "Reset your password"}
+                    ? t("auth.signUpTitle", "Create your SMARAN account")
+                    : t("auth.forgotTitle", "Reset your password")}
               </CardTitle>
               <CardDescription className="text-[#5F4D3D]">
-                Remember Him. Stay Connected.
+                {mode === "signin"
+                  ? t("auth.signInSub", "Enter your email to continue your daily sacred chanting.")
+                  : mode === "signup"
+                    ? t("auth.signUpSub", "Establish a personal, quiet sanctuary for Japa and devotion.")
+                    : t("auth.forgotSub", "Enter your email to receive a password reset link.")}
               </CardDescription>
             </div>
           </div>
@@ -193,9 +199,9 @@ export function AuthPanel({
           >
             {(
               [
-                { id: "signin", label: "Sign in" },
-                { id: "signup", label: "Sign up" },
-                { id: "forgot", label: "Reset" },
+                { id: "signin", label: t("auth.tabSignIn", "Sign in") },
+                { id: "signup", label: t("auth.tabSignUp", "Sign up") },
+                { id: "forgot", label: t("auth.tabForgot", "Reset") },
               ] as const
             ).map((tab) => {
               const selected = mode === tab.id;
@@ -257,7 +263,7 @@ export function AuthPanel({
                   disabled={isAnyPending}
                   className="w-full"
                 >
-                  Resend verification email
+                  {t("auth.btnResendVerification", "Resend verification email")}
                 </Button>
               </form>
             )}
@@ -274,13 +280,13 @@ export function AuthPanel({
                 className="w-full border-[#CEB893] bg-[#FFFDF8] text-[#2B1F15] hover:border-[#B89864] hover:bg-[#F6EDE0]"
               >
                 {!googlePending && <GoogleMark />}
-                Continue with Google
+                {t("auth.continueWithGoogle", "Continue with Google")}
               </Button>
 
               <div className="relative flex items-center py-0.5">
                 <div className="grow border-t border-[#DFCFB4]" />
                 <span className="mx-3 shrink-0 text-[11px] font-medium tracking-[0.06em] uppercase text-[#76624F]">
-                  or continue with email
+                  {t("auth.orDivider", "or continue with email")}
                 </span>
                 <div className="grow border-t border-[#DFCFB4]" />
               </div>
@@ -297,7 +303,8 @@ export function AuthPanel({
               className="space-y-4"
             >
               <input type="hidden" name="next" value={nextPath} />
-              <FormField id="signin-email" label="Email" required>
+              <input type="hidden" name="language" value={language} />
+              <FormField id="signin-email" label={t("auth.emailLabel", "Email")} required>
                 <Input
                   id="signin-email"
                   name="email"
@@ -306,12 +313,12 @@ export function AuthPanel({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  placeholder="you@example.org"
+                  placeholder={t("auth.emailPlaceholder", "you@example.org")}
                   className="border-[#D8C6A8] bg-[#FFFDF8] text-[#2B1F15] placeholder:text-[#8E7A66]"
                 />
               </FormField>
 
-              <FormField id="signin-password" label="Password" required>
+              <FormField id="signin-password" label={t("auth.passwordLabel", "Password")} required>
                 <PasswordInput
                   id="signin-password"
                   name="password"
@@ -320,7 +327,7 @@ export function AuthPanel({
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   minLength={8}
-                  placeholder="Enter your password"
+                  placeholder={t("auth.passwordPlaceholder", "Enter your password")}
                   className="border-[#D8C6A8] bg-[#FFFDF8] text-[#2B1F15] placeholder:text-[#8E7A66]"
                 />
               </FormField>
@@ -332,7 +339,7 @@ export function AuthPanel({
                   onClick={() => switchMode("signup")}
                   className="cursor-pointer font-medium text-[#5F4D3D] transition-colors hover:text-[#2B1F15] hover:underline disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  New here? Create account
+                  {t("auth.newHereLink", "New here? Create account")}
                 </button>
                 <button
                   type="button"
@@ -340,7 +347,7 @@ export function AuthPanel({
                   onClick={() => switchMode("forgot")}
                   className="cursor-pointer font-medium text-[#9A5B25] underline underline-offset-2 transition-colors hover:text-[#7A4417] disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Forgot password?
+                  {t("auth.forgotPasswordLink", "Forgot password?")}
                 </button>
               </div>
 
@@ -352,7 +359,7 @@ export function AuthPanel({
                 disabled={isAnyPending}
                 className="w-full font-semibold text-[#24170D]"
               >
-                Sign in
+                {signInPending ? t("auth.signingIn", "Signing in...") : t("auth.btnSignIn", "Sign in")}
               </Button>
             </form>
           )}
@@ -366,10 +373,11 @@ export function AuthPanel({
               }}
               className="space-y-4"
             >
+              <input type="hidden" name="language" value={language} />
               <FormField
                 id="signup-name"
-                label="Display name"
-                hint="Shown to you on your dashboard; never shared publicly by default."
+                label={t("auth.displayNameLabel", "Display name")}
+                hint={t("auth.displayNameHint", "Shown to you on your dashboard; never shared publicly by default.")}
                 required
               >
                 <Input
@@ -381,12 +389,12 @@ export function AuthPanel({
                   onChange={(e) => setDisplayName(e.target.value)}
                   required
                   maxLength={80}
-                  placeholder="Your name"
+                  placeholder={t("auth.displayNamePlaceholder", "Your devotional name")}
                   className="border-[#D8C6A8] bg-[#FFFDF8] text-[#2B1F15] placeholder:text-[#8E7A66]"
                 />
               </FormField>
 
-              <FormField id="signup-email" label="Email" required>
+              <FormField id="signup-email" label={t("auth.emailLabel", "Email")} required>
                 <Input
                   id="signup-email"
                   name="email"
@@ -395,14 +403,14 @@ export function AuthPanel({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  placeholder="you@example.org"
+                  placeholder={t("auth.emailPlaceholder", "you@example.org")}
                   className="border-[#D8C6A8] bg-[#FFFDF8] text-[#2B1F15] placeholder:text-[#8E7A66]"
                 />
               </FormField>
 
               <FormField
                 id="signup-password"
-                label="Password"
+                label={t("auth.passwordLabel", "Password")}
                 hint="Minimum 8 characters. Click the eye icon to verify your typing."
                 required
               >
@@ -415,7 +423,7 @@ export function AuthPanel({
                   required
                   minLength={8}
                   maxLength={128}
-                  placeholder="At least 8 characters"
+                  placeholder={t("auth.passwordPlaceholder", "At least 8 characters")}
                   className="border-[#D8C6A8] bg-[#FFFDF8] text-[#2B1F15] placeholder:text-[#8E7A66]"
                 />
               </FormField>
@@ -428,7 +436,7 @@ export function AuthPanel({
                 disabled={isAnyPending}
                 className="w-full font-semibold text-[#24170D]"
               >
-                Create account
+                {signUpPending ? t("auth.signingUp", "Creating account...") : t("auth.btnSignUp", "Create account")}
               </Button>
             </form>
           )}
@@ -444,7 +452,7 @@ export function AuthPanel({
             >
               <FormField
                 id="forgot-email"
-                label="Account email"
+                label={t("auth.emailLabel", "Account email")}
                 hint="We will send a password recovery link to reset your password."
                 required
               >
@@ -456,7 +464,7 @@ export function AuthPanel({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  placeholder="you@example.org"
+                  placeholder={t("auth.emailPlaceholder", "you@example.org")}
                   className="border-[#D8C6A8] bg-[#FFFDF8] text-[#2B1F15] placeholder:text-[#8E7A66]"
                 />
               </FormField>
@@ -469,7 +477,7 @@ export function AuthPanel({
                 disabled={isAnyPending}
                 className="w-full font-semibold text-[#24170D]"
               >
-                Send reset link
+                {forgotPending ? t("auth.sendingReset", "Sending reset link...") : t("auth.btnSendReset", "Send reset link")}
               </Button>
             </form>
           )}

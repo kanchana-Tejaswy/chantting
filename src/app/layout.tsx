@@ -7,6 +7,7 @@ import {
 } from "next/font/google";
 import "./globals.css";
 import { PwaRegister } from "@/components/pwa/pwa-register";
+import { LanguageProvider } from "@/lib/i18n/context";
 
 const cormorant = Cormorant_Garamond({
   subsets: ["latin", "latin-ext"],
@@ -86,13 +87,15 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{document.documentElement.setAttribute("data-theme","padmaraga-lotus");var f=localStorage.getItem("smaran-font-size");if(f){document.documentElement.setAttribute("data-font-size",f);}}catch(e){}})();`,
+            __html: `(function(){try{document.documentElement.setAttribute("data-theme","padmaraga-lotus");var f=localStorage.getItem("smaran-font-size");if(f){document.documentElement.setAttribute("data-font-size",f);}var l=localStorage.getItem("smaran-language");if(!l){var m=document.cookie.match(/(?:^|; )smaran-language=([^;]+)/);if(m)l=decodeURIComponent(m[1]);}if(l){document.documentElement.lang=l;document.documentElement.dir="ltr";}}catch(e){}})();`,
           }}
         />
       </head>
       <body className="antialiased">
-        <PwaRegister />
-        {children}
+        <LanguageProvider>
+          <PwaRegister />
+          {children}
+        </LanguageProvider>
       </body>
     </html>
   );

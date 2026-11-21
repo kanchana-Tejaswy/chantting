@@ -514,6 +514,8 @@ export async function loadChantWorkspaceData(): Promise<ChantWorkspaceLoadResult
     remindersRes,
     notesRes,
     mantraRoundsRes,
+    manualStateRes,
+    manualEntriesRes,
   ] = await Promise.all([
     supabase
       .from("chanting_sessions")
@@ -582,6 +584,18 @@ export async function loadChantWorkspaceData(): Promise<ChantWorkspaceLoadResult
       .select("mantra_id, round_delta")
       .eq("user_id", user.id)
       .eq("is_reverted", false),
+    supabase
+      .from("manual_counter_state")
+      .select("cumulative_names, cumulative_rounds, current_remainder, last_entry_at")
+      .eq("user_id", user.id)
+      .maybeSingle(),
+    supabase
+      .from("manual_name_entries")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("is_reverted", false)
+      .order("created_at", { ascending: false })
+      .limit(10),
   ]);
 
   const rawRecords = ((todayRecordsRes.data ?? []) as ChantingRoundRecord[]).map(
@@ -712,6 +726,22 @@ export async function loadChantWorkspaceData(): Promise<ChantWorkspaceLoadResult
       currentStreak,
       longestStreak,
       lifetimeRounds,
+      manualCounterState: manualStateRes?.data
+        ? {
+            cumulative_names: Number(manualStateRes.data.cumulative_names ?? 0),
+            cumulative_rounds: Number(manualStateRes.data.cumulative_rounds ?? 0),
+            current_remainder: Number(manualStateRes.data.current_remainder ?? 0),
+            last_entry: null,
+            active_session: null,
+          }
+        : {
+            cumulative_names: 0,
+            cumulative_rounds: 0,
+            current_remainder: 0,
+            last_entry: null,
+            active_session: null,
+          },
+      manualEntries: (manualEntriesRes?.data ?? []) as any[],
     },
   };
 }

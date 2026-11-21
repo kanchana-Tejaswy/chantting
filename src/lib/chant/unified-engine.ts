@@ -4,6 +4,8 @@ import type {
   ChantingMethod,
   ChantingRoundRecord,
   ChantingSessionRecord,
+  ManualCounterState,
+  ManualNameEntryRecord,
 } from "./types";
 import type { SankalpaRecord } from "@/lib/sankalpa/types";
 
@@ -260,5 +262,108 @@ export async function auditHistoricalProtection(
     revertedCount: reverted,
     isIntegrityPreserved: true,
   };
+}
+
+export interface RecordManualNamesInput {
+  namesCount: number;
+  idempotencyKey: string;
+  sessionId?: string | null;
+  startNewSession?: boolean;
+  clientRecordedAt?: string | null;
+  sankalpaId?: string | null;
+  mantraId?: string | null;
+}
+
+export interface RecordManualNamesResult {
+  duplicate: boolean;
+  entry: ManualNameEntryRecord;
+  counter_state: ManualCounterState;
+  rounds_earned: number;
+  current_remainder: number;
+  daily_sadhana: DailySadhana;
+  session?: ChantingSessionRecord | null;
+  sankalpa?: SankalpaRecord | null;
+}
+
+export interface UndoManualNameEntryInput {
+  entryId: string;
+  reason?: string;
+}
+
+export interface UndoManualNameEntryResult {
+  already_reverted: boolean;
+  entry: ManualNameEntryRecord;
+  counter_state: ManualCounterState;
+  daily_sadhana: DailySadhana;
+  session?: ChantingSessionRecord | null;
+  sankalpa?: SankalpaRecord | null;
+}
+
+/**
+ * Authoritative recording of manual chanting names with persistent remainder.
+ * 108 names = 1 round.
+ * Atomically updates user's cumulative manual names and remainder, crediting newly completed rounds.
+ */
+export async function recordAuthoritativeManualNames(
+  supabase: SupabaseClient,
+  userId: string,
+  input: RecordManualNamesInput
+): Promise<RecordManualNamesResult> {
+  const rpcRes = await supabase.rpc("record_manual_names", {
+    p_names_count: input.namesCount,
+    p_idempotency_key: input.idempotencyKey,
+    p_session_id: input.sessionId ?? null,
+    p_start_new_session: input.startNewSession ?? false,
+    p_client_recorded_at: input.clientRecordedAt ?? null,
+    p_sankalpa_id: input.sankalpaId ?? null,
+    p_mantra_id: input.mantraId ?? null,
+  });
+
+  if (rpcRes.error) {
+    throw new Error(rpcRes.error.message);
+  }
+
+  return rpcRes.data as RecordManualNamesResult;
+}
+
+/**
+ * Authoritative undo of the most recent manual name entry.
+ * Reverts the earned rounds, restores previous remainder, and recalculates carry-forward.
+ */
+export async function undoAuthoritativeManualNameEntry(
+  supabase: SupabaseClient,
+  userId: string,
+  input: UndoManualNameEntryInput
+): Promise<UndoManualNameEntryResult> {
+  const rpcRes = await supabase.rpc("undo_manual_name_entry", {
+    p_entry_id: input.entryId,
+    p_reason: input.reason ?? "user_undo",
+  });
+
+  if (rpcRes.error) {
+    throw new Error(rpcRes.error.message);
+  }
+
+  return rpcRes.data as UndoManualNameEntryResult;
+}
+
+/**
+ * Fetches the user's authoritative manual counter summary (remainder, cumulative names/rounds).
+ */
+export async function getAuthoritativeManualCounterState(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<ManualCounterState> {
+  const rpcRes = await supabase.rpc("get_manual_counter_state");
+  if (rpcRes.error) {
+    return {
+      cumulative_names: 0,
+      cumulative_rounds: 0,
+      current_remainder: 0,
+      last_entry: null,
+      active_session: null,
+    };
+  }
+  return rpcRes.data as ManualCounterState;
 }
 

@@ -39,6 +39,37 @@ export interface ChantingRoundRecord {
   sankalpa_id?: string | null;
   mantra_id?: string | null;
   sync_status?: "synced" | "offline_pending";
+  manual_entry_id?: string | null;
+}
+
+export interface ManualNameEntryRecord {
+  id: string;
+  user_id: string;
+  session_id: string | null;
+  sadhana_date: string;
+  names_count: number;
+  previous_remainder: number;
+  rounds_earned: number;
+  new_remainder: number;
+  cumulative_names_snapshot: number;
+  idempotency_key: string;
+  recorded_at: string;
+  client_recorded_at: string | null;
+  timezone_snapshot: string;
+  mantra_id?: string | null;
+  sankalpa_id?: string | null;
+  is_reverted: boolean;
+  reverted_at?: string | null;
+  revert_reason?: string | null;
+  created_at: string;
+}
+
+export interface ManualCounterState {
+  cumulative_names: number;
+  cumulative_rounds: number;
+  current_remainder: number;
+  last_entry?: ManualNameEntryRecord | null;
+  active_session?: ChantingSessionRecord | null;
 }
 
 export interface ChantWorkspacePayload {
@@ -74,4 +105,6 @@ export interface ChantWorkspacePayload {
   currentStreak?: number;
   longestStreak?: number;
   lifetimeRounds?: number;
+  manualCounterState?: ManualCounterState | null;
+  manualEntries?: ManualNameEntryRecord[];
 }

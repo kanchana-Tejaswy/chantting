@@ -36,6 +36,9 @@ import {
   FONT_SIZES,
   useDevotionalFontSize,
 } from "@/lib/design/themes";
+import { useTranslation } from "@/lib/i18n/context";
+import { LanguageSelectField } from "@/components/i18n/language-select-field";
+import type { LanguageCode } from "@/lib/i18n/languages";
 import type {
   AccountNotification,
   AccountPreferences,
@@ -125,6 +128,15 @@ export function AccountWorkspace({
   const [preferredLanguage, setPreferredLanguage] = React.useState(
     profile.preferred_language
   );
+
+  const { language, setLanguage, t } = useTranslation();
+
+  // Cross-device restoration: saved profile preference takes priority over temporary local storage
+  React.useEffect(() => {
+    if (profile.preferred_language && profile.preferred_language !== language) {
+      void setLanguage(profile.preferred_language as LanguageCode);
+    }
+  }, [profile.preferred_language, language, setLanguage]);
 
   const activeAvatarPreset = React.useMemo(() => {
     if (!avatarUrl) return null;
@@ -568,10 +580,10 @@ export function AccountWorkspace({
       <header className="flex flex-wrap items-end justify-between gap-4 border-b border-sandalwood-border pb-6">
         <div>
           <p className="text-xs font-medium tracking-wider uppercase text-gold-ink">
-            Personal Sanctuary Controls
+            {t("account.sanctuaryControls", "Personal Sanctuary Controls")}
           </p>
           <h1 className="mt-1 font-display text-3xl font-semibold text-ink sm:text-4xl">
-            Account, Notifications &amp; Privacy
+            {t("account.title", "Account, Notifications & Privacy")}
           </h1>
           <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-ink-muted">
             <span className="font-medium text-ink">
@@ -582,7 +594,7 @@ export function AccountWorkspace({
             <span>·</span>
             <span className="inline-flex items-center gap-1">
               <Calendar className="size-3.5" aria-hidden={true} />
-              Devotee since {formattedJoinDate}
+              {t("account.devoteeSince", "Devotee since")} {formattedJoinDate}
             </span>
           </div>
         </div>
@@ -593,7 +605,7 @@ export function AccountWorkspace({
             className={buttonStyles({ variant: "secondary", size: "sm" })}
           >
             <Download className="size-4" aria-hidden={true} />
-            <span>Export Data (JSON)</span>
+            <span>{t("account.dataExport", "Export Data (JSON)")}</span>
           </a>
         </div>
       </header>
@@ -606,20 +618,20 @@ export function AccountWorkspace({
       >
         {(
           [
-            ["profile", "My Profile", User],
-            ["privacy", "Privacy & Visibility", Shield],
-            ["security", "Account Security", Lock],
-            ["data", "Data & Account", Download],
+            ["profile", t("account.profileSection", "My Profile"), User],
+            ["privacy", t("account.privacySection", "Privacy & Visibility"), Shield],
+            ["security", t("account.securitySection", "Account Security"), Lock],
+            ["data", t("account.dataSection", "Data & Account"), Download],
             [
               "notifications",
               unreadNotificationCount > 0
-                ? `Notifications (${unreadNotificationCount})`
-                : "Notifications",
+                ? `${t("account.notifications", "Notifications")} (${unreadNotificationCount})`
+                : t("account.notifications", "Notifications"),
               Bell,
             ],
             [
               "milestones",
-              `Milestones (${unlockedCount}/${milestones.length})`,
+              `${t("account.milestones", "Milestones")} (${unlockedCount}/${milestones.length})`,
               Award,
             ],
           ] as const
@@ -661,11 +673,10 @@ export function AccountWorkspace({
           <Card surface="parchment">
             <CardHeader>
               <CardTitle className="font-display text-2xl">
-                Identity &amp; Devotional Avatar
+                {t("account.identityTitle", "Identity & Devotional Avatar")}
               </CardTitle>
               <CardDescription>
-                Customize your display name, devotional avatar, introduction, and
-                scriptural timezone.
+                {t("account.identityDesc", "Customize your display name, devotional avatar, introduction, and scriptural timezone.")}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -673,7 +684,7 @@ export function AccountWorkspace({
                 {/* Avatar Preview & Selection */}
                 <div className="rounded-[12px] border border-sandalwood-border bg-ivory p-4 space-y-3">
                   <p className="text-xs font-semibold uppercase tracking-wider text-gold-ink">
-                    Devotional Avatar
+                    {t("account.devotionalAvatar", "Devotional Avatar")}
                   </p>
                   <div className="flex items-center gap-4">
                     <div className="relative size-16 shrink-0 overflow-hidden rounded-full border-2 border-gold-antique/50 bg-sandalwood-light shadow-sm">
@@ -692,7 +703,7 @@ export function AccountWorkspace({
                     </div>
                     <div className="flex-1 space-y-1.5">
                       <p className="text-xs text-ink-muted">
-                        Select a sacred motif or paste an HTTPS image URL:
+                        {t("account.avatarPrompt", "Select a sacred motif or paste an HTTPS image URL:")}
                       </p>
                       <div className="flex flex-wrap gap-1.5">
                         {DEVOTIONAL_AVATARS.map((av) => {
@@ -752,7 +763,7 @@ export function AccountWorkspace({
                 {/* Account Details Box */}
                 <div className="grid gap-3 rounded-[12px] border border-sandalwood-border bg-ivory p-3.5 sm:grid-cols-2">
                   <div>
-                    <span className="text-xs text-ink-muted">Registered Email</span>
+                    <span className="text-xs text-ink-muted">{t("account.registeredEmail", "Registered Email")}</span>
                     <div className="mt-1 flex items-center gap-1.5">
                       <Mail className="size-3.5 text-ink-muted" aria-hidden={true} />
                       <span className="text-xs font-medium text-ink truncate">
@@ -761,24 +772,24 @@ export function AccountWorkspace({
                     </div>
                   </div>
                   <div>
-                    <span className="text-xs text-ink-muted">Email Verification</span>
+                    <span className="text-xs text-ink-muted">{t("account.emailVerification", "Email Verification")}</span>
                     <div className="mt-1 flex items-center gap-1.5">
                       {emailConfirmed ? (
                         <Badge variant="peacock">
                           <CheckCircle2 className="size-3" aria-hidden={true} />
-                          <span>Verified</span>
+                          <span>{t("account.verified", "Verified")}</span>
                         </Badge>
                       ) : (
                         <Badge variant="gold">
                           <ShieldAlert className="size-3" aria-hidden={true} />
-                          <span>Pending Verification</span>
+                          <span>{t("account.pendingVerification", "Pending Verification")}</span>
                         </Badge>
                       )}
                     </div>
                   </div>
                 </div>
 
-                <FormField id="acc-name" label="Display Name" required>
+                <FormField id="acc-name" label={t("account.displayName", "Display Name")} required>
                   <Input
                     id="acc-name"
                     value={displayName}
@@ -789,7 +800,7 @@ export function AccountWorkspace({
 
                 <FormField
                   id="acc-username"
-                  label="Handle (Optional)"
+                  label={t("account.username", "Handle (Optional)")}
                   hint="4–32 lowercase characters, letters, numbers, hyphens, or underscores."
                 >
                   <Input
@@ -801,7 +812,7 @@ export function AccountWorkspace({
                 </FormField>
 
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <FormField id="acc-tz" label="IANA Timezone" required>
+                  <FormField id="acc-tz" label={t("account.timezone", "IANA Timezone")} required>
                     <Input
                       id="acc-tz"
                       value={timezone}
@@ -810,24 +821,25 @@ export function AccountWorkspace({
                       required
                     />
                   </FormField>
-                  <FormField id="acc-lang" label="Preferred Language">
-                    <Select
+                  <FormField
+                    id="acc-lang"
+                    label={t("account.languageSection", "Preferred Language")}
+                    hint={t("account.languageDescription", "Choose from 20 sacred and regional languages. Updates immediately without requiring sign out.")}
+                  >
+                    <LanguageSelectField
                       id="acc-lang"
                       value={preferredLanguage}
-                      onChange={(e) => setPreferredLanguage(e.target.value)}
-                    >
-                      {SUPPORTED_LANGUAGES.map((l) => (
-                        <option key={l.code} value={l.code}>
-                          {l.label}
-                        </option>
-                      ))}
-                    </Select>
+                      onChange={(nextLang) => {
+                        setPreferredLanguage(nextLang);
+                        void setLanguage(nextLang);
+                      }}
+                    />
                   </FormField>
                 </div>
 
                 <FormField
                   id="acc-bio"
-                  label="Devotional Introduction / Bio (Optional)"
+                  label={t("account.bio", "Devotional Introduction / Bio (Optional)")}
                   hint="Share your spiritual intentions, preferred slokas, or chanting focus."
                 >
                   <Textarea
@@ -840,7 +852,7 @@ export function AccountWorkspace({
                 </FormField>
 
                 <Button type="submit" variant="primary" disabled={busy}>
-                  Save Profile Details
+                  {busy ? t("common.loading", "Saving...") : t("account.saveProfile", "Save Profile Details")}
                 </Button>
               </form>
             </CardContent>
@@ -849,16 +861,15 @@ export function AccountWorkspace({
           <Card surface="parchment">
             <CardHeader>
               <CardTitle className="font-display text-2xl">
-                Chanting, Carry-Forward &amp; Comfort
+                {t("account.chantingPreferencesTitle", "Chanting, Carry-Forward & Comfort")}
               </CardTitle>
               <CardDescription>
-                Tune daily round commitments, counting methods, sound/tactile
-                feedback, and reduced motion.
+                {t("account.chantingPreferencesDesc", "Tune daily round commitments, counting methods, sound/tactile feedback, and reduced motion.")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-3 sm:grid-cols-2">
-                <FormField id="acc-target" label="Daily Round Target (1–192)">
+                <FormField id="acc-target" label={t("account.dailyRoundTarget", "Daily Round Target (1–192)")}>
                   <Input
                     id="acc-target"
                     type="number"
@@ -868,7 +879,7 @@ export function AccountWorkspace({
                     onChange={(e) => setDailyRoundTarget(Number(e.target.value))}
                   />
                 </FormField>
-                <FormField id="acc-method" label="Default Chanting Mode">
+                <FormField id="acc-method" label={t("account.defaultChantingMode", "Default Chanting Mode")}>
                   <Select
                     id="acc-method"
                     value={countingMethod}
@@ -878,14 +889,14 @@ export function AccountWorkspace({
                       )
                     }
                   >
-                    <option value="japa_mala">108-Bead Digital Japa Mala</option>
-                    <option value="manual">Manual Round Counter</option>
+                    <option value="japa_mala">{t("japa.japaMala", "108-Bead Digital Japa Mala")}</option>
+                    <option value="manual">{t("japa.manualCounter", "Manual Round Counter")}</option>
                   </Select>
                 </FormField>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2">
-                <FormField id="acc-policy" label="Carry-Forward Policy">
+                <FormField id="acc-policy" label={t("account.carryForwardPolicy", "Carry-Forward Policy")}>
                   <Select
                     id="acc-policy"
                     value={carryPolicy}
@@ -899,15 +910,15 @@ export function AccountWorkspace({
                       )
                     }
                   >
-                    <option value="automatic">Automatic carry-forward</option>
-                    <option value="optional">Optional daily choice</option>
-                    <option value="fresh_daily">Fresh daily target</option>
-                    <option value="custom">Custom carry cap</option>
+                    <option value="automatic">{t("sadhana.policyAutomatic", "Automatic carry-forward")}</option>
+                    <option value="optional">{t("sadhana.policyOptional", "Optional daily choice")}</option>
+                    <option value="fresh_daily">{t("sadhana.policyFresh", "Fresh daily target")}</option>
+                    <option value="custom">{t("sadhana.policyCap", "Custom carry cap")}</option>
                   </Select>
                 </FormField>
 
                 {carryPolicy === "custom" && (
-                  <FormField id="acc-cap" label="Max Carry Cap (Rounds)">
+                  <FormField id="acc-cap" label={t("account.customCarryCap", "Max Carry Cap (Rounds)")}>
                     <Input
                       id="acc-cap"
                       type="number"
@@ -923,21 +934,21 @@ export function AccountWorkspace({
               <div className="space-y-2.5">
                 <SwitchField
                   id="acc-sound"
-                  label="Subtle Chanting Chime"
+                  label={t("japa.audioFeedback", "Subtle Chanting Chime")}
                   description="Gentle Web Audio chime when completing the 108th bead."
                   checked={soundEnabled}
                   onCheckedChange={setSoundEnabled}
                 />
                 <SwitchField
                   id="acc-haptic"
-                  label="Tactile Vibration Feedback"
+                  label={t("japa.tactileFeedback", "Tactile Vibration Feedback")}
                   description="Gentle mobile vibration feedback on each bead advance."
                   checked={tactileEnabled}
                   onCheckedChange={setTactileEnabled}
                 />
                 <SwitchField
                   id="acc-motion"
-                  label="Reduced Motion"
+                  label={t("account.reducedMotion", "Reduced Motion")}
                   description="Minimize transitions and ambient animations across the sanctuary."
                   checked={reducedMotion}
                   onCheckedChange={setReducedMotion}
@@ -947,7 +958,7 @@ export function AccountWorkspace({
                 <div className="space-y-2 pt-3 border-t border-sandalwood-border/60">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-semibold text-ink">Text Font Size</p>
+                      <p className="text-xs font-semibold text-ink">{t("account.fontSizeOption", "Text Font Size")}</p>
                       <p className="text-[11px] text-ink-muted">Scale typography across your sanctuary for comfortable chanting.</p>
                     </div>
                     <span className="text-xs font-medium text-ink-muted">
@@ -988,7 +999,7 @@ export function AccountWorkspace({
                   savePreferences("Chanting and comfort preferences saved.")
                 }
               >
-                Save Sādhana Preferences
+                {t("account.saveSadhanaPreferences", "Save Sādhana Preferences")}
               </Button>
             </CardContent>
           </Card>

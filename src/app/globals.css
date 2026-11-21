@@ -142,10 +142,11 @@ html[data-theme="govardhan-dawn"] {
 }
 
 @theme inline {
-  --font-sans: var(--font-noto-sans), system-ui, sans-serif;
+  --font-sans: var(--font-noto-sans), "Noto Sans Devanagari", "Noto Sans Bengali", "Noto Sans Gurmukhi", "Noto Sans Gujarati", "Noto Sans Oriya", "Noto Sans Tamil", "Noto Sans Telugu", "Noto Sans Kannada", "Noto Sans Malayalam", "Noto Sans Ol Chiki", system-ui, -apple-system, sans-serif;
   --font-serif: var(--font-noto-serif), Georgia, serif;
   --font-display: var(--font-cormorant), var(--font-noto-serif), Georgia, serif;
   --font-devanagari: var(--font-tiro-devanagari), var(--font-noto-sans), serif;
+  --font-ol-chiki: "Noto Sans Ol Chiki", var(--font-noto-sans), sans-serif;
 
   --color-ivory: var(--ks-ivory);
   --color-paper: var(--ks-paper);
@@ -546,4 +547,61 @@ input[type="radio"] {
 
 [data-reduced-motion="true"] [data-veo-motion="video"] {
   display: none !important;
+}
+
+/* =========================================================================
+   Multilingual Script & Typography Primitives (20 Indian Languages)
+   ========================================================================= */
+html[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+html[dir="ltr"] {
+  direction: ltr;
+  text-align: left;
+}
+
+/* Santali Ol Chiki Script */
+html[lang="sat"] {
+  font-family: var(--font-ol-chiki);
+}
+
+/* Gurmukhi (Punjabi) */
+html[lang="pa"] {
+  font-family: "Noto Sans Gurmukhi", var(--font-sans);
+}
+
+/* Odia */
+html[lang="or"] {
+  font-family: "Noto Sans Oriya", var(--font-sans);
+}
+
+/* Bengali & Assamese & Meitei */
+html[lang="bn"],
+html[lang="as"],
+html[lang="mni"] {
+  font-family: "Noto Sans Bengali", var(--font-sans);
+}
+
+/* Dravidian Scripts (Tamil, Telugu, Kannada, Malayalam) */
+html[lang="ta"] {
+  font-family: "Noto Sans Tamil", var(--font-sans);
+}
+
+html[lang="te"] {
+  font-family: "Noto Sans Telugu", var(--font-sans);
+}
+
+html[lang="kn"] {
+  font-family: "Noto Sans Kannada", var(--font-sans);
+}
+
+html[lang="ml"] {
+  font-family: "Noto Sans Malayalam", var(--font-sans);
+}
+
+/* RTL directional flip utility for icons */
+html[dir="rtl"] .rtl-flip {
+  transform: scaleX(-1);
 }

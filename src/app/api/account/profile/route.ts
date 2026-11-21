@@ -4,7 +4,10 @@ import {
   getAuthenticatedGitaContext,
   parseJsonBody,
 } from "@/lib/gita/api-helpers";
-import { accountProfileUpdateSchema } from "@/lib/account/validation";
+import {
+  accountProfileUpdateSchema,
+  accountProfilePatchSchema,
+} from "@/lib/account/validation";
 
 export async function PATCH(request: Request) {
   const auth = await getAuthenticatedGitaContext();
@@ -13,7 +16,16 @@ export async function PATCH(request: Request) {
   const body = await parseJsonBody(request);
   if (!body.ok) return body.response;
 
-  const parsed = accountProfileUpdateSchema.safeParse(body.data);
+  // Support partial updates (e.g., updating only preferredLanguage from language switcher)
+  const isPartial =
+    typeof body.data === "object" &&
+    body.data !== null &&
+    (!("displayName" in body.data) || !("timezone" in body.data));
+
+  const parsed = isPartial
+    ? accountProfilePatchSchema.safeParse(body.data)
+    : accountProfileUpdateSchema.safeParse(body.data);
+
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.issues[0]?.message ?? "Invalid profile details." },
@@ -21,16 +33,17 @@ export async function PATCH(request: Request) {
     );
   }
 
+  const updates: Record<string, unknown> = {};
+  if (parsed.data.displayName !== undefined) updates.display_name = parsed.data.displayName;
+  if (parsed.data.username !== undefined) updates.username = parsed.data.username;
+  if (parsed.data.avatarUrl !== undefined) updates.avatar_url = parsed.data.avatarUrl;
+  if (parsed.data.bio !== undefined) updates.bio = parsed.data.bio;
+  if (parsed.data.timezone !== undefined) updates.timezone = parsed.data.timezone;
+  if (parsed.data.preferredLanguage !== undefined) updates.preferred_language = parsed.data.preferredLanguage;
+
   const updateRes = await auth.supabase
     .from("profiles")
-    .update({
-      display_name: parsed.data.displayName,
-      username: parsed.data.username,
-      avatar_url: parsed.data.avatarUrl,
-      bio: parsed.data.bio,
-      timezone: parsed.data.timezone,
-      preferred_language: parsed.data.preferredLanguage,
-    })
+    .update(updates)
     .eq("id", auth.user.id)
     .select(
       "id, username, display_name, avatar_url, bio, timezone, preferred_language, updated_at"

@@ -17,6 +17,8 @@ import {
 import { signOutAction } from "@/app/auth/actions";
 import { cn } from "@/lib/cn";
 import { LotusEmblem } from "@/components/sacred/ornaments";
+import { useTranslation } from "@/lib/i18n/context";
+import { LanguageSelector } from "@/components/i18n/language-selector";
 
 interface NavItem {
   href: string;
@@ -159,6 +161,18 @@ export function AppShell({
 }: AppShellProps) {
   const pathname = usePathname();
   const homeHref = userSummary ? "/sadhana" : "/";
+  const { t, isRtl } = useTranslation();
+
+  const getNavLabel = React.useCallback(
+    (href: string, defaultLabel: string): string => {
+      if (href.startsWith("/drsti")) return t("nav.drsti", defaultLabel);
+      if (href.startsWith("/sadhana/chant")) return t("nav.japa", defaultLabel);
+      if (href.startsWith("/sadhana")) return t("nav.lakshya", defaultLabel);
+      if (href.startsWith("/rooms")) return t("nav.satsang", defaultLabel);
+      return defaultLabel;
+    },
+    [t]
+  );
 
   return (
     <div
@@ -167,7 +181,7 @@ export function AppShell({
     >
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-[10px] focus:bg-peacock-deep focus:px-4 focus:py-2.5 focus:text-sm focus:font-medium focus:text-ink-on-dark"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:start-3 focus:z-50 focus:rounded-[10px] focus:bg-peacock-deep focus:px-4 focus:py-2.5 focus:text-sm focus:font-medium focus:text-ink-on-dark"
       >
         Skip to main content
       </a>
@@ -175,13 +189,13 @@ export function AppShell({
       {/* Soft ambient dusk/tulsi wash behind frosted glass rail on light interior pages */}
       <div
         aria-hidden="true"
-        className="pointer-events-none fixed inset-y-0 left-0 z-0 hidden w-64 bg-[radial-gradient(circle_at_24%_18%,rgba(214,168,72,0.16),transparent_60%),radial-gradient(circle_at_75%_82%,rgba(42,134,121,0.12),transparent_58%)] lg:block"
+        className="pointer-events-none fixed inset-y-0 start-0 z-0 hidden w-64 bg-[radial-gradient(circle_at_24%_18%,rgba(214,168,72,0.16),transparent_60%),radial-gradient(circle_at_75%_82%,rgba(42,134,121,0.12),transparent_58%)] lg:block"
       />
 
-      {/* Desktop Left Navigation Rail (Frosted Glass) */}
+      {/* Desktop Navigation Rail (Frosted Glass with RTL awareness) */}
       <aside
         aria-label="Primary navigation"
-        className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-white/45 bg-gradient-to-b from-[#FAF6EC]/76 via-[#F7F1E3]/68 to-[#FAF6EC]/78 backdrop-blur-2xl backdrop-saturate-150 shadow-[8px_0_32px_-12px_rgba(13,22,40,0.14)] lg:flex"
+        className="fixed inset-y-0 start-0 z-30 hidden w-64 flex-col border-e border-white/45 bg-gradient-to-b from-[#FAF6EC]/76 via-[#F7F1E3]/68 to-[#FAF6EC]/78 backdrop-blur-2xl backdrop-saturate-150 shadow-[8px_0_32px_-12px_rgba(13,22,40,0.14)] lg:flex"
       >
         <div className="flex items-center gap-3 border-b border-sandalwood-border/60 px-5 py-5">
           <div className="flex size-10 items-center justify-center rounded-[12px] bg-krishna-midnight/95 text-gold-antique shadow-sacred-sm">
@@ -198,7 +212,7 @@ export function AppShell({
               </span>
             </Link>
             <p className="text-xs text-ink/75">
-              Remember Him. Stay Connected.
+              {t("nav.tagline", "Remember Him. Stay Connected.")}
             </p>
           </div>
         </div>
@@ -247,7 +261,7 @@ export function AppShell({
                     strokeWidth={isActive ? 2 : 1.5}
                     aria-hidden={true}
                   />
-                  <span>{item.label}</span>
+                  <span>{getNavLabel(item.href, item.label)}</span>
                 </span>
                 {item.phaseNote && (
                   <span
@@ -284,7 +298,7 @@ export function AppShell({
                   ) : (
                     <User className="size-3.5" aria-hidden={true} />
                   )}
-                  <span>Account, Privacy &amp; Inbox</span>
+                  <span>{t("nav.account", "Account, Privacy & Inbox")}</span>
                 </Link>
                 <form action={signOutAction}>
                   <button
@@ -292,7 +306,7 @@ export function AppShell({
                     className="flex w-full cursor-pointer items-center gap-2 rounded-[8px] px-2 py-1.5 text-xs font-medium text-ink-muted transition-colors hover:bg-white/55 hover:text-kumkum"
                   >
                     <LogOut className="size-3.5" aria-hidden={true} />
-                    <span>Sign out</span>
+                    <span>{t("nav.signOut", "Sign out")}</span>
                   </button>
                 </form>
               </>
@@ -302,7 +316,7 @@ export function AppShell({
               className="flex items-center gap-2 rounded-[8px] px-2 py-1.5 text-xs font-medium text-ink/80 transition-colors hover:bg-white/55 hover:text-ink"
             >
               <Palette className="size-3.5" aria-hidden={true} />
-              <span>Design System</span>
+              <span>{t("nav.designSystem", "Design System")}</span>
             </Link>
           </div>
           <p className="font-medium text-ink">Accessible to all</p>
@@ -313,7 +327,7 @@ export function AppShell({
       </aside>
 
       {/* Main Column */}
-      <div className="flex min-h-dvh flex-col pb-20 lg:pb-0 lg:pl-64">
+      <div className="flex min-h-dvh flex-col pb-20 lg:pb-0 lg:ps-64">
         <header className="sticky top-0 z-20 flex min-h-14 items-center justify-between border-b border-sandalwood-border/60 bg-ivory/72 px-4 backdrop-blur-xl backdrop-saturate-150 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2.5 lg:hidden">
             <Link
@@ -393,7 +407,7 @@ export function AppShell({
                     strokeWidth={1.75}
                     aria-hidden={true}
                   />
-                  <span>Settings</span>
+                  <span>{t("nav.settings", "Settings")}</span>
                 </Link>
               </>
             ) : !pathname?.startsWith("/auth") ? (
@@ -401,9 +415,12 @@ export function AppShell({
                 href="/auth"
                 className="inline-flex min-h-9 items-center rounded-full border border-sandalwood-border bg-paper px-3.5 text-xs font-medium text-ink transition-colors duration-150 hover:bg-linen"
               >
-                Sign in
+                {t("nav.signIn", "Sign in")}
               </Link>
             ) : null}
+
+            {/* Application-wide Language Selector */}
+            <LanguageSelector variant="button" />
           </div>
         </header>
 
@@ -462,7 +479,7 @@ export function AppShell({
                       strokeWidth={isActive ? 2 : 1.5}
                       aria-hidden={true}
                     />
-                    <span className="truncate">{item.shortLabel}</span>
+                    <span className="truncate">{getNavLabel(item.href, item.shortLabel)}</span>
                   </span>
                 </Link>
               </li>

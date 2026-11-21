@@ -5,12 +5,17 @@ import {
   chantingMethodSchema,
   roomShareModeSchema,
 } from "@/lib/domain/sadhana";
+import {
+  SUPPORTED_LANGUAGES as I18N_LANGUAGES,
+  type LanguageCode,
+} from "@/lib/i18n/languages";
 
-export const SUPPORTED_LANGUAGES = [
-  { code: "en", label: "English" },
-  { code: "hi", label: "हिन्दी (Hindi)" },
-  { code: "sa", label: "संस्कृतम् (Sanskrit)" },
-] as const;
+export const SUPPORTED_LANGUAGES = I18N_LANGUAGES.map((l) => ({
+  code: l.code,
+  label: `${l.nativeName} (${l.name})`,
+}));
+
+const VALID_LANGUAGE_CODES = new Set(I18N_LANGUAGES.map((l) => l.code));
 
 const timeHHMMSSSchema = z
   .string()
@@ -65,9 +70,11 @@ export const accountProfileUpdateSchema = z.object({
     .string()
     .trim()
     .toLowerCase()
-    .regex(/^[a-z]{2,8}(-[a-z]{2,8})?$/, "Invalid language code.")
+    .refine((v) => VALID_LANGUAGE_CODES.has(v as LanguageCode), "Invalid language code.")
     .default("en"),
 });
+
+export const accountProfilePatchSchema = accountProfileUpdateSchema.partial();
 
 export const accountPasswordUpdateSchema = z.discriminatedUnion("action", [
   z

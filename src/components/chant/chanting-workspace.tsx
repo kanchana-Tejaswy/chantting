@@ -7,8 +7,11 @@ import {
   BarChart3,
   Bell,
   BookOpen,
+  Calculator,
   CheckCircle2,
+  Clock,
   Gauge,
+  History,
   Minus,
   Pause,
   Play,
@@ -16,6 +19,8 @@ import {
   RefreshCw,
   RotateCcw,
   Sparkles,
+  Timer,
+  TimerOff,
   WifiOff,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -44,6 +49,8 @@ import type {
   ChantingRoundRecord,
   ChantingSessionRecord,
   ChantWorkspacePayload,
+  ManualCounterState,
+  ManualNameEntryRecord,
 } from "@/lib/chant/types";
 import { JapaMalaWheel } from "@/components/chant/japa-mala-wheel";
 import { ChantingSectionTabs } from "@/components/sadhana/chanting-section-tabs";
@@ -182,6 +189,51 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
     initialData.preferences.tactileFeedbackEnabled
   );
 
+  // Manual Name Counter with Persistent Remainder State
+  const [manualState, setManualState] = React.useState<ManualCounterState>(
+    initialData.manualCounterState ?? {
+      cumulative_names: 0,
+      cumulative_rounds: 0,
+      current_remainder: 0,
+      last_entry: null,
+      active_session: null,
+    }
+  );
+  const [manualEntries, setManualEntries] = React.useState<ManualNameEntryRecord[]>(
+    initialData.manualEntries ?? []
+  );
+  const [manualNamesInput, setManualNamesInput] = React.useState<string>("");
+  const [manualSessionOption, setManualSessionOption] = React.useState<"continue" | "new">("continue");
+  const [manualSubMode, setManualSubMode] = React.useState<"japa_mala" | "digital_counter">("japa_mala");
+  const [isSubmittingManual, setIsSubmittingManual] = React.useState(false);
+  const [isUndoingManual, setIsUndoingManual] = React.useState(false);
+
+  const parsedEnteredNames = React.useMemo(() => {
+    const clean = manualNamesInput.trim();
+    if (!clean) return 0;
+    const val = parseInt(clean, 10);
+    return Number.isFinite(val) && val > 0 ? val : 0;
+  }, [manualNamesInput]);
+
+  const currentManualRemainder = manualState.current_remainder ?? 0;
+  const combinedManualNames = currentManualRemainder + parsedEnteredNames;
+  const newlyEarnedManualRounds = Math.floor(combinedManualNames / BEADS_PER_ROUND);
+  const newPreservedManualRemainder = combinedManualNames % BEADS_PER_ROUND;
+  const manualNamesNeededForNext =
+    newPreservedManualRemainder === 0 ? BEADS_PER_ROUND : BEADS_PER_ROUND - newPreservedManualRemainder;
+
+  const activeManualSession = React.useMemo(() => {
+    if (activeSession && activeSession.method === "manual") {
+      return activeSession;
+    }
+    const todayManual = todaySessions.find((s) => s.method === "manual");
+    return todayManual ?? null;
+  }, [activeSession, todaySessions]);
+
+  const latestActiveManualEntry = React.useMemo(() => {
+    return manualEntries.find((e) => !e.is_reverted) ?? null;
+  }, [manualEntries]);
+
   const [queuedRounds, setQueuedRounds] = React.useState<QueuedRoundSubmission[]>(
     []
   );
@@ -219,10 +271,46 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
   const inFlightSessionPromiseRef =
     React.useRef<Promise<ChantingSessionRecord | null> | null>(null);
 
-  const isPaused =
-    method === "japa_mala" &&
-    activeSession?.method === "japa_mala" &&
-    activeSession.status === "paused";
+  // Optional Session Timer & Duration Tracking preference (persisted locally)
+  const [isTimerEnabled, setIsTimerEnabled] = React.useState<boolean>(true);
+
+  React.useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(`smaran_timer_enabled_${initialData.userId}`);
+      if (saved !== null) {
+        setIsTimerEnabled(saved === "true");
+      }
+    } catch {
+      // ignore in environments without localStorage
+    }
+  }, [initialData.userId]);
+
+  const handleToggleTimer = React.useCallback(
+    (enabled: boolean) => {
+      setIsTimerEnabled(enabled);
+      try {
+        window.localStorage.setItem(
+          `smaran_timer_enabled_${initialData.userId}`,
+          String(enabled)
+        );
+      } catch {
+        // ignore
+      }
+      setStatusMessage(
+        enabled
+          ? "Session timer enabled. Duration tracking is active."
+          : "Session timer turned off. Timeless chanting mode active."
+      );
+      setAnnouncement(enabled ? "Session timer turned on" : "Session timer turned off");
+    },
+    [initialData.userId]
+  );
+
+  const isPaused = Boolean(
+    activeSession &&
+    activeSession.method === method &&
+    activeSession.status === "paused"
+  );
   const latestRecord = todayRecords[0] ?? null;
 
   // Session duration tick while active
@@ -309,7 +397,7 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
             body: JSON.stringify({
               method: targetMethod,
               clientSessionKey: makeClientKey("sess"),
-              mantraId: activeMantra?.id ?? null,
+              mantraId: activeMantra?.id || null,
             }),
           });
           const json = (await res.json()) as {
@@ -463,8 +551,8 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
           method: targetMethod,
           sessionId: session?.id ?? null,
           clientRecordedAt: new Date().toISOString(),
-          sankalpaId: dedicateToSankalpa && activeSankalpa ? activeSankalpa.id : null,
-          mantraId: activeMantra?.id ?? null,
+          sankalpaId: dedicateToSankalpa && activeSankalpa?.id ? activeSankalpa.id : null,
+          mantraId: activeMantra?.id || null,
         };
 
         if (typeof navigator !== "undefined" && !navigator.onLine) {
@@ -616,6 +704,164 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
     },
     [router]
   );
+
+  const handleRecordManualNames = React.useCallback(
+    async (explicitNamesCount?: number) => {
+      const namesCountToRecord = explicitNamesCount ?? parsedEnteredNames;
+      if (namesCountToRecord <= 0 || isSubmittingManual) return;
+      setIsSubmittingManual(true);
+      setErrorMessage(null);
+
+      const shouldContinue = manualSessionOption === "continue" && Boolean(activeManualSession);
+      const idempotencyKey = makeClientKey("manual-names");
+
+      try {
+        const res = await fetch("/api/chant/manual-names", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            namesCount: namesCountToRecord,
+            idempotencyKey,
+            sessionId: shouldContinue && activeManualSession?.id ? activeManualSession.id : null,
+            startNewSession: !shouldContinue,
+            clientRecordedAt: new Date().toISOString(),
+            sankalpaId: dedicateToSankalpa && activeSankalpa?.id ? activeSankalpa.id : null,
+            mantraId: activeMantra?.id || null,
+          }),
+        });
+
+        const json = await res.json();
+        if (!res.ok || json.error) {
+          throw new Error(json.error ?? "Failed to record manual names.");
+        }
+
+        if (json.counter_state) {
+          setManualState(json.counter_state);
+        }
+        if (json.entry) {
+          setManualEntries((prev) => [
+            json.entry,
+            ...prev.filter((e) => e.id !== json.entry.id),
+          ]);
+        }
+        if (json.daily_sadhana) {
+          setDailySadhana(json.daily_sadhana);
+        }
+        if (json.sankalpa) {
+          if (json.sankalpa.status === "completed") {
+            setActiveSankalpa(null);
+            setDedicateToSankalpa(false);
+          } else {
+            setActiveSankalpa(json.sankalpa);
+          }
+        }
+        if (json.session) {
+          setActiveSession(json.session);
+          setTodaySessions((prev) => [
+            json.session,
+            ...prev.filter((s) => s.id !== json.session.id),
+          ]);
+        }
+
+        if (json.rounds_earned > 0) {
+          triggerBeadFeedback({
+            soundEnabled,
+            tactileEnabled,
+            isRoundComplete: true,
+          });
+          setStatusMessage(
+            `Recorded ${namesCountToRecord.toLocaleString()} names: ${json.rounds_earned} round${json.rounds_earned > 1 ? "s" : ""} credited! Remainder preserved: ${json.current_remainder} names.`
+          );
+          setAnnouncement(`${json.rounds_earned} round${json.rounds_earned > 1 ? "s" : ""} credited`);
+        } else {
+          triggerBeadFeedback({
+            soundEnabled,
+            tactileEnabled,
+            isRoundComplete: false,
+          });
+          setStatusMessage(
+            `Recorded ${namesCountToRecord.toLocaleString()} names. Remainder balance is now ${json.current_remainder} / 108 names.`
+          );
+          setAnnouncement(`${namesCountToRecord} names added to remainder`);
+        }
+
+        if (!explicitNamesCount) {
+          setManualNamesInput("");
+        }
+        router.refresh();
+      } catch (err) {
+        setErrorMessage(
+          err instanceof Error ? err.message : "Failed to record manual names."
+        );
+      } finally {
+        setIsSubmittingManual(false);
+      }
+    },
+    [
+      activeManualSession,
+      activeMantra,
+      activeSankalpa,
+      dedicateToSankalpa,
+      isSubmittingManual,
+      manualSessionOption,
+      parsedEnteredNames,
+      router,
+      soundEnabled,
+      tactileEnabled,
+    ]
+  );
+
+  const handleUndoManualEntry = React.useCallback(async (entryId: string) => {
+    if (isUndoingManual) return;
+    setIsUndoingManual(true);
+    setErrorMessage(null);
+
+    try {
+      const res = await fetch("/api/chant/manual-names/undo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entryId, reason: "devotee_undo" }),
+      });
+
+      const json = await res.json();
+      if (!res.ok || json.error) {
+        throw new Error(json.error ?? "Failed to undo manual entry.");
+      }
+
+      if (json.counter_state) {
+        setManualState(json.counter_state);
+      }
+      if (json.entry) {
+        setManualEntries((prev) =>
+          prev.map((e) => (e.id === json.entry.id ? json.entry : e))
+        );
+      }
+      if (json.daily_sadhana) {
+        setDailySadhana(json.daily_sadhana);
+      }
+      if (json.sankalpa) {
+        setActiveSankalpa(json.sankalpa);
+      }
+      if (json.session) {
+        setActiveSession(json.session);
+        setTodaySessions((prev) =>
+          prev.map((s) => (s.id === json.session.id ? json.session : s))
+        );
+      }
+
+      setStatusMessage(
+        `Reverted entry of ${json.entry?.names_count ?? 0} names. Restored remainder to ${json.counter_state?.current_remainder ?? 0} names.`
+      );
+      setAnnouncement("Manual entry reverted");
+      router.refresh();
+    } catch (err) {
+      setErrorMessage(
+        err instanceof Error ? err.message : "Failed to revert manual entry."
+      );
+    } finally {
+      setIsUndoingManual(false);
+    }
+  }, [isUndoingManual, router]);
 
   const handleSessionStatus = React.useCallback(
     async (nextStatus: "paused" | "active" | "completed") => {
@@ -859,6 +1105,27 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
             <span className="hidden sm:inline">Insights</span>
           </Button>
 
+          {/* Optional Session Timer Toggle */}
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => handleToggleTimer(!isTimerEnabled)}
+            className={cn(
+              "flex items-center gap-1.5 text-xs rounded-xl border px-3 py-1.5 transition-all shadow-2xs",
+              isTimerEnabled
+                ? "border-peacock-green/50 bg-tulsi-wash/70 text-peacock-deep font-medium hover:border-peacock-green"
+                : "border-sandalwood-border/80 bg-paper text-ink-muted hover:text-ink hover:border-gold-border/70"
+            )}
+            title={isTimerEnabled ? "Optional Session Timer: Enabled (tap to disable)" : "Optional Session Timer: Disabled (tap to enable)"}
+          >
+            {isTimerEnabled ? (
+              <Timer className="size-3.5 text-peacock-deep" aria-hidden={true} />
+            ) : (
+              <TimerOff className="size-3.5 text-ink-muted" aria-hidden={true} />
+            )}
+            <span className="hidden sm:inline">Timer: {isTimerEnabled ? "On" : "Off"}</span>
+          </Button>
+
           {!isOnline && (
             <Badge variant="gold">
               <WifiOff className="size-3.5" aria-hidden={true} />
@@ -875,9 +1142,16 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
               <span>Sync queued ({queuedRounds.length})</span>
             </Button>
           )}
-          {method === "japa_mala" && (
-            <Badge variant="neutral" className="tabular-nums">
-              Duration {formatDuration(elapsedSeconds)}
+          {isTimerEnabled && activeSession && (
+            <Badge
+              variant="neutral"
+              className="tabular-nums flex items-center gap-1.5 border-sandalwood-border/70 bg-paper/90 text-ink shadow-2xs font-medium"
+            >
+              <Clock className="size-3 text-gold-antique" aria-hidden={true} />
+              <span>Duration {formatDuration(elapsedSeconds)}</span>
+              {activeSession.status === "paused" && (
+                <span className="text-[10px] text-gold-ink font-semibold ml-0.5">(Paused)</span>
+              )}
             </Badge>
           )}
         </div>
@@ -993,7 +1267,7 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
             {
               id: "manual",
               label: "Manual Counter",
-              hint: "1 whole round (+1)",
+              hint: "108 names = 1 round",
             },
           ] as const
         ).map((tab) => {
@@ -1218,78 +1492,511 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
             </div>
           </div>
         ) : (
-          <div className="mx-auto flex max-w-md flex-col items-center space-y-6 py-4 text-center">
-            <SacredRingProgress
-              value={dailySadhana.completed_rounds}
-              max={dailySadhana.effective_daily_target}
-              label="Today's manual chanting progress"
-              size={148}
-              strokeWidth={9}
-            />
+          <div className="mx-auto max-w-xl space-y-6 py-2">
+            {/* Header: Today's Rounds & Persistent Remainder Stats */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div className="rounded-2xl border border-sandalwood-border/80 bg-paper/90 p-4 shadow-2xs">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
+                  Today's Manual Rounds
+                </p>
+                <div className="mt-1 flex items-baseline gap-2">
+                  <span className="font-serif text-3xl font-bold tabular-nums text-ink">
+                    {dailySadhana.completed_rounds}
+                  </span>
+                  <span className="text-xs text-ink-muted">
+                    / {dailySadhana.effective_daily_target} target
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-ink-muted tabular-nums">
+                  {dailySadhana.remaining_balance === 0
+                    ? "Target met 🎉"
+                    : `${dailySadhana.remaining_balance} remaining`}
+                </p>
+              </div>
 
-            <div>
-              <p className="text-xs font-medium tracking-wide uppercase text-ink-muted">
-                Manual Round Counter
-              </p>
-              <p className="mt-1 font-serif text-5xl font-semibold text-ink tabular-nums">
-                {dailySadhana.completed_rounds}{" "}
-                <span className="text-xl font-normal text-ink-muted">
-                  / {dailySadhana.effective_daily_target} rounds
-                </span>
-              </p>
-              <p className="mt-1.5 text-sm text-ink-muted tabular-nums">
-                Rounds today: {dailySadhana.completed_rounds} · Remaining:{" "}
-                {dailySadhana.remaining_balance}
-              </p>
+              <div className="rounded-2xl border border-gold-border/70 bg-gold-wash/60 p-4 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-gold-ink">
+                    Persistent Remainder
+                  </p>
+                  <span className="text-[10px] font-medium text-ink-muted">
+                    108 names = 1 round
+                  </span>
+                </div>
+                <div className="mt-1 flex items-baseline gap-1.5">
+                  <span className="font-serif text-3xl font-bold tabular-nums text-lotus-ruby">
+                    {currentManualRemainder}
+                  </span>
+                  <span className="text-xs text-ink-muted">/ 108 names</span>
+                </div>
+                <ProgressBar
+                  value={currentManualRemainder}
+                  max={BEADS_PER_ROUND}
+                  label="Unconverted remainder progress"
+                  showValueLabel={false}
+                  tone="gold"
+                  className="mt-2"
+                />
+              </div>
             </div>
 
-            <Button
-              variant="primary"
-              size="lg"
-              disabled={isSubmittingRound}
-              loading={isSubmittingRound}
-              onClick={() => void recordCompletedRound("manual")}
-              className="min-h-16 w-full max-w-xs rounded-[16px] text-base font-semibold"
+            {/* Optional Session Timer & Controls for Manual Counter */}
+            {isTimerEnabled && (
+              activeSession ? (
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-sandalwood-border/80 bg-paper/95 p-3.5 shadow-2xs">
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-gold-wash border border-gold-border/60 text-gold-ink">
+                      <Clock className="size-4" aria-hidden={true} />
+                    </div>
+                    <div className="text-left">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-ink">
+                          Manual Chanting Session
+                        </span>
+                        <span className="text-xs font-serif font-bold text-peacock-deep tabular-nums">
+                          {formatDuration(elapsedSeconds)}
+                        </span>
+                        {activeSession.status === "paused" && (
+                          <span className="rounded-md bg-gold-wash px-1.5 py-0.5 text-[10px] font-bold text-gold-ink border border-gold-border/50">
+                            Paused
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-ink-muted">
+                        {activeSession.rounds_completed} rounds credited in this session
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {activeSession.status === "paused" ? (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        loading={isSessionBusy}
+                        onClick={() => void handleSessionStatus("active")}
+                        className="rounded-xl px-3 py-1.5 text-xs font-semibold"
+                      >
+                        <Play className="size-3 mr-1 fill-current" strokeWidth={1.75} aria-hidden={true} />
+                        <span>Resume session</span>
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        loading={isSessionBusy}
+                        onClick={() => void handleSessionStatus("paused")}
+                        className="rounded-xl border border-sandalwood-border/80 bg-paper px-3 py-1.5 text-xs font-medium text-ink hover:border-gold-border"
+                      >
+                        <Pause className="size-3 mr-1" strokeWidth={1.75} aria-hidden={true} />
+                        <span>Pause session</span>
+                      </Button>
+                    )}
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      loading={isSessionBusy}
+                      onClick={() => void handleSessionStatus("completed")}
+                      className="rounded-xl border border-sandalwood-border/80 bg-paper px-3 py-1.5 text-xs font-medium text-ink-muted hover:text-ink hover:border-sandalwood-strong"
+                    >
+                      <span>Finish session</span>
+                    </Button>
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={isSessionBusy}
+                      onClick={() => void handleStartNewSession("manual")}
+                      className="rounded-xl px-2.5 py-1.5 text-xs text-ink-muted hover:text-ink"
+                    >
+                      <Plus className="size-3 mr-1" strokeWidth={1.75} aria-hidden={true} />
+                      <span>New session</span>
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-dashed border-sandalwood-border/80 bg-paper/60 px-4 py-2.5 text-xs">
+                  <div className="flex items-center gap-2 text-ink-muted">
+                    <Timer className="size-3.5 text-gold-antique shrink-0" aria-hidden={true} />
+                    <span>Optional session timer active · Track duration for your manual sadhana</span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={isSessionBusy}
+                    onClick={() => void handleStartNewSession("manual")}
+                    className="rounded-xl border-sandalwood-border/80 bg-paper px-3 py-1 text-xs font-semibold text-peacock-deep hover:border-gold-border transition-all"
+                  >
+                    <Plus className="size-3 mr-1 text-gold-antique" strokeWidth={2} aria-hidden={true} />
+                    <span>Start Timed Session</span>
+                  </Button>
+                </div>
+              )
+            )}
+
+            {/* Two Selectable Modes within Manual Counter */}
+            <div
+              role="tablist"
+              aria-label="Manual counting modes"
+              className="grid grid-cols-2 gap-1.5 rounded-2xl border border-sandalwood-border/80 bg-linen/70 p-1.5"
             >
-              <Plus className="size-5" strokeWidth={2} aria-hidden={true} />
-              <span>Add 1 completed round</span>
-            </Button>
-
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              <Button
-                variant="secondary"
-                size="md"
-                disabled={!latestRecord || isSubmittingRound}
-                onClick={() =>
-                  latestRecord && void handleUndoRound(latestRecord.id)
-                }
+              <button
+                type="button"
+                role="tab"
+                aria-selected={manualSubMode === "japa_mala"}
+                onClick={() => setManualSubMode("japa_mala")}
+                className={cn(
+                  "flex min-h-12 cursor-pointer flex-col items-center justify-center rounded-xl px-3 py-2 text-center transition-all duration-150 active:scale-[0.97]",
+                  manualSubMode === "japa_mala"
+                    ? "bg-paper text-ink shadow-xs border border-sandalwood-border/60 font-semibold"
+                    : "text-ink-muted hover:bg-paper/60 hover:text-ink"
+                )}
               >
-                <RotateCcw className="size-4" strokeWidth={1.75} aria-hidden={true} />
-                <span>Undo last round</span>
-              </Button>
+                <span className="text-sm font-semibold">Japa Mala — +1 Round</span>
+                <span className="text-[11px] opacity-75">Physical 108-bead Mala</span>
+              </button>
 
-              {latestRecord && (
+              <button
+                type="button"
+                role="tab"
+                aria-selected={manualSubMode === "digital_counter"}
+                onClick={() => setManualSubMode("digital_counter")}
+                className={cn(
+                  "flex min-h-12 cursor-pointer flex-col items-center justify-center rounded-xl px-3 py-2 text-center transition-all duration-150 active:scale-[0.97]",
+                  manualSubMode === "digital_counter"
+                    ? "bg-paper text-ink shadow-xs border border-sandalwood-border/60 font-semibold"
+                    : "text-ink-muted hover:bg-paper/60 hover:text-ink"
+                )}
+              >
+                <span className="text-sm font-semibold">Digital Counter — Enter Names</span>
+                <span className="text-[11px] opacity-75">Electronic clicker machine</span>
+              </button>
+            </div>
+
+            {manualSubMode === "japa_mala" ? (
+              /* Mode A: Japa Mala for devotees chanting with a physical 108-bead Mala */
+              <div className="rounded-2xl border border-sandalwood-border/90 bg-paper p-5 sm:p-6 shadow-xs space-y-5">
+                <div className="text-left">
+                  <h3 className="text-base font-semibold text-ink flex items-center gap-2">
+                    <span aria-hidden={true}>📿</span>
+                    <span>Physical 108-Bead Japa Mala</span>
+                  </h3>
+                  <p className="text-xs text-ink-muted mt-1">
+                    Chant with your physical Tulsi or Neem Japa beads. Every completed round logs exactly 108 sacred names while preserving your unconverted remainder balance.
+                  </p>
+                </div>
+
+                {/* Big Prominent +1 Round Button */}
+                <Button
+                  variant="primary"
+                  size="lg"
+                  disabled={isSubmittingManual}
+                  loading={isSubmittingManual}
+                  onClick={() => void handleRecordManualNames(108)}
+                  className="min-h-16 w-full rounded-2xl text-lg font-bold shadow-sacred-sm active:scale-[0.97]"
+                >
+                  <Plus className="size-6 mr-2" strokeWidth={2.4} aria-hidden={true} />
+                  <span>+1 Round (108 Names)</span>
+                </Button>
+
+                {/* Multiple Round Entries */}
+                <div className="space-y-2 pt-1 text-left">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
+                    Multiple Round Entries
+                  </span>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {[
+                      { rounds: 2, label: "+2 Rounds", names: 216 },
+                      { rounds: 4, label: "+4 Rounds", names: 432 },
+                      { rounds: 8, label: "+8 Rounds", names: 864 },
+                      { rounds: 16, label: "+16 Rounds", names: 1728 },
+                    ].map((item) => (
+                      <Button
+                        key={item.rounds}
+                        variant="outline"
+                        size="md"
+                        disabled={isSubmittingManual}
+                        onClick={() => void handleRecordManualNames(item.names)}
+                        className="flex flex-col items-center justify-center rounded-xl border-sandalwood-border/80 bg-linen/50 hover:bg-paper hover:border-gold-border py-2.5 h-auto text-ink transition-all active:scale-[0.97]"
+                      >
+                        <span className="text-xs font-bold">{item.label}</span>
+                        <span className="text-[10px] text-ink-muted">{item.names} names</span>
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* Mode B: Digital Counter for devotees using an electronic physical counting machine */
+              <div className="rounded-2xl border border-sandalwood-border/90 bg-paper p-5 sm:p-6 shadow-xs space-y-4">
+                <div>
+                  <label
+                    htmlFor="manual-names-input"
+                    className="block text-sm font-semibold text-ink"
+                  >
+                    Enter Sacred Names Chanted
+                  </label>
+                  <p className="text-xs text-ink-muted mt-0.5">
+                    Enter the exact count of names displayed on your electronic counting machine (e.g. 250 names).
+                  </p>
+
+                  <div className="relative mt-2.5">
+                    <input
+                      id="manual-names-input"
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={manualNamesInput}
+                      onChange={(e) => setManualNamesInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && parsedEnteredNames > 0) {
+                          e.preventDefault();
+                          void handleRecordManualNames();
+                        }
+                      }}
+                      placeholder="Enter names chanted, e.g. 250"
+                      className="w-full rounded-2xl border border-sandalwood-strong/80 bg-paper px-4 py-3.5 text-xl sm:text-2xl font-serif font-bold tabular-nums text-ink placeholder:text-ink-muted/50 focus:border-gold-antique focus:outline-none focus:ring-2 focus:ring-gold-antique/20"
+                    />
+                    {manualNamesInput && (
+                      <button
+                        type="button"
+                        onClick={() => setManualNamesInput("")}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-lg bg-linen px-2.5 py-1 text-xs font-medium text-ink-muted hover:text-ink transition-colors"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Quick Preset Increment Chips */}
+                <div className="space-y-1.5">
+                  <span className="text-[11px] font-medium text-ink-muted">
+                    Quick increment chips:
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { label: "+108 (1 round)", count: 108 },
+                      { label: "+216 (2 rounds)", count: 216 },
+                      { label: "+250 names", count: 250 },
+                      { label: "+500 names", count: 500 },
+                      { label: "+1,080 (10 rounds)", count: 1080 },
+                    ].map((chip) => (
+                      <button
+                        key={chip.count}
+                        type="button"
+                        onClick={() =>
+                          setManualNamesInput(String((parsedEnteredNames || 0) + chip.count))
+                        }
+                        className="rounded-xl border border-sandalwood-border/80 bg-linen/50 hover:bg-paper hover:border-gold-border px-3 py-1.5 text-xs font-medium text-ink transition-all active:scale-[0.97]"
+                      >
+                        {chip.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Live Mathematical Conversion Breakdown */}
+                {parsedEnteredNames > 0 && (
+                  <div className="rounded-2xl border border-gold-border/60 bg-gold-wash/50 p-4 sm:p-5 text-left text-ink animate-in fade-in-50 duration-150">
+                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gold-ink">
+                      <Calculator className="size-4" aria-hidden={true} />
+                      <span>Authoritative Conversion Breakdown</span>
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center">
+                      <div className="rounded-xl bg-paper/90 p-2.5 border border-gold-border/30">
+                        <p className="text-[10px] uppercase font-semibold text-ink-muted">Previous</p>
+                        <p className="font-serif text-lg font-bold tabular-nums text-ink">
+                          {currentManualRemainder}
+                        </p>
+                      </div>
+                      <div className="rounded-xl bg-paper/90 p-2.5 border border-gold-border/30">
+                        <p className="text-[10px] uppercase font-semibold text-ink-muted">+ Entered</p>
+                        <p className="font-serif text-lg font-bold tabular-nums text-peacock-deep">
+                          +{parsedEnteredNames}
+                        </p>
+                      </div>
+                      <div className="rounded-xl bg-paper/90 p-2.5 border border-gold-border/30">
+                        <p className="text-[10px] uppercase font-semibold text-ink-muted">= Credited</p>
+                        <p className="font-serif text-lg font-bold tabular-nums text-lotus-ruby">
+                          {newlyEarnedManualRounds > 0 ? `+${newlyEarnedManualRounds}r` : "0r"}
+                        </p>
+                      </div>
+                      <div className="rounded-xl bg-paper/90 p-2.5 border border-gold-border/30">
+                        <p className="text-[10px] uppercase font-semibold text-ink-muted">New Remainder</p>
+                        <p className="font-serif text-lg font-bold tabular-nums text-ink">
+                          {newPreservedManualRemainder}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-gold-border/40 pt-2.5 text-xs text-ink-muted">
+                      <span>
+                        {newlyEarnedManualRounds > 0
+                          ? `🎉 ${newlyEarnedManualRounds * BEADS_PER_ROUND} names convert to ${newlyEarnedManualRounds} round${newlyEarnedManualRounds > 1 ? "s" : ""} credited today.`
+                          : `All ${parsedEnteredNames} names will be added to your remainder balance.`}
+                      </span>
+                      {manualNamesNeededForNext > 0 && (
+                        <span className="font-medium text-ink tabular-nums">
+                          {manualNamesNeededForNext} more names to complete next round
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Session Association: Continue vs New */}
+                <div className="space-y-2 pt-1 text-left">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
+                    Session Association
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setManualSessionOption("continue")}
+                      className={cn(
+                        "flex flex-col rounded-xl border p-3 text-left transition-all",
+                        manualSessionOption === "continue"
+                          ? "border-peacock-green/70 bg-tulsi-wash/70 shadow-2xs text-ink"
+                          : "border-sandalwood-border/60 bg-paper hover:bg-linen/50 text-ink-muted"
+                      )}
+                    >
+                      <span className="text-xs font-bold text-ink">Continue Previous Session</span>
+                      <span className="text-[11px] opacity-75 mt-0.5">
+                        {activeManualSession
+                          ? `Attaches to active manual session (${activeManualSession.rounds_completed} rounds today)`
+                          : "Attaches to today's open manual chanting batch"}
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setManualSessionOption("new")}
+                      className={cn(
+                        "flex flex-col rounded-xl border p-3 text-left transition-all",
+                        manualSessionOption === "new"
+                          ? "border-peacock-green/70 bg-tulsi-wash/70 shadow-2xs text-ink"
+                          : "border-sandalwood-border/60 bg-paper hover:bg-linen/50 text-ink-muted"
+                      )}
+                    >
+                      <span className="text-xs font-bold text-ink">Start New Session</span>
+                      <span className="text-[11px] opacity-75 mt-0.5">
+                        Creates fresh session · Remainder of {currentManualRemainder} is preserved
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Primary Action Button */}
+                <Button
+                  variant="primary"
+                  size="lg"
+                  disabled={parsedEnteredNames <= 0 || isSubmittingManual}
+                  loading={isSubmittingManual}
+                  onClick={() => void handleRecordManualNames()}
+                  className="min-h-14 w-full rounded-2xl text-base font-bold shadow-xs active:scale-[0.98]"
+                >
+                  <Plus className="size-5 mr-1.5" strokeWidth={2.2} aria-hidden={true} />
+                  <span>
+                    {parsedEnteredNames <= 0
+                      ? "Enter names chanted to record"
+                      : newlyEarnedManualRounds > 0
+                      ? `Record ${parsedEnteredNames.toLocaleString()} Names (+${newlyEarnedManualRounds} Round${newlyEarnedManualRounds > 1 ? "s" : ""} Earned)`
+                      : `Record ${parsedEnteredNames.toLocaleString()} Names (Save ${newPreservedManualRemainder}/108 to Remainder)`}
+                  </span>
+                </Button>
+              </div>
+            )}
+
+            {/* Undo Latest Manual Entry */}
+            {latestActiveManualEntry && (
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-sandalwood-border/80 bg-paper px-4 py-3 text-xs text-ink shadow-2xs">
+                <div>
+                  <span className="font-semibold text-ink">Latest Entry:</span>{" "}
+                  <span className="tabular-nums text-ink-muted">
+                    +{latestActiveManualEntry.names_count} names ({latestActiveManualEntry.rounds_earned} rounds earned, remainder {latestActiveManualEntry.new_remainder})
+                  </span>
+                </div>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button
                       variant="outline"
-                      size="md"
-                      disabled={isSubmittingRound}
+                      size="sm"
+                      disabled={isUndoingManual}
+                      loading={isUndoingManual}
+                      className="rounded-xl border-sandalwood-border/80 text-xs text-ink-muted hover:text-ink hover:border-kumkum/60"
                     >
-                      <Minus className="size-4" strokeWidth={1.75} aria-hidden={true} />
-                      <span>Decrement (-1)</span>
+                      <RotateCcw className="size-3.5 mr-1" strokeWidth={1.75} aria-hidden={true} />
+                      <span>Undo this entry</span>
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent
-                    title="Decrement completed rounds?"
-                    description="Confirming will revert your most recently recorded round from today's Sadhana history."
-                    confirmLabel="Decrement 1 round"
+                    title="Undo manual name entry?"
+                    description={`This will revert your entry of ${latestActiveManualEntry.names_count} names, restore your remainder to ${latestActiveManualEntry.previous_remainder} names, and revert any credited rounds.`}
+                    confirmLabel="Revert entry"
                     destructive
-                    onConfirm={() => void handleUndoRound(latestRecord.id)}
+                    onConfirm={() => void handleUndoManualEntry(latestActiveManualEntry.id)}
                   />
                 </AlertDialog>
-              )}
-            </div>
+              </div>
+            )}
+
+            {/* Recent Manual Entries Audit Trail */}
+            {manualEntries.length > 0 && (
+              <div className="space-y-2 pt-1 text-left">
+                <div className="flex items-center justify-between text-xs font-semibold text-ink-muted">
+                  <div className="flex items-center gap-1.5">
+                    <History className="size-3.5" aria-hidden={true} />
+                    <span>Recent Manual Entries</span>
+                  </div>
+                  <span className="tabular-nums">
+                    Cumulative: {manualState.cumulative_names.toLocaleString()} names ({manualState.cumulative_rounds} rounds)
+                  </span>
+                </div>
+
+                <div className="divide-y divide-sandalwood-border/50 rounded-2xl border border-sandalwood-border/70 bg-paper/80 overflow-hidden shadow-2xs">
+                  {manualEntries.slice(0, 5).map((entry) => (
+                    <div
+                      key={entry.id}
+                      className={cn(
+                        "flex items-center justify-between px-3.5 py-2.5 text-xs transition-colors",
+                        entry.is_reverted ? "bg-linen/40 opacity-55 line-through" : "hover:bg-linen/30"
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="font-serif font-bold text-ink tabular-nums text-sm">
+                          +{entry.names_count.toLocaleString()} names
+                        </span>
+                        <span className="text-[11px] text-ink-muted tabular-nums hidden sm:inline">
+                          ({entry.previous_remainder} + {entry.names_count} = {entry.rounds_earned}r + {entry.new_remainder}rem)
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant={entry.is_reverted ? "neutral" : entry.rounds_earned > 0 ? "peacock" : "gold"}
+                          className="text-[10px]"
+                        >
+                          {entry.is_reverted
+                            ? "Reverted"
+                            : entry.rounds_earned > 0
+                            ? `+${entry.rounds_earned} round${entry.rounds_earned > 1 ? "s" : ""}`
+                            : "Remainder saved"}
+                        </Badge>
+                        <span className="text-[10px] text-ink-muted/80 tabular-nums">
+                          {new Date(entry.recorded_at).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </Card>
@@ -1317,6 +2024,13 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
               description="Subtle haptic pulse on supported mobile devices."
               checked={tactileEnabled}
               onCheckedChange={(v) => void handleTogglePreference("tactile", v)}
+            />
+            <SwitchField
+              id="chant-timer-enabled"
+              label="Optional session timer"
+              description="Display live elapsed duration and timer controls across both Digital Japa Mala and Manual Counter."
+              checked={isTimerEnabled}
+              onCheckedChange={handleToggleTimer}
             />
           </CardContent>
         </Card>

@@ -4,8 +4,9 @@ import { redirect } from "next/navigation";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { sanitizeRedirectPath } from "@/lib/auth/validation";
-import { LotusEmblem } from "@/components/sacred/ornaments";
 import { AuthPanel, type AuthMode } from "@/components/auth/auth-panel";
+import { AuthHeader } from "@/components/auth/auth-header";
+import { AuthHeroStory } from "@/components/auth/auth-hero-story";
 
 export const dynamic = "force-dynamic";
 
@@ -71,73 +72,14 @@ export default async function AuthPage({
         />
       </div>
 
-      {/* Minimal Top Navigation — Return to SMARAN */}
-      <header className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between px-5 pt-5 sm:px-8 sm:pt-7">
-        <Link
-          href="/"
-          className="group inline-flex items-center gap-2.5 rounded-full border border-[#E5BF73]/28 bg-[#1E150E]/55 px-3.5 py-2 text-xs font-medium text-[#FBF7EE] backdrop-blur-md transition-colors hover:border-[#E5BF73]/55 hover:bg-[#1E150E]/75"
-        >
-          <ArrowLeft
-            className="size-3.5 text-[#E5BF73] transition-transform duration-150 group-hover:-translate-x-0.5"
-            strokeWidth={1.75}
-            aria-hidden="true"
-          />
-          <span>Return to SMARAN</span>
-        </Link>
-      </header>
+      {/* Minimal Top Navigation — Return to SMARAN & Language Selector */}
+      <AuthHeader />
 
       {/* Main Balanced Immersive Composition */}
       <main className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 items-center px-5 py-8 sm:px-8 sm:py-10">
         <div className="grid w-full items-center gap-8 lg:grid-cols-[1.08fr_minmax(0,440px)] lg:gap-14">
           {/* Left Sanctuary Story & Brand Identity */}
-          <section
-            aria-label="SMARAN Sanctuary Introduction"
-            className="space-y-5 text-left"
-          >
-            <div className="inline-flex items-center gap-3 rounded-full border border-[#E5BF73]/30 bg-[#22170F]/60 px-3.5 py-1.5 backdrop-blur-sm">
-              <span className="flex size-6 items-center justify-center rounded-full bg-[#E5BF73]/18 text-[#E5BF73]">
-                <LotusEmblem size={14} />
-              </span>
-              <span className="text-xs font-semibold tracking-[0.16em] uppercase text-[#FBF7EE]">
-                SMARAN
-              </span>
-              <span className="h-3 w-px bg-[#E5BF73]/35" aria-hidden="true" />
-              <span lang="sa" className="text-sm font-medium text-[#E5BF73]">
-                स्मरण
-              </span>
-            </div>
-
-            <div className="space-y-3.5">
-              <h1 className="max-w-xl font-display text-3xl font-semibold leading-[1.08] tracking-[-0.02em] text-[#FBF7EE] drop-shadow-[0_2px_18px_rgba(12,8,4,0.45)] sm:text-5xl lg:text-[3.25rem]">
-                Remember Him. Stay Connected.
-              </h1>
-              <p className="max-w-lg text-base leading-relaxed text-[#F2E8D5]/92 sm:text-lg">
-                A space for chanting, sadhana and devotion.
-              </p>
-              <p className="max-w-md text-sm leading-relaxed text-[#DECDB1]/82">
-                Continue your personal Japa rounds, maintain your daily target carry-forward,
-                and deepen your devotional discipline in quiet peace.
-              </p>
-            </div>
-
-            <div className="hidden flex-wrap items-center gap-x-6 gap-y-2 pt-2 text-xs text-[#E6D8BF]/80 sm:flex">
-              <span className="inline-flex items-center gap-1.5">
-                <ShieldCheck
-                  className="size-3.5 text-[#E5BF73]"
-                  strokeWidth={1.6}
-                  aria-hidden="true"
-                />
-                Private chanting records by default
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span
-                  className="size-1.5 rounded-full bg-[#92B47D]"
-                  aria-hidden="true"
-                />
-                Daily rounds synced across devices
-              </span>
-            </div>
-          </section>
+          <AuthHeroStory />
 
           {/* Right Translucent Warm Ivory Login Interface */}
           <section

@@ -127,6 +127,24 @@ export async function signInWithPasswordAction(
     };
   }
 
+  // Persist pre-authentication language selection to user profile
+  const selectedLang = formData.get("language")?.toString();
+  if (selectedLang) {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from("profiles")
+          .update({ preferred_language: selectedLang })
+          .eq("id", user.id);
+      }
+    } catch {
+      // Non-blocking preference sync failure
+    }
+  }
+
   safeRevalidateRootLayout();
   redirect(nextPath);
 }
@@ -151,6 +169,7 @@ export async function signUpWithPasswordAction(
 
   const origin = await getRequestOrigin();
   const supabase = await createClient();
+  const selectedLang = formData.get("language")?.toString() || "en";
 
   const { data, error } = await supabase.auth.signUp({
     email: parsed.data.email,
@@ -158,6 +177,7 @@ export async function signUpWithPasswordAction(
     options: {
       data: {
         full_name: parsed.data.displayName,
+        preferred_language: selectedLang,
       },
       emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent("/onboarding")}`,
     },
@@ -178,6 +198,16 @@ export async function signUpWithPasswordAction(
 
   // If email confirmation is disabled on the project, session is returned immediately
   if (data.session) {
+    if (data.user?.id) {
+      try {
+        await supabase
+          .from("profiles")
+          .update({ preferred_language: selectedLang })
+          .eq("id", data.user.id);
+      } catch {
+        // Non-blocking
+      }
+    }
     safeRevalidateRootLayout();
     redirect("/onboarding");
   }

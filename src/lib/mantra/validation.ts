@@ -8,7 +8,13 @@ export const createMantraSchema = z.object({
 });
 
 export const updateMantraSchema = createMantraSchema.extend({
-  id: z.string().uuid("Invalid mantra ID"),
+  id: z
+    .string()
+    .trim()
+    .regex(
+      /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/,
+      "Invalid mantra ID"
+    ),
 });
 
 export type CreateMantraInput = z.infer<typeof createMantraSchema>;

@@ -17,9 +17,17 @@ export const roomShareModeSchema = z.enum(ROOM_SHARE_MODES);
 
 export const BEADS_PER_ROUND = 108;
 
+const pgUuidSchema = z
+  .string()
+  .trim()
+  .regex(
+    /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/,
+    "Invalid UUID format"
+  );
+
 export const dailySadhanaSchema = z.object({
-  id: z.uuid(),
-  user_id: z.uuid(),
+  id: pgUuidSchema,
+  user_id: pgUuidSchema,
   sadhana_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   timezone_snapshot: z.string().min(1),
   original_daily_target: z.number().int().min(1).max(192),
@@ -38,7 +46,7 @@ export type DailySadhana = z.infer<typeof dailySadhanaSchema>;
 export const recordChantingRoundInputSchema = z.object({
   method: chantingMethodSchema,
   idempotencyKey: z.string().trim().min(8).max(128),
-  sessionId: z.uuid().nullable().optional(),
+  sessionId: pgUuidSchema.nullable().optional(),
   clientRecordedAt: z.iso.datetime().nullable().optional(),
 });
 

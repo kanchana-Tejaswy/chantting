@@ -80,7 +80,15 @@ export default function RootLayout({
       lang="en"
       data-scroll-behavior="smooth"
       className={`${cormorant.variable} ${notoSerif.variable} ${notoSans.variable} ${tiroDevanagari.variable}`}
+      suppressHydrationWarning
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("smaran-theme");if(t){document.documentElement.setAttribute("data-theme",t);}}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body className="antialiased">
         <PwaRegister />
         {children}

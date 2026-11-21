@@ -8,6 +8,7 @@ import {
   Z_INDEX,
   getContrastRatio,
 } from "@/lib/design/tokens";
+import { DEVOTIONAL_THEMES } from "@/lib/design/themes";
 
 describe("Phase 2 design tokens & accessibility contrast", () => {
   it("satisfies WCAG AA contrast (>= 4.5:1) across all paired tokens", () => {
@@ -16,6 +17,22 @@ describe("Phase 2 design tokens & accessibility contrast", () => {
       expect(ratio, `${pair.name} (${pair.fg} on ${pair.bg})`).toBeGreaterThanOrEqual(
         pair.minRatio
       );
+    }
+  });
+
+  it("validates that all 4 devotional themes are defined and contrast-compliant", () => {
+    expect(DEVOTIONAL_THEMES).toHaveLength(4);
+    const themeIds = DEVOTIONAL_THEMES.map((t) => t.id);
+    expect(themeIds).toContain("vrindavan-ivory");
+    expect(themeIds).toContain("padmaraga-lotus");
+    expect(themeIds).toContain("yamuna-midnight");
+    expect(themeIds).toContain("govardhan-dawn");
+
+    for (const theme of DEVOTIONAL_THEMES) {
+      expect(theme.name.length).toBeGreaterThan(0);
+      expect(theme.previewColors).toHaveLength(6);
+      expect(theme.swatches.length).toBeGreaterThanOrEqual(8);
+      expect(theme.contrastPairs.length).toBeGreaterThanOrEqual(10);
     }
   });
 
@@ -34,7 +51,7 @@ describe("Phase 2 design tokens & accessibility contrast", () => {
     );
   });
 
-  it("defines CSS variables and reduced-motion rules in globals.css matching PALETTE", () => {
+  it("defines CSS variables and reduced-motion rules in globals.css matching PALETTE and data-theme selectors", () => {
     const css = fs.readFileSync(
       path.resolve(process.cwd(), "src", "app", "globals.css"),
       "utf8"
@@ -43,6 +60,10 @@ describe("Phase 2 design tokens & accessibility contrast", () => {
     expect(css.toLowerCase()).toContain(PALETTE.warmIvory.toLowerCase());
     expect(css.toLowerCase()).toContain(PALETTE.antiqueGold.toLowerCase());
     expect(css).toContain("prefers-reduced-motion: reduce");
+    expect(css).toContain('data-theme="vrindavan-ivory"');
+    expect(css).toContain('data-theme="padmaraga-lotus"');
+    expect(css).toContain('data-theme="yamuna-midnight"');
+    expect(css).toContain('data-theme="govardhan-dawn"');
   });
 });
 

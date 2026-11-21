@@ -1,35 +1,35 @@
 @import "tailwindcss";
 
 :root {
-  /* Core Surfaces & Inks — Sattvic Harmony (Padmaraga Lotus Sanctum) */
+  /* Core Surfaces & Inks — Canonical Vrindavan Dusk & Manuscript Ivory */
   /* Canonical Phase 2 tokens: #0c152b #faf6ec #c79a3b */
-  --ks-ivory: #faf7f2;
-  --ks-paper: #ffffff;
-  --ks-linen: #f4efe6;
-  --ks-border: #e7dfd3;
-  --ks-border-strong: #d8ccbc;
+  --ks-ivory: #faf6ec;
+  --ks-paper: #fffdf8;
+  --ks-linen: #f2ebd9;
+  --ks-border: #ddd1b8;
+  --ks-border-strong: #c4b496;
 
-  --ks-krishna-midnight: #1a1315;
-  --ks-krishna-elevated: #261c20;
-  --ks-peacock-deep: #7a2638;
-  --ks-peacock-slate: #641c2c;
+  --ks-krishna-midnight: #0c152b;
+  --ks-krishna-elevated: #132244;
+  --ks-peacock-deep: #16325b;
+  --ks-peacock-slate: #214875;
 
-  --ks-peacock-green: #9e364c;
-  --ks-peacock-ink: #4f1220;
-  --ks-tulsi-wash: #fdf1f3;
+  --ks-peacock-green: #145b51;
+  --ks-peacock-ink: #114e45;
+  --ks-tulsi-wash: #e5efea;
 
-  --ks-gold-antique: #c29438;
-  --ks-gold-border: #c9a354;
-  --ks-gold-ink: #7e5b13;
-  --ks-gold-wash: #f8f3e6;
+  --ks-gold-antique: #c79a3b;
+  --ks-gold-border: #b4862e;
+  --ks-gold-ink: #78520f;
+  --ks-gold-wash: #f5ecd8;
 
-  --ks-ink: #1f1d1a;
-  --ks-ink-muted: #665f55;
-  --ks-ink-on-dark: #fbf5f6;
-  --ks-ink-muted-dark: #d6cbcf;
+  --ks-ink: #111b33;
+  --ks-ink-muted: #524b3e;
+  --ks-ink-on-dark: #f7f1e3;
+  --ks-ink-muted-dark: #c9beaa;
 
-  --ks-kumkum: #a24136;
-  --ks-kumkum-wash: #fbf0ee;
+  --ks-kumkum: #9e2f26;
+  --ks-kumkum-wash: #faece9;
 
   /* Z-Index Scale */
   --ks-z-base: 0;
@@ -39,6 +39,106 @@
   --ks-z-overlay: 40;
   --ks-z-modal: 50;
   --ks-z-toast: 60;
+}
+
+html[data-theme="vrindavan-ivory"] {
+  --ks-ivory: #faf6ec;
+  --ks-paper: #fffdf8;
+  --ks-linen: #f2ebd9;
+  --ks-border: #ddd1b8;
+  --ks-border-strong: #c4b496;
+  --ks-krishna-midnight: #0c152b;
+  --ks-krishna-elevated: #132244;
+  --ks-peacock-deep: #16325b;
+  --ks-peacock-slate: #214875;
+  --ks-peacock-green: #145b51;
+  --ks-peacock-ink: #114e45;
+  --ks-tulsi-wash: #e5efea;
+  --ks-gold-antique: #c79a3b;
+  --ks-gold-border: #b4862e;
+  --ks-gold-ink: #78520f;
+  --ks-gold-wash: #f5ecd8;
+  --ks-ink: #111b33;
+  --ks-ink-muted: #524b3e;
+  --ks-ink-on-dark: #f7f1e3;
+  --ks-ink-muted-dark: #c9beaa;
+  --ks-kumkum: #9e2f26;
+  --ks-kumkum-wash: #faece9;
+}
+
+html[data-theme="padmaraga-lotus"] {
+  --ks-ivory: #faf7f2;
+  --ks-paper: #ffffff;
+  --ks-linen: #f4efe6;
+  --ks-border: #e7dfd3;
+  --ks-border-strong: #d8ccbc;
+  --ks-krishna-midnight: #1a1315;
+  --ks-krishna-elevated: #261c20;
+  --ks-peacock-deep: #7a2638;
+  --ks-peacock-slate: #641c2c;
+  --ks-peacock-green: #9e364c;
+  --ks-peacock-ink: #4f1220;
+  --ks-tulsi-wash: #fdf1f3;
+  --ks-gold-antique: #c29438;
+  --ks-gold-border: #c9a354;
+  --ks-gold-ink: #7e5b13;
+  --ks-gold-wash: #f8f3e6;
+  --ks-ink: #1f1d1a;
+  --ks-ink-muted: #665f55;
+  --ks-ink-on-dark: #fbf5f6;
+  --ks-ink-muted-dark: #d6cbcf;
+  --ks-kumkum: #a24136;
+  --ks-kumkum-wash: #fbf0ee;
+}
+
+html[data-theme="yamuna-midnight"] {
+  --ks-ivory: #0c152b;
+  --ks-paper: #13203d;
+  --ks-linen: #172747;
+  --ks-border: #23375e;
+  --ks-border-strong: #354f82;
+  --ks-krishna-midnight: #070d1c;
+  --ks-krishna-elevated: #0f1a33;
+  --ks-peacock-deep: #2c5999;
+  --ks-peacock-slate: #3f70b3;
+  --ks-peacock-green: #228a7c;
+  --ks-peacock-ink: #5ce0cc;
+  --ks-tulsi-wash: #132b29;
+  --ks-gold-antique: #d8a942;
+  --ks-gold-border: #b88e33;
+  --ks-gold-ink: #f5d67d;
+  --ks-gold-wash: #2b2312;
+  --ks-ink: #f5f2eb;
+  --ks-ink-muted: #a9b4cc;
+  --ks-ink-on-dark: #ffffff;
+  --ks-ink-muted-dark: #bac4d9;
+  --ks-kumkum: #e05d50;
+  --ks-kumkum-wash: #331613;
+}
+
+html[data-theme="govardhan-dawn"] {
+  --ks-ivory: #f5f7f3;
+  --ks-paper: #ffffff;
+  --ks-linen: #e9efe6;
+  --ks-border: #d2ddd0;
+  --ks-border-strong: #bac8b7;
+  --ks-krishna-midnight: #0d2621;
+  --ks-krishna-elevated: #143831;
+  --ks-peacock-deep: #1b4f45;
+  --ks-peacock-slate: #2b6b5f;
+  --ks-peacock-green: #286e60;
+  --ks-peacock-ink: #15423a;
+  --ks-tulsi-wash: #e8f4ee;
+  --ks-gold-antique: #c9972e;
+  --ks-gold-border: #b88520;
+  --ks-gold-ink: #75500a;
+  --ks-gold-wash: #f7f1df;
+  --ks-ink: #142420;
+  --ks-ink-muted: #4d5e59;
+  --ks-ink-on-dark: #f4f8f6;
+  --ks-ink-muted-dark: #c4d4cf;
+  --ks-kumkum: #9e2f26;
+  --ks-kumkum-wash: #f9ebea;
 }
 
 @theme inline {

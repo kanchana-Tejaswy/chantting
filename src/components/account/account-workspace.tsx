@@ -32,6 +32,10 @@ import {
 import { FormField, Input, Select, Textarea } from "@/components/ui/input";
 import { ProgressBar } from "@/components/ui/progress";
 import { SwitchField } from "@/components/ui/switch";
+import {
+  DEVOTIONAL_THEMES,
+  useDevotionalTheme,
+} from "@/lib/design/themes";
 import type {
   AccountNotification,
   AccountPreferences,
@@ -205,6 +209,7 @@ export function AccountWorkspace({
   // Account Deletion Confirmation
   const [deleteConfirmPhrase, setDeleteConfirmPhrase] = React.useState("");
   const [deleteConfirmEmail, setDeleteConfirmEmail] = React.useState("");
+  const [activeThemeId, setActiveThemeId] = useDevotionalTheme();
 
   const formattedJoinDate = React.useMemo(() => {
     try {
@@ -937,6 +942,49 @@ export function AccountWorkspace({
                   checked={reducedMotion}
                   onCheckedChange={setReducedMotion}
                 />
+
+                <div className="space-y-2 pt-3 border-t border-sandalwood-border/60">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-semibold text-ink">Devotional Atmosphere &amp; Theme</p>
+                      <p className="text-[11px] text-ink-muted">Choose your preferred sacred color palette.</p>
+                    </div>
+                    <Link
+                      href="/design-system"
+                      className="text-xs font-medium text-peacock-deep hover:underline"
+                    >
+                      Theme Previewer &rarr;
+                    </Link>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 pt-1">
+                    {DEVOTIONAL_THEMES.map((theme) => {
+                      const isSelected = activeThemeId === theme.id;
+                      return (
+                        <button
+                          key={theme.id}
+                          type="button"
+                          onClick={() => {
+                            setActiveThemeId(theme.id);
+                            setStatusMessage(`Atmosphere changed to "${theme.name}".`);
+                          }}
+                          className={`flex flex-col text-left p-2.5 rounded-[10px] border transition-all cursor-pointer ${
+                            isSelected
+                              ? "border-gold-antique bg-gold-wash/50 ring-1 ring-gold-antique"
+                              : "border-sandalwood-border bg-paper hover:border-gold-antique/50 hover:bg-linen"
+                          }`}
+                        >
+                          <div className="flex h-3 w-full overflow-hidden rounded-full mb-2">
+                            {theme.previewColors.map((c, i) => (
+                              <div key={i} className="flex-1 h-full" style={{ backgroundColor: c }} />
+                            ))}
+                          </div>
+                          <span className="text-[11px] font-bold text-ink truncate">{theme.name.split(" ")[0]}</span>
+                          <span className="text-[10px] text-ink-muted truncate">{theme.tag}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
 
               <Button

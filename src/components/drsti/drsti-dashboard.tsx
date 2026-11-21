@@ -31,6 +31,11 @@ import { LotusEmblem, ManuscriptDivider } from "@/components/sacred/ornaments";
 import { Badge } from "@/components/ui/badge";
 import { buttonStyles } from "@/components/ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
   Card,
   CardContent,
   CardDescription,
@@ -105,36 +110,150 @@ export function DrstiDashboard({
           SECTION A: Welcome & Overview Hero
          ========================================================================= */}
       <section aria-label="Welcome and Daily Sādhana Overview" className="space-y-6">
-        {/* Devotional Greeting & Date Header */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <Badge variant="gold" className="text-xs">
-                <LotusEmblem size={13} className="text-[#8C6F2D]" />
-                <span>DṚṢṬI · Spiritual Vision</span>
-              </Badge>
-              <span className="text-xs text-ink-muted">({timezone})</span>
-            </div>
-            <h1 className="mt-2.5 font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
-              Hare Krishna, {displayName}
-            </h1>
-            <p className="mt-1 font-serif text-sm text-ink-muted sm:text-base">
-              {formattedDate} · Stay centered in the holy names today.
-            </p>
-          </div>
+        {/* Sacred DṚṢṬI Jharokha Hero Sanctuary */}
+        <div className="relative overflow-hidden rounded-3xl border border-gold-border/70 bg-gradient-to-br from-paper via-paper to-gold-wash/30 p-6 sm:p-8 shadow-xs">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            {/* Left Content (7 cols): Devotional Vision & Gita Shloka */}
+            <div className="lg:col-span-7 space-y-4 text-left">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="gold" className="text-xs">
+                  <LotusEmblem size={13} className="text-[#8C6F2D]" />
+                  <span>DṚṢṬI · दृष्टि · Spiritual Vision</span>
+                </Badge>
+                <span className="text-xs text-ink-muted">({timezone})</span>
+              </div>
 
-          <div className="flex items-center gap-2.5">
-            <Link
-              href="/sadhana/chant"
-              className={buttonStyles({
-                variant: "primary",
-                size: "md",
-                className: "shadow-sm",
-              })}
-            >
-              <Flame className="size-4" aria-hidden="true" />
-              <span>Continue Chanting</span>
-            </Link>
+              <div>
+                <h1 className="font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+                  Hare Krishna, {displayName}
+                </h1>
+                <p className="mt-1 font-serif text-sm text-ink-muted sm:text-base">
+                  {formattedDate} · Look through the sacred window of divine remembrance.
+                </p>
+              </div>
+
+              {/* Sacred Bhagavad Gītā 6.30 Darshan Inscription */}
+              <div className="rounded-2xl border border-gold-border/60 bg-gold-wash/50 p-4 text-ink shadow-2xs">
+                <p className="font-devanagari text-xs sm:text-sm font-semibold text-gold-ink leading-relaxed">
+                  यो मां पश्यति सर्वत्र सर्वं च मयि पश्यति ।<br className="hidden sm:inline" />
+                  तस्याहं न प्रणश्यामि स च मे न प्रणश्यति ॥
+                </p>
+                <p className="mt-1.5 font-serif text-xs text-ink-muted italic leading-relaxed">
+                  “For one who sees Me everywhere and sees everything in Me, I am never lost to him, nor is he ever lost to Me.”
+                </p>
+                <span className="mt-1 block text-[10px] font-semibold uppercase tracking-wider text-gold-ink">
+                  — Bhagavad Gītā 6.30 · DṚṢṬI Darśana
+                </span>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-wrap items-center gap-3 pt-1">
+                <Link
+                  href="/sadhana/chant"
+                  className={buttonStyles({
+                    variant: "primary",
+                    size: "md",
+                    className: "shadow-xs active:scale-[0.98]",
+                  })}
+                >
+                  <Flame className="size-4" aria-hidden="true" />
+                  <span>Continue Chanting</span>
+                </Link>
+
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-sandalwood-border/80 bg-paper hover:bg-linen px-3.5 py-2 text-xs font-semibold text-ink transition-all shadow-2xs cursor-pointer active:scale-[0.97]"
+                    >
+                      <Sparkles className="size-3.5 text-gold-antique" />
+                      <span>View Sacred Darśana</span>
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent
+                    title="DṚṢṬI — Sri Krishna at the Jharokha"
+                    description="Sacred contemplation on divine vision and remembrance"
+                    className="max-w-md p-6"
+                  >
+                    <div className="space-y-4 pt-2">
+                      <div className="overflow-hidden rounded-2xl border border-gold-border/80 shadow-md">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src="/media/krishna-jharokha-drsti.jpg"
+                          alt="Sri Krishna gazing upon holy Vrindavan from the palace jharokha"
+                          className="h-auto w-full object-cover"
+                        />
+                      </div>
+                      <div className="rounded-xl bg-gold-wash/60 p-3 text-xs text-ink-muted space-y-1">
+                        <p className="font-semibold text-gold-ink">The Vision of DṚṢṬI</p>
+                        <p>
+                          Standing in the arched jharokha of royal Vrindavan, Sri Krishna gazes with affectionate grace upon every sincere devotee. Every round chanted is a window connecting the heart directly to His lotus feet.
+                        </p>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </div>
+
+            {/* Right Side (5 cols): The Arched Jharokha Window Artwork */}
+            <div className="lg:col-span-5 flex justify-center">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    className="group relative cursor-pointer overflow-hidden rounded-t-[3.5rem] rounded-b-2xl border-2 border-gold-border/80 bg-paper p-1.5 shadow-sacred-md ring-1 ring-gold-border/30 transition-all duration-300 hover:shadow-sacred-lg hover:border-gold-antique focus:outline-none focus:ring-2 focus:ring-gold-antique max-w-[280px] sm:max-w-[320px] w-full active:scale-[0.99]"
+                    title="Click to view full sacred Darśana"
+                  >
+                    {/* Arched Window Image Container */}
+                    <div className="relative aspect-[3/4] w-full overflow-hidden rounded-t-[3.2rem] rounded-b-xl bg-linen">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src="/media/krishna-jharokha-drsti.jpg"
+                        alt="Sri Krishna gazing upon holy Vrindavan from the palace jharokha"
+                        className="h-full w-full object-cover object-center filter brightness-[0.98] contrast-[1.03] transition-transform duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:scale-[1.04]"
+                      />
+                      {/* Subtle ambient lighting vignette */}
+                      <div
+                        aria-hidden="true"
+                        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/75 via-transparent to-ink/20"
+                      />
+                      {/* Golden Plaque Label at Base of Jharokha */}
+                      <div className="absolute inset-x-2 bottom-2 z-10 flex items-center justify-between rounded-lg bg-paper/90 px-3 py-1.5 backdrop-blur-xs border border-gold-border/50 shadow-2xs">
+                        <div className="flex items-center gap-1.5 text-[11px] font-semibold text-ink">
+                          <LotusEmblem size={12} className="text-gold-antique" />
+                          <span>Vrindavan Darśana</span>
+                        </div>
+                        <span className="text-[10px] text-gold-ink font-medium">Click to expand</span>
+                      </div>
+                    </div>
+                  </div>
+                </DialogTrigger>
+                <DialogContent
+                  title="DṚṢṬI — Sri Krishna at the Jharokha"
+                  description="Sacred contemplation on divine vision and remembrance"
+                  className="max-w-md p-6"
+                >
+                  <div className="space-y-4 pt-2">
+                    <div className="overflow-hidden rounded-2xl border border-gold-border/80 shadow-md">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src="/media/krishna-jharokha-drsti.jpg"
+                        alt="Sri Krishna gazing upon holy Vrindavan from the palace jharokha"
+                        className="h-auto w-full object-cover"
+                      />
+                    </div>
+                    <div className="rounded-xl bg-gold-wash/60 p-3 text-xs text-ink-muted space-y-1">
+                      <p className="font-semibold text-gold-ink">The Vision of DṚṢṬI</p>
+                      <p>
+                        Standing in the arched jharokha of royal Vrindavan, Sri Krishna gazes with affectionate grace upon every sincere devotee. Every round chanted is a window connecting the heart directly to His lotus feet.
+                      </p>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
         </div>
 
@@ -222,7 +341,7 @@ export function DrstiDashboard({
                       {Math.round(
                         (todaySadhana.completed_rounds /
                           Math.max(1, todaySadhana.effective_daily_target)) *
-                          100
+                        100
                       )}
                       % achieved
                     </span>

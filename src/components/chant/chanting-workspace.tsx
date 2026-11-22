@@ -8,6 +8,8 @@ import {
   Bell,
   BookOpen,
   Calculator,
+  Calendar,
+  CalendarDays,
   CheckCircle2,
   Clock,
   Gauge,
@@ -21,6 +23,7 @@ import {
   Sparkles,
   Timer,
   TimerOff,
+  Undo2,
   WifiOff,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -67,7 +70,16 @@ import {
   AlertDialog,
   AlertDialogContent,
   AlertDialogTrigger,
+  Dialog,
+  DialogContent,
 } from "@/components/ui/dialog";
+import type { SadhanaDayDetailPayload } from "@/lib/sadhana/queries";
+import {
+  getYesterdayDateString,
+  formatShortDate,
+  formatReadableDateWithWeekday,
+  getClientRecordedAtForDate,
+} from "@/lib/chant/date-utils";
 import { ProgressBar, SacredRingProgress } from "@/components/ui/progress";
 import { SwitchField } from "@/components/ui/switch";
 
@@ -233,6 +245,19 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
   const latestActiveManualEntry = React.useMemo(() => {
     return manualEntries.find((e) => !e.is_reverted) ?? null;
   }, [manualEntries]);
+
+  const todayDateStr = dailySadhana.sadhana_date;
+  const yesterdayDateStr = React.useMemo(
+    () => getYesterdayDateString(todayDateStr),
+    [todayDateStr]
+  );
+  const [attributionDate, setAttributionDate] = React.useState<"today" | "yesterday">("today");
+  const [isYesterdayHistoryOpen, setIsYesterdayHistoryOpen] = React.useState(false);
+  const [yesterdayDetail, setYesterdayDetail] = React.useState<SadhanaDayDetailPayload | null>(null);
+  const [isLoadingYesterday, setIsLoadingYesterday] = React.useState(false);
+  const [isSubmittingYesterday, setIsSubmittingYesterday] = React.useState(false);
+  const [undoingRecordId, setUndoingRecordId] = React.useState<string | null>(null);
+  const [yesterdayCustomNames, setYesterdayCustomNames] = React.useState("");
 
   const [queuedRounds, setQueuedRounds] = React.useState<QueuedRoundSubmission[]>(
     []
@@ -546,11 +571,15 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
             ? (sessionOverride ?? (await ensureActiveSession(targetMethod)))
             : null;
 
+        const recordedAt = attributionDate === "yesterday"
+          ? getClientRecordedAtForDate(yesterdayDateStr)
+          : new Date().toISOString();
+
         const submission: QueuedRoundSubmission = {
           idempotencyKey: makeClientKey("round"),
           method: targetMethod,
-          sessionId: session?.id ?? null,
-          clientRecordedAt: new Date().toISOString(),
+          sessionId: attributionDate === "yesterday" ? null : (session?.id ?? null),
+          clientRecordedAt: recordedAt,
           sankalpaId: dedicateToSankalpa && activeSankalpa?.id ? activeSankalpa.id : null,
           mantraId: activeMantra?.id || null,
         };
@@ -567,8 +596,16 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
 
         try {
           await submitRoundToServer(submission);
-          setStatusMessage("Completed round recorded.");
-          setAnnouncement("Round completed and saved");
+          setStatusMessage(
+            attributionDate === "yesterday"
+              ? `Completed round recorded for Yesterday (${formatShortDate(yesterdayDateStr)}).`
+              : "Completed round recorded."
+          );
+          setAnnouncement(
+            attributionDate === "yesterday"
+              ? `Round completed for Yesterday (${formatShortDate(yesterdayDateStr)})`
+              : "Round completed and saved"
+          );
         } catch (err) {
           // Preserve submission in offline queue if network failed transiently
           const msg = err instanceof Error ? err.message : "Network error";
@@ -586,10 +623,12 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
     [
       activeMantra,
       activeSankalpa,
+      attributionDate,
       dedicateToSankalpa,
       ensureActiveSession,
       initialData.userId,
       submitRoundToServer,
+      yesterdayDateStr,
     ]
   );
 
@@ -714,6 +753,9 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
 
       const shouldContinue = manualSessionOption === "continue" && Boolean(activeManualSession);
       const idempotencyKey = makeClientKey("manual-names");
+      const recordedAt = attributionDate === "yesterday"
+        ? getClientRecordedAtForDate(yesterdayDateStr)
+        : new Date().toISOString();
 
       try {
         const res = await fetch("/api/chant/manual-names", {
@@ -722,9 +764,9 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
           body: JSON.stringify({
             namesCount: namesCountToRecord,
             idempotencyKey,
-            sessionId: shouldContinue && activeManualSession?.id ? activeManualSession.id : null,
-            startNewSession: !shouldContinue,
-            clientRecordedAt: new Date().toISOString(),
+            sessionId: attributionDate === "yesterday" ? null : (shouldContinue && activeManualSession?.id ? activeManualSession.id : null),
+            startNewSession: attributionDate === "yesterday" ? true : !shouldContinue,
+            clientRecordedAt: recordedAt,
             sankalpaId: dedicateToSankalpa && activeSankalpa?.id ? activeSankalpa.id : null,
             mantraId: activeMantra?.id || null,
           }),
@@ -763,7 +805,12 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
           ]);
         }
 
-        if (json.rounds_earned > 0) {
+        if (attributionDate === "yesterday") {
+          setStatusMessage(
+            `Recorded ${namesCountToRecord.toLocaleString()} names for Yesterday (${formatShortDate(yesterdayDateStr)}): ${json.rounds_earned} round${json.rounds_earned > 1 ? "s" : ""} credited to yesterday's sadhana!`
+          );
+          setAnnouncement(`${json.rounds_earned} round${json.rounds_earned > 1 ? "s" : ""} credited to yesterday`);
+        } else if (json.rounds_earned > 0) {
           triggerBeadFeedback({
             soundEnabled,
             tactileEnabled,
@@ -801,6 +848,7 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
       activeManualSession,
       activeMantra,
       activeSankalpa,
+      attributionDate,
       dedicateToSankalpa,
       isSubmittingManual,
       manualSessionOption,
@@ -808,6 +856,7 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
       router,
       soundEnabled,
       tactileEnabled,
+      yesterdayDateStr,
     ]
   );
 
@@ -862,6 +911,105 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
       setIsUndoingManual(false);
     }
   }, [isUndoingManual, router]);
+
+  const handleOpenYesterdayHistory = React.useCallback(async () => {
+    setIsYesterdayHistoryOpen(true);
+    setIsLoadingYesterday(true);
+    try {
+      const res = await fetch(
+        `/api/sadhana/day-detail?date=${encodeURIComponent(yesterdayDateStr)}`
+      );
+      if (res.ok) {
+        const json = (await res.json()) as SadhanaDayDetailPayload;
+        setYesterdayDetail(json);
+      }
+    } catch {
+      // Graceful preview handling
+    } finally {
+      setIsLoadingYesterday(false);
+    }
+  }, [yesterdayDateStr]);
+
+  const handleQuickRecordForYesterday = React.useCallback(
+    async (namesCount: number) => {
+      if (namesCount <= 0 || isSubmittingYesterday) return;
+      setIsSubmittingYesterday(true);
+      setErrorMessage(null);
+      try {
+        const recordedAt = getClientRecordedAtForDate(yesterdayDateStr);
+        const res = await fetch("/api/chant/manual-names", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            namesCount,
+            idempotencyKey: makeClientKey("yesterday-names"),
+            startNewSession: true,
+            clientRecordedAt: recordedAt,
+            mantraId: activeMantra?.id || null,
+          }),
+        });
+        const json = await res.json();
+        if (!res.ok || json.error) {
+          throw new Error(json.error ?? "Failed to save yesterday's entry.");
+        }
+        if (json.counter_state) {
+          setManualState(json.counter_state);
+        }
+        setStatusMessage(
+          `Added ${namesCount.toLocaleString()} names to Yesterday (${formatShortDate(yesterdayDateStr)}): ${json.rounds_earned} round(s) credited!`
+        );
+        const ref = await fetch(
+          `/api/sadhana/day-detail?date=${encodeURIComponent(yesterdayDateStr)}`
+        );
+        if (ref.ok) {
+          setYesterdayDetail((await ref.json()) as SadhanaDayDetailPayload);
+        }
+        setYesterdayCustomNames("");
+        router.refresh();
+      } catch (err) {
+        setErrorMessage(
+          err instanceof Error ? err.message : "Failed to record for yesterday."
+        );
+      } finally {
+        setIsSubmittingYesterday(false);
+      }
+    },
+    [yesterdayDateStr, isSubmittingYesterday, activeMantra?.id, router]
+  );
+
+  const handleUndoYesterdayRecord = React.useCallback(
+    async (recordId: string) => {
+      if (undoingRecordId) return;
+      setUndoingRecordId(recordId);
+      setErrorMessage(null);
+      try {
+        const res = await fetch("/api/chant/rounds/undo", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ recordId, reason: "devotee_yesterday_edit" }),
+        });
+        const json = await res.json();
+        if (!res.ok || json.error) {
+          throw new Error(json.error ?? "Failed to revert yesterday's round.");
+        }
+        setStatusMessage("Reverted round from yesterday's history.");
+        const ref = await fetch(
+          `/api/sadhana/day-detail?date=${encodeURIComponent(yesterdayDateStr)}`
+        );
+        if (ref.ok) {
+          setYesterdayDetail((await ref.json()) as SadhanaDayDetailPayload);
+        }
+        router.refresh();
+      } catch (err) {
+        setErrorMessage(
+          err instanceof Error ? err.message : "Failed to revert record."
+        );
+      } finally {
+        setUndoingRecordId(null);
+      }
+    },
+    [undoingRecordId, yesterdayDateStr, router]
+  );
 
   const handleSessionStatus = React.useCallback(
     async (nextStatus: "paused" | "active" | "completed") => {
@@ -1328,6 +1476,90 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
         >
           <CheckCircle2 className="size-4 shrink-0" aria-hidden={true} />
           <span>{statusMessage}</span>
+        </div>
+      )}
+
+      {/* Sādhana Date Attribution Selector (Today vs Yesterday) */}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-sandalwood-border/80 bg-paper/95 p-3 sm:px-4 shadow-2xs">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <span className="text-xs font-semibold text-ink flex items-center gap-1.5">
+            <Calendar className="size-3.5 text-gold-antique" aria-hidden={true} />
+            <span>Sādhana Date:</span>
+          </span>
+
+          <div
+            role="radiogroup"
+            aria-label="Sādhana attribution date"
+            className="inline-flex rounded-xl border border-sandalwood-border/70 bg-linen/60 p-0.5"
+          >
+            <button
+              type="button"
+              role="radio"
+              aria-checked={attributionDate === "today"}
+              onClick={() => setAttributionDate("today")}
+              className={cn(
+                "rounded-lg px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer",
+                attributionDate === "today"
+                  ? "bg-paper text-ink shadow-2xs border border-sandalwood-border/60"
+                  : "text-ink-muted hover:text-ink"
+              )}
+            >
+              Today ({formatShortDate(todayDateStr)})
+            </button>
+
+            <button
+              type="button"
+              role="radio"
+              aria-checked={attributionDate === "yesterday"}
+              onClick={() => setAttributionDate("yesterday")}
+              className={cn(
+                "rounded-lg px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5",
+                attributionDate === "yesterday"
+                  ? "bg-amber-100 text-amber-950 shadow-2xs border border-amber-300 font-bold"
+                  : "text-ink-muted hover:text-ink"
+              )}
+            >
+              <span>🌙 Yesterday</span>
+              <span className="text-[11px] opacity-80 font-normal">
+                ({formatShortDate(yesterdayDateStr)})
+              </span>
+            </button>
+          </div>
+        </div>
+
+        {/* View & Edit Yesterday's History Action */}
+        <button
+          type="button"
+          onClick={() => void handleOpenYesterdayHistory()}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-sandalwood-border/80 bg-paper px-3 py-1.5 text-xs font-semibold text-gold-ink hover:text-ink hover:border-gold-border shadow-2xs transition-all active:scale-[0.98] cursor-pointer"
+        >
+          <History className="size-3.5 text-gold-antique" aria-hidden={true} />
+          <span>View &amp; Edit Yesterday&apos;s History</span>
+        </button>
+      </div>
+
+      {/* Amber Banner when recording for Yesterday */}
+      {attributionDate === "yesterday" && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-300/80 bg-gradient-to-r from-amber-50/90 to-amber-100/60 p-3.5 text-xs text-amber-950 shadow-2xs animate-in fade-in-50 duration-150">
+          <div className="flex items-start gap-2.5">
+            <Sparkles className="size-4 text-amber-700 shrink-0 mt-0.5" aria-hidden={true} />
+            <div className="space-y-0.5">
+              <p className="font-semibold text-amber-950">
+                Recording for Yesterday · {formatReadableDateWithWeekday(yesterdayDateStr)}
+              </p>
+              <p className="text-[11px] text-amber-900/90 leading-relaxed">
+                Forgot to record last night? Any round or names logged now will be attributed directly to yesterday&apos;s Sādhana, fulfilling yesterday&apos;s daily target and protecting your streak.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setAttributionDate("today")}
+            className="rounded-xl border border-amber-300 bg-paper px-3 py-1.5 text-xs font-semibold text-amber-950 hover:bg-amber-100 shadow-2xs transition-all active:scale-[0.98] cursor-pointer"
+          >
+            Switch to Today
+          </button>
         </div>
       )}
 
@@ -2189,6 +2421,172 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
           }}
         />
       )}
+      {/* Yesterday's Sādhana History & Editor Modal */}
+      <Dialog open={isYesterdayHistoryOpen} onOpenChange={setIsYesterdayHistoryOpen}>
+        <DialogContent
+          title={`Yesterday's Sādhana · ${formatReadableDateWithWeekday(yesterdayDateStr)}`}
+          description="Review, add, or edit chanting recorded for yesterday."
+          className="max-w-lg p-6"
+        >
+          {isLoadingYesterday ? (
+            <div className="flex items-center justify-center py-8 text-xs text-ink-muted">
+              <RefreshCw className="size-4 animate-spin mr-2" />
+              <span>Loading yesterday&apos;s Sādhana records...</span>
+            </div>
+          ) : (
+            <div className="space-y-5 pt-1">
+              {/* Yesterday's Summary Metrics */}
+              <div className="grid grid-cols-3 gap-2.5 rounded-2xl border border-gold-border/70 bg-gold-wash/50 p-3.5 text-center">
+                <div>
+                  <span className="block text-[10px] font-semibold uppercase tracking-wider text-ink-muted">
+                    Completed
+                  </span>
+                  <span className="font-serif text-2xl font-bold text-peacock-deep tabular-nums">
+                    {yesterdayDetail?.dailySadhana?.completed_rounds ?? 0}
+                  </span>
+                  <span className="block text-[10px] text-ink-muted">rounds</span>
+                </div>
+
+                <div>
+                  <span className="block text-[10px] font-semibold uppercase tracking-wider text-ink-muted">
+                    Target
+                  </span>
+                  <span className="font-serif text-2xl font-bold text-ink tabular-nums">
+                    {yesterdayDetail?.dailySadhana?.effective_daily_target ?? initialData.preferences.dailyRoundTarget}
+                  </span>
+                  <span className="block text-[10px] text-ink-muted">commitment</span>
+                </div>
+
+                <div>
+                  <span className="block text-[10px] font-semibold uppercase tracking-wider text-ink-muted">
+                    Status
+                  </span>
+                  <div className="mt-1 flex items-center justify-center">
+                    {(yesterdayDetail?.dailySadhana?.completed_rounds ?? 0) >=
+                    (yesterdayDetail?.dailySadhana?.effective_daily_target ?? initialData.preferences.dailyRoundTarget) ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-peacock-green/10 px-2 py-0.5 text-[11px] font-bold text-peacock-green">
+                        <CheckCircle2 className="size-3" />
+                        Target Met 🌸
+                      </span>
+                    ) : (
+                      <span className="text-xs font-semibold text-gold-ink">
+                        {(yesterdayDetail?.dailySadhana?.remaining_balance ?? 0) > 0
+                          ? `${yesterdayDetail?.dailySadhana?.remaining_balance} left`
+                          : "0 rounds"}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Add to Yesterday */}
+              <div className="space-y-2.5 rounded-2xl border border-sandalwood-border/80 bg-paper p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-ink flex items-center gap-1.5">
+                    <Plus className="size-3.5 text-gold-antique" />
+                    <span>Add Chanting to Yesterday</span>
+                  </span>
+                  <span className="text-[11px] text-ink-muted">108 names = 1 round</span>
+                </div>
+
+                {/* Quick Round Buttons */}
+                <div className="grid grid-cols-4 gap-2">
+                  {[
+                    { rounds: 1, names: 108, label: "+1 Round" },
+                    { rounds: 2, names: 216, label: "+2 Rounds" },
+                    { rounds: 4, names: 432, label: "+4 Rounds" },
+                    { rounds: 8, names: 864, label: "+8 Rounds" },
+                  ].map((btn) => (
+                    <Button
+                      key={btn.rounds}
+                      variant="outline"
+                      size="sm"
+                      disabled={isSubmittingYesterday}
+                      onClick={() => void handleQuickRecordForYesterday(btn.names)}
+                      className="rounded-xl border-sandalwood-border/70 hover:border-gold-border py-2 h-auto text-xs font-semibold active:scale-[0.98]"
+                    >
+                      <span>{btn.label}</span>
+                    </Button>
+                  ))}
+                </div>
+
+                {/* Custom Name Count Input */}
+                <div className="flex items-center gap-2 pt-1">
+                  <input
+                    type="number"
+                    min="1"
+                    placeholder="Or enter exact names (e.g. 250)"
+                    value={yesterdayCustomNames}
+                    onChange={(e) => setYesterdayCustomNames(e.target.value)}
+                    className="flex-1 min-h-10 rounded-xl border border-sandalwood-border bg-paper px-3 text-xs text-ink placeholder:text-ink-muted/50 focus:border-gold-antique focus:outline-none"
+                  />
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    disabled={isSubmittingYesterday || !yesterdayCustomNames || parseInt(yesterdayCustomNames, 10) <= 0}
+                    loading={isSubmittingYesterday}
+                    onClick={() => {
+                      const count = parseInt(yesterdayCustomNames, 10);
+                      if (count > 0) void handleQuickRecordForYesterday(count);
+                    }}
+                    className="rounded-xl px-3 py-2 text-xs font-semibold"
+                  >
+                    <span>Save</span>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Existing Records for Yesterday (Edit / Undo) */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-ink">
+                    Recorded Rounds on {formatShortDate(yesterdayDateStr)} ({yesterdayDetail?.records?.length ?? 0})
+                  </span>
+                  <span className="text-[10px] text-ink-muted">Tap Undo to revert an error</span>
+                </div>
+
+                {(!yesterdayDetail?.records || yesterdayDetail.records.length === 0) ? (
+                  <div className="rounded-xl border border-dashed border-sandalwood-border/80 bg-linen/40 p-4 text-center text-xs text-ink-muted">
+                    No rounds recorded for yesterday yet. Use the buttons above to log any rounds chanted last night!
+                  </div>
+                ) : (
+                  <div className="max-h-48 space-y-1.5 overflow-y-auto pr-1">
+                    {yesterdayDetail.records.map((rec, idx) => (
+                      <div
+                        key={rec.id}
+                        className="flex items-center justify-between rounded-xl border border-sandalwood-border/60 bg-paper p-2.5 text-xs shadow-2xs"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-ink">
+                            Round #{yesterdayDetail.records.length - idx}
+                          </span>
+                          <span className="text-ink-muted">·</span>
+                          <span className="capitalize text-ink-muted">
+                            {rec.method === "japa_mala" ? "Japa Mala" : "Manual Counter"}
+                          </span>
+                          <span className="text-[11px] text-ink-muted">
+                            {rec.client_recorded_at ? rec.client_recorded_at.slice(11, 16) : rec.recorded_at.slice(11, 16)} UTC
+                          </span>
+                        </div>
+
+                        <button
+                          type="button"
+                          disabled={undoingRecordId === rec.id}
+                          onClick={() => void handleUndoYesterdayRecord(rec.id)}
+                          className="inline-flex items-center gap-1 rounded-lg border border-kumkum/40 bg-kumkum-wash px-2 py-1 text-[11px] font-semibold text-kumkum hover:bg-kumkum/15 transition-all active:scale-[0.97] cursor-pointer disabled:opacity-50"
+                        >
+                          <Undo2 className="size-3" />
+                          <span>{undoingRecordId === rec.id ? "Reverting..." : "Undo"}</span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

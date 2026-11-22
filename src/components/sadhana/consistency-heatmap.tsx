@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Flame,
   HelpCircle,
+  History,
   Info,
   Sparkles,
 } from "lucide-react";
@@ -723,7 +724,7 @@ export function ConsistencyHeatmap({
                 </div>
               </div>
 
-              {selectedDate === todayDate && (
+              {selectedDate === todayDate ? (
                 <Link
                   href="/sadhana/chant"
                   className={buttonStyles({
@@ -734,6 +735,18 @@ export function ConsistencyHeatmap({
                 >
                   <Flame className="size-3.5" />
                   <span>Chant Today</span>
+                </Link>
+              ) : (
+                <Link
+                  href="/sadhana/chant"
+                  className={buttonStyles({
+                    variant: "secondary",
+                    size: "sm",
+                    className: "shrink-0 shadow-2xs text-xs font-semibold border-sandalwood-border/80",
+                  })}
+                >
+                  <History className="size-3.5 text-gold-antique" />
+                  <span>Log Sādhana in Japa</span>
                 </Link>
               )}
             </div>
@@ -786,12 +799,20 @@ export function ConsistencyHeatmap({
 
               {detail.records.length > 0 && (
                 <div className="rounded-xl border border-sandalwood-border/50 bg-paper/70 p-4">
-                  <p className="mb-2.5 text-xs font-semibold text-ink flex items-center gap-1.5">
-                    <LotusEmblem size={13} className="text-gold-antique" />
-                    <span>
-                      Completed rounds logged on {formatReadableDate(detail.date)} ({detail.records.length})
-                    </span>
-                  </p>
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+                    <p className="text-xs font-semibold text-ink flex items-center gap-1.5">
+                      <LotusEmblem size={13} className="text-gold-antique" />
+                      <span>
+                        Completed rounds logged on {formatReadableDate(detail.date)} ({detail.records.length})
+                      </span>
+                    </p>
+                    <Link
+                      href="/sadhana/chant"
+                      className="text-[11px] font-semibold text-gold-ink hover:text-ink hover:underline"
+                    >
+                      Log / Edit in Japa Workspace →
+                    </Link>
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     {detail.records.map((rec, idx) => (
                       <Badge key={rec.id} variant="neutral" className="border-sandalwood-border/80">

@@ -89,7 +89,7 @@ describe("DṚṢṬI Personal Spiritual Progress Dashboard", () => {
 
     // Section A: Welcome and overview
     expect(html).toContain("Hare Krishna, Radha Damodara Dasa");
-    expect(html).toContain("DṚṢṬI · Spiritual Vision");
+    expect(html).toContain("DṚṢṬI · दृष्टि · Spiritual Vision");
     expect(html).toContain("(Asia/Kolkata)");
     expect(html).toContain("Continue Chanting");
     expect(html).toContain("12 of 16 Rounds");

@@ -1585,8 +1585,8 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
                       reached
                         ? "border-peacock-green/40 bg-paper text-peacock-deep shadow-xs font-semibold"
                         : isCurrent
-                        ? "border-gold-border/80 bg-paper text-ink shadow-xs ring-1 ring-gold-antique/30"
-                        : "border-transparent bg-transparent text-ink-muted/70"
+                          ? "border-gold-border/80 bg-paper text-ink shadow-xs ring-1 ring-gold-antique/30"
+                          : "border-transparent bg-transparent text-ink-muted/70"
                     )}
                   >
                     <p className="font-serif text-sm sm:text-base font-bold tabular-nums">
@@ -2135,8 +2135,8 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
                     {parsedEnteredNames <= 0
                       ? "Enter names chanted to record"
                       : newlyEarnedManualRounds > 0
-                      ? `Record ${parsedEnteredNames.toLocaleString()} Names (+${newlyEarnedManualRounds} Round${newlyEarnedManualRounds > 1 ? "s" : ""} Earned)`
-                      : `Record ${parsedEnteredNames.toLocaleString()} Names (Save ${newPreservedManualRemainder}/108 to Remainder)`}
+                        ? `Record ${parsedEnteredNames.toLocaleString()} Names (+${newlyEarnedManualRounds} Round${newlyEarnedManualRounds > 1 ? "s" : ""} Earned)`
+                        : `Record ${parsedEnteredNames.toLocaleString()} Names (Save ${newPreservedManualRemainder}/108 to Remainder)`}
                   </span>
                 </Button>
               </div>
@@ -2214,8 +2214,8 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
                           {entry.is_reverted
                             ? "Reverted"
                             : entry.rounds_earned > 0
-                            ? `+${entry.rounds_earned} round${entry.rounds_earned > 1 ? "s" : ""}`
-                            : "Remainder saved"}
+                              ? `+${entry.rounds_earned} round${entry.rounds_earned > 1 ? "s" : ""}`
+                              : "Remainder saved"}
                         </Badge>
                         <span className="text-[10px] text-ink-muted/80 tabular-nums">
                           {new Date(entry.recorded_at).toLocaleTimeString([], {
@@ -2463,7 +2463,7 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
                   </span>
                   <div className="mt-1 flex items-center justify-center">
                     {(yesterdayDetail?.dailySadhana?.completed_rounds ?? 0) >=
-                    (yesterdayDetail?.dailySadhana?.effective_daily_target ?? initialData.preferences.dailyRoundTarget) ? (
+                      (yesterdayDetail?.dailySadhana?.effective_daily_target ?? initialData.preferences.dailyRoundTarget) ? (
                       <span className="inline-flex items-center gap-1 rounded-full bg-peacock-green/10 px-2 py-0.5 text-[11px] font-bold text-peacock-green">
                         <CheckCircle2 className="size-3" />
                         Target Met 🌸

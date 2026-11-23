@@ -328,17 +328,17 @@ export function AppShell({
 
       {/* Main Column */}
       <div className="flex min-h-dvh flex-col pb-20 lg:pb-0 lg:ps-64">
-        <header className="sticky top-0 z-20 flex min-h-14 items-center justify-between border-b border-sandalwood-border/60 bg-ivory/72 px-4 backdrop-blur-xl backdrop-saturate-150 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2.5 lg:hidden">
+        <header className="sticky top-0 z-20 flex min-h-14 items-center justify-between border-b border-sandalwood-border/60 bg-ivory/72 px-3 sm:px-6 lg:px-8 backdrop-blur-xl backdrop-saturate-150">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-2.5 lg:hidden">
             <Link
               href={homeHref}
-              className="flex items-center gap-2.5 text-ink hover:text-peacock-deep transition-colors"
+              className="flex items-center gap-2 text-ink hover:text-peacock-deep transition-colors"
               aria-label="SMARAN Home"
             >
-              <span className="flex size-8 items-center justify-center rounded-[8px] bg-krishna-midnight text-gold-antique">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-[8px] bg-krishna-midnight text-gold-antique">
                 <LotusEmblem size={18} />
               </span>
-              <span className="font-display text-base font-semibold">
+              <span className="font-display text-base font-semibold whitespace-nowrap">
                 SMARAN{" "}
                 <span className="font-devanagari text-xs font-normal text-ink-muted">
                   स्मरण
@@ -351,7 +351,7 @@ export function AppShell({
             {pageTitle ?? "SMARAN"}
           </p>
 
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
             {userSummary ? (
               <>
                 <Link
@@ -362,7 +362,7 @@ export function AppShell({
                       ? `Open notifications inbox (${userSummary.unreadNotificationsCount} unread)`
                       : "Open notifications inbox"
                   }
-                  className="relative inline-flex size-9 items-center justify-center rounded-full border border-sandalwood-border bg-paper text-ink-muted transition-colors duration-150 hover:bg-linen hover:text-ink"
+                  className="relative inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-sandalwood-border bg-paper text-ink-muted transition-colors duration-150 hover:bg-linen hover:text-ink shadow-2xs"
                 >
                   <Bell className="size-4" strokeWidth={1.75} aria-hidden={true} />
                   {typeof userSummary.unreadNotificationsCount === "number" &&
@@ -379,41 +379,42 @@ export function AppShell({
                 </Link>
                 <Link
                   href="/account"
-                  className="inline-flex min-h-9 max-w-48 items-center gap-2 rounded-full border border-sandalwood-border bg-paper py-1 pr-3 pl-1.5 text-xs font-medium text-ink transition-colors duration-150 hover:bg-linen"
+                  className="inline-flex size-9 shrink-0 sm:size-auto sm:min-h-9 sm:max-w-48 items-center justify-center sm:justify-start gap-2 rounded-full border border-sandalwood-border bg-paper p-0 sm:py-1 sm:pr-3 sm:pl-1.5 text-xs font-medium text-ink transition-colors duration-150 hover:bg-linen shadow-2xs"
                   title="Devotee Profile & Account"
+                  aria-label={`Devotee Profile: ${userSummary.displayName}`}
                 >
                   {userSummary.avatarUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={userSummary.avatarUrl}
                       alt=""
-                      className="size-6 shrink-0 rounded-full object-cover border border-gold-antique/60 shadow-sacred-xs"
+                      className="size-7 sm:size-6 shrink-0 rounded-full object-cover border border-gold-antique/60 shadow-sacred-xs"
                     />
                   ) : (
-                    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-sandalwood-light border border-gold-antique/40 font-display text-[11px] font-bold text-gold-ink">
+                    <span className="flex size-7 sm:size-6 shrink-0 items-center justify-center rounded-full bg-sandalwood-light border border-gold-antique/40 font-display text-[11px] font-bold text-gold-ink">
                       {userSummary.displayName.trim().charAt(0).toUpperCase() || "D"}
                     </span>
                   )}
-                  <span className="truncate">{userSummary.displayName}</span>
+                  <span className="hidden sm:inline truncate">{userSummary.displayName}</span>
                 </Link>
                 <Link
                   href="/account"
-                  className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-sandalwood-border bg-paper px-3 text-xs font-medium text-ink transition-colors duration-150 hover:bg-linen hover:border-gold-antique/50"
+                  className="inline-flex size-9 shrink-0 sm:size-auto sm:min-h-9 items-center justify-center gap-1.5 rounded-full border border-sandalwood-border bg-paper p-0 sm:px-3 text-xs font-medium text-ink transition-colors duration-150 hover:bg-linen hover:border-gold-antique/50 shadow-2xs"
                   title="Settings & Privacy"
                   aria-label="Settings & Privacy"
                 >
                   <Settings
-                    className="size-3.5 text-peacock-deep"
+                    className="size-4 sm:size-3.5 text-peacock-deep"
                     strokeWidth={1.75}
                     aria-hidden={true}
                   />
-                  <span>{t("nav.settings", "Settings")}</span>
+                  <span className="hidden sm:inline">{t("nav.settings", "Settings")}</span>
                 </Link>
               </>
             ) : !pathname?.startsWith("/auth") ? (
               <Link
                 href="/auth"
-                className="inline-flex min-h-9 items-center rounded-full border border-sandalwood-border bg-paper px-3.5 text-xs font-medium text-ink transition-colors duration-150 hover:bg-linen"
+                className="inline-flex min-h-9 items-center rounded-full border border-sandalwood-border bg-paper px-3 sm:px-3.5 text-xs font-medium text-ink transition-colors duration-150 hover:bg-linen shadow-2xs"
               >
                 {t("nav.signIn", "Sign in")}
               </Link>
@@ -434,7 +435,7 @@ export function AppShell({
         aria-label="Mobile navigation"
         className="fixed inset-x-0 bottom-0 z-30 border-t border-white/45 bg-[#FAF6EC]/78 px-2 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-2xl backdrop-saturate-150 shadow-[0_-8px_28px_-12px_rgba(13,22,40,0.12)] lg:hidden"
       >
-        <ul className="mx-auto grid max-w-md grid-cols-5 gap-1">
+        <ul className="mx-auto grid max-w-md grid-cols-4 gap-1">
           {NAV_ITEMS.map((item) => {
             const isActive = isNavItemActive(item, pathname);
             const hasImage = Boolean(item.bgImageSrc);
@@ -445,7 +446,7 @@ export function AppShell({
                   href={item.href}
                   aria-current={isActive ? "page" : undefined}
                   className={cn(
-                    "group relative flex min-h-11 flex-col items-center justify-center gap-0.5 overflow-hidden rounded-[10px] px-1 py-1 text-[11px] transition-colors duration-200",
+                    "group relative flex min-h-12 flex-col items-center justify-center gap-0.5 overflow-hidden rounded-[10px] px-1 py-1 text-[11px] transition-colors duration-200",
                     isActive
                       ? hasImage
                         ? "bg-krishna-midnight font-medium text-ink-on-dark ring-1 ring-gold-antique/40"

@@ -93,13 +93,15 @@ export function LanguageSelector({
         type="button"
         aria-haspopup="dialog"
         aria-expanded={isOpen}
+        aria-label={`Select language (current: ${langDef.name})`}
+        title={`Language: ${langDef.name} (${langDef.nativeName})`}
         onClick={() => setIsOpen((prev) => !prev)}
         className={cn(
           "group inline-flex items-center gap-2 rounded-full transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C79A3B] focus-visible:ring-offset-2",
           variant === "pill" &&
             "border border-[#E5BF73]/28 bg-[#1E150E]/60 px-3.5 py-1.5 text-xs font-medium text-[#FBF7EE] backdrop-blur-md hover:border-[#E5BF73]/55 hover:bg-[#1E150E]/85 shadow-sm",
           variant === "button" &&
-            "border border-[#D8CCBC] bg-[#FAF7F2] px-3.5 py-2 text-xs font-medium text-[#1F1D1A] shadow-xs hover:border-[#C29438] hover:bg-[#F4EFE6]",
+            "size-9 shrink-0 sm:size-auto sm:min-h-9 justify-center border border-[#D8CCBC] bg-[#FAF7F2] p-0 sm:px-3 sm:py-1.5 text-xs font-medium text-[#1F1D1A] shadow-xs hover:border-[#C29438] hover:bg-[#F4EFE6]",
           variant === "compact" &&
             "p-1.5 text-[#E5BF73] hover:bg-[#1E150E]/50 rounded-full",
           variant === "card" &&
@@ -107,14 +109,14 @@ export function LanguageSelector({
         )}
       >
         <Globe
-          className="size-3.5 text-[#E5BF73] transition-transform duration-200 group-hover:rotate-12"
+          className="size-4 sm:size-3.5 text-[#C79A3B] shrink-0 transition-transform duration-200 group-hover:rotate-12"
           strokeWidth={1.8}
           aria-hidden="true"
         />
-        <span className="font-medium tracking-wide">
+        <span className="font-medium tracking-wide hidden sm:inline">
           {langDef.nativeName}
         </span>
-        <span className="text-[11px] opacity-75 hidden sm:inline">
+        <span className="text-[11px] opacity-75 hidden md:inline">
           ({langDef.name})
         </span>
       </button>
@@ -125,7 +127,7 @@ export function LanguageSelector({
           ref={dialogRef}
           role="dialog"
           aria-label={t("common.selectLanguage", "Select Language")}
-          className="absolute right-0 top-full mt-2 z-50 w-80 sm:w-96 rounded-2xl border border-[#E5BF73]/35 bg-[#1B120B]/95 p-3.5 text-[#FBF7EE] shadow-2xl backdrop-blur-xl ring-1 ring-black/40 animate-in fade-in-0 zoom-in-95 duration-150"
+          className="absolute end-0 top-full mt-2 z-50 w-72 max-w-[calc(100vw-1.5rem)] sm:w-80 md:w-96 rounded-2xl border border-[#E5BF73]/35 bg-[#1B120B]/95 p-3.5 text-[#FBF7EE] shadow-2xl backdrop-blur-xl ring-1 ring-black/40 animate-in fade-in-0 zoom-in-95 duration-150"
           style={{
             boxShadow:
               "0 20px 35px -8px rgba(0,0,0,0.65), 0 0 1px 1px rgba(229,191,115,0.25)",

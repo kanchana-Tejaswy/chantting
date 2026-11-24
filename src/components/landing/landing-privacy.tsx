@@ -4,15 +4,15 @@ import { MotionReveal } from "@/components/ui/motion-reveal";
 
 export function LandingPrivacy() {
   return (
-    <section id="privacy" className="relative overflow-hidden border-t border-white/[0.08] bg-[#0F0A0C]/90 py-20 sm:py-28">
+    <section id="privacy" className="relative overflow-hidden border-t border-white/[0.08] bg-[#0F0A0C]/90 py-14 xs:py-18 sm:py-28">
       {/* Sacred Sanctum Ambient Backlight */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[720px] max-w-[90vw] h-[380px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(122,38,56,0.14),rgba(194,148,56,0.06),transparent_70%)] blur-[96px] will-change-transform"
       />
 
-      <div className="relative z-10 mx-auto max-w-6xl px-5 sm:px-8">
-        <ManuscriptDivider className="mb-14 opacity-40 transition-opacity duration-700 hover:opacity-70" />
+      <div className="relative z-10 mx-auto max-w-6xl px-4 xs:px-5 sm:px-8">
+        <ManuscriptDivider className="mb-10 sm:mb-14 opacity-40 transition-opacity duration-700 hover:opacity-70" />
 
         <MotionReveal durationMs={680} yOffset={20} className="mx-auto max-w-3xl text-center">
           <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-[#C29438]/35 bg-[#24171B]/90 px-3.5 py-1 text-xs font-medium text-[#E5C378] shadow-[0_2px_8px_rgba(0,0,0,0.3)] transition-[transform,box-shadow,border-color] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-105 hover:border-[#C29438]/60 hover:shadow-[0_0_18px_rgba(194,148,56,0.22)]">
@@ -20,21 +20,21 @@ export function LandingPrivacy() {
             <span>Sacred Trust · गोपनीयता</span>
           </div>
 
-          <h2 className="mt-5 font-display text-3xl font-semibold tracking-tight text-white sm:text-4xl lg:text-5xl">
+          <h2 className="mt-5 font-display text-2xl xs:text-3xl font-semibold tracking-tight text-white sm:text-4xl lg:text-5xl">
             Privacy &amp; Personal Practice
           </h2>
 
-          <p className="mt-4 text-base leading-relaxed text-slate-300 text-pretty sm:text-lg">
+          <p className="mt-3.5 sm:mt-4 text-sm xs:text-base leading-relaxed text-slate-300 text-pretty sm:text-lg">
             Devotional life is sacred and deeply personal. We treat your chanting
             discipline with reverence, ensuring your records remain strictly yours.
           </p>
         </MotionReveal>
 
         {/* 4 Trust Commitments with Orchestrated Motion & Tactile Elevation */}
-        <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-10 sm:mt-14 grid gap-5 sm:gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {/* Commitment 1 */}
           <MotionReveal delayMs={40} durationMs={680} yOffset={24} className="h-full">
-            <div className="group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border border-white/[0.08] bg-[#1C1417]/80 p-6 shadow-[0_8px_30px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-md transition-[transform,box-shadow,border-color,background-color] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-2 hover:border-[#C29438]/50 hover:bg-[#23181C]/95 hover:shadow-[0_20px_45px_rgba(0,0,0,0.6),0_0_24px_rgba(194,148,56,0.12),inset_0_1px_0_rgba(255,255,255,0.12)]">
+            <div className="group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border border-white/[0.08] bg-[#1C1417]/80 p-5 xs:p-6 shadow-[0_8px_30px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-md transition-[transform,box-shadow,border-color,background-color] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-2 hover:border-[#C29438]/50 hover:bg-[#23181C]/95 hover:shadow-[0_20px_45px_rgba(0,0,0,0.6),0_0_24px_rgba(194,148,56,0.12),inset_0_1px_0_rgba(255,255,255,0.12)]">
               {/* Subtle Ambient Specular Gleam */}
               <div
                 aria-hidden="true"

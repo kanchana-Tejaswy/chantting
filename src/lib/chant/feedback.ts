@@ -12,10 +12,27 @@ function getAudioContext(): AudioContext | null {
   if (!sharedAudioContext) {
     sharedAudioContext = new AudioCtx();
   }
-  if (sharedAudioContext.state === "suspended") {
+  if (
+    sharedAudioContext.state === "suspended" ||
+    (sharedAudioContext.state as string) === "interrupted"
+  ) {
     sharedAudioContext.resume().catch(() => {});
   }
   return sharedAudioContext;
+}
+
+/**
+ * Unlocks Web Audio on first user gesture for iOS Safari and autoplay-restricted browsers.
+ */
+export function unlockAudioContext(): void {
+  try {
+    const ctx = getAudioContext();
+    if (ctx && (ctx.state === "suspended" || (ctx.state as string) === "interrupted")) {
+      void ctx.resume();
+    }
+  } catch {
+    // Graceful no-op
+  }
 }
 
 function playTone(
@@ -51,7 +68,11 @@ export function triggerBeadFeedback(opts: {
   tactileEnabled: boolean;
   isRoundComplete?: boolean;
 }) {
-  if (opts.tactileEnabled && typeof navigator !== "undefined" && "vibrate" in navigator) {
+  if (
+    opts.tactileEnabled &&
+    typeof navigator !== "undefined" &&
+    typeof navigator.vibrate === "function"
+  ) {
     try {
       navigator.vibrate(opts.isRoundComplete ? [24, 48, 36] : 10);
     } catch {

@@ -358,7 +358,7 @@ export function JapaMalaWheel({
                   : `Advance to bead ${Math.min(safeBead + 1, BEADS_PER_ROUND)} of ${BEADS_PER_ROUND}`
               }
               className={cn(
-                "pointer-events-auto relative flex size-full cursor-pointer flex-col items-center justify-center rounded-full border-2 text-center select-none p-4",
+                "pointer-events-auto relative flex size-full cursor-pointer flex-col items-center justify-center rounded-full border-2 text-center select-none p-4 touch-manipulation",
                 "transition-[transform,background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)]",
                 isPaused
                   ? "cursor-not-allowed border-sandalwood-strong bg-linen/95 text-ink-muted shadow-xs"

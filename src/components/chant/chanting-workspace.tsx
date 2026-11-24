@@ -12,6 +12,7 @@ import {
   CalendarDays,
   CheckCircle2,
   Clock,
+  Eye,
   Gauge,
   History,
   Minus,
@@ -25,6 +26,7 @@ import {
   TimerOff,
   Undo2,
   WifiOff,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { BEADS_PER_ROUND, type DailySadhana } from "@/lib/domain/sadhana";
@@ -744,6 +746,42 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
     [router]
   );
 
+  // Universal Cross-Platform Keyboard Shortcuts (Space / ArrowRight to chant, ArrowLeft / Ctrl+Z to undo)
+  React.useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+
+      if (
+        (e.code === "Space" || e.code === "ArrowRight") &&
+        method === "japa_mala" &&
+        !isPaused &&
+        !isSubmittingRound
+      ) {
+        e.preventDefault();
+        void handleAdvanceBead();
+      } else if (
+        (e.code === "ArrowLeft" || (e.key === "z" && (e.ctrlKey || e.metaKey))) &&
+        method === "japa_mala" &&
+        !isPaused
+      ) {
+        e.preventDefault();
+        void handleUndoBead();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleAdvanceBead, handleUndoBead, isPaused, isSubmittingRound, method]);
+
   const handleRecordManualNames = React.useCallback(
     async (explicitNamesCount?: number) => {
       const namesCountToRecord = explicitNamesCount ?? parsedEnteredNames;
@@ -1210,6 +1248,18 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
                 }),
               });
             }}
+            beadCount={beadCount}
+            onAdvanceBead={() => void handleAdvanceBead()}
+            onUndoBead={() => void handleUndoBead()}
+            sessionRounds={activeSession?.rounds_completed ?? 0}
+            todayRounds={dailySadhana.completed_rounds}
+            mantraName={activeMantra?.name}
+            isPaused={isPaused}
+            isBusy={isSubmittingRound}
+            activeSession={activeSession}
+            isSessionBusy={isSessionBusy}
+            onSessionStatusChange={(status) => void handleSessionStatus(status)}
+            onStartNewSession={() => void handleStartNewSession(method)}
           />
 
           {/* Pace Guidance */}
@@ -1444,9 +1494,36 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
       {errorMessage && (
         <div
           role="alert"
-          className="rounded-[12px] border border-kumkum/30 bg-kumkum-wash px-4 py-3 text-sm text-kumkum"
+          className="flex items-center justify-between gap-3 rounded-[12px] border border-kumkum/30 bg-kumkum-wash px-4 py-3 text-sm text-kumkum"
         >
-          {errorMessage}
+          <span>{errorMessage}</span>
+          <button
+            type="button"
+            onClick={() => setErrorMessage(null)}
+            className="flex size-6 items-center justify-center rounded-md hover:bg-kumkum/15 text-kumkum transition-colors cursor-pointer shrink-0"
+            aria-label="Dismiss error"
+          >
+            <X className="size-3.5" aria-hidden="true" />
+          </button>
+        </div>
+      )}
+
+      {/* Gentle Rollover Notice when previous balance is carried */}
+      {dailySadhana.previous_pending_balance > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[12px] border border-gold-border/60 bg-gold-wash/80 px-4 py-3 text-xs text-ink shadow-2xs">
+          <div className="flex items-center gap-2">
+            <Sparkles className="size-4 text-gold-ink shrink-0" aria-hidden="true" />
+            <span>
+              <strong>+{dailySadhana.previous_pending_balance} rounds</strong> carried from previous days (effective target: <strong>{dailySadhana.effective_daily_target} rounds</strong>).
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsAnalyticsOpen(true)}
+            className="font-semibold text-gold-ink hover:underline cursor-pointer transition-colors"
+          >
+            Review or Forgive Balance &rarr;
+          </button>
         </div>
       )}
 
@@ -1567,35 +1644,52 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
       <Card surface="elevated" className="p-5 sm:p-8">
         {method === "japa_mala" ? (
           <div className="space-y-5">
-            {/* Visual Quarter-Round Cadence Strip */}
-            <div
-              aria-label="Current round milestones"
-              className="mx-auto grid max-w-md grid-cols-4 gap-1.5 rounded-2xl border border-sandalwood-border/80 bg-linen/60 p-1.5 shadow-2xs"
-            >
-              {quarterMilestones.map((step) => {
-                const reached = beadCount >= step.target;
-                const isCurrent =
-                  !reached &&
-                  (step.target === 27 ? beadCount < 27 : beadCount >= step.target - 27);
-                return (
-                  <div
-                    key={step.target}
-                    className={cn(
-                      "rounded-xl border px-2 py-2 text-center transition-all duration-200",
-                      reached
-                        ? "border-peacock-green/40 bg-paper text-peacock-deep shadow-xs font-semibold"
-                        : isCurrent
-                          ? "border-gold-border/80 bg-paper text-ink shadow-xs ring-1 ring-gold-antique/30"
-                          : "border-transparent bg-transparent text-ink-muted/70"
-                    )}
-                  >
-                    <p className="font-serif text-sm sm:text-base font-bold tabular-nums">
-                      {step.target}
-                    </p>
-                    <p className="text-[10px] font-semibold uppercase tracking-wider">{step.label}</p>
-                  </div>
-                );
-              })}
+            {/* Top Bar of Mala Card: Dṛṣṭi Mode on Top-Left + Centered Quarter Milestones */}
+            <div className="relative flex flex-col sm:flex-row items-center justify-center gap-3">
+              {/* Dṛṣṭi Mode Button in Top-Left (Exact spot requested by devotee) */}
+              <div className="w-full sm:w-auto sm:absolute sm:left-0 flex items-center justify-start">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setIsAmbientMode((prev) => !prev)}
+                  className="flex items-center gap-1.5 text-xs rounded-xl border border-gold-border/70 bg-paper hover:bg-gold-wash/70 hover:border-gold-antique text-ink shadow-2xs transition-all cursor-pointer font-semibold px-3 py-1.5"
+                  title="Enter Dṛṣṭi Ambient Devotional Darshan Mode"
+                >
+                  <Eye className="size-3.5 text-gold-antique" />
+                  <span>Dṛṣṭi Mode</span>
+                </Button>
+              </div>
+
+              {/* Visual Quarter-Round Cadence Strip */}
+              <div
+                aria-label="Current round milestones"
+                className="grid max-w-md w-full grid-cols-4 gap-1.5 rounded-2xl border border-sandalwood-border/80 bg-linen/60 p-1.5 shadow-2xs"
+              >
+                {quarterMilestones.map((step) => {
+                  const reached = beadCount >= step.target;
+                  const isCurrent =
+                    !reached &&
+                    (step.target === 27 ? beadCount < 27 : beadCount >= step.target - 27);
+                  return (
+                    <div
+                      key={step.target}
+                      className={cn(
+                        "rounded-xl border px-2 py-2 text-center transition-all duration-200",
+                        reached
+                          ? "border-peacock-green/40 bg-paper text-peacock-deep shadow-xs font-semibold"
+                          : isCurrent
+                            ? "border-gold-border/80 bg-paper text-ink shadow-xs ring-1 ring-gold-antique/30"
+                            : "border-transparent bg-transparent text-ink-muted/70"
+                      )}
+                    >
+                      <p className="font-serif text-sm sm:text-base font-bold tabular-nums">
+                        {step.target}
+                      </p>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider">{step.label}</p>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             <JapaMalaWheel
@@ -2361,6 +2455,8 @@ export function ChantingWorkspace({ initialData }: ChantingWorkspaceProps) {
         currentStreak={initialData.currentStreak ?? 0}
         longestStreak={initialData.longestStreak ?? 0}
         lifetimeRounds={initialData.lifetimeRounds}
+        todayDate={todayDateStr}
+        onUpdateDailySadhana={setDailySadhana}
       />
 
       {/* Chanting Reminders Modal */}

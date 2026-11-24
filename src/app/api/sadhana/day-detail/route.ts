@@ -54,7 +54,6 @@ export async function GET(request: NextRequest) {
       )
       .eq("user_id", user.id)
       .eq("sadhana_date", date)
-      .eq("is_reverted", false)
       .order("recorded_at", { ascending: false }),
     supabase
       .from("carry_forward_ledger")

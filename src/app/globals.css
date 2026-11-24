@@ -605,3 +605,43 @@ html[lang="ml"] {
 html[dir="rtl"] .rtl-flip {
   transform: scaleX(-1);
 }
+
+/* =========================================================================
+   Cross-Platform Mobile Touch, Zoom & Viewport Ergonomics
+   ========================================================================= */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+[role="button"],
+input[type="button"],
+input[type="submit"],
+.touch-control {
+  touch-action: manipulation;
+}
+
+/* Prevent unwanted horizontal viewport drift while keeping sticky / fixed layouts stable */
+html,
+body {
+  overflow-x: clip;
+}
+
+/* =========================================================================
+   Print / Devotional PDF Export Ergonomics
+   ========================================================================= */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #1f1d1a !important;
+  }
+  .no-print,
+  nav,
+  header button,
+  a[href^="/sadhana/chant"] {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+}

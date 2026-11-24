@@ -89,9 +89,7 @@ export function CarryForwardPanel({
   const [maxCapInput, setMaxCapInput] = React.useState(
     currentMaxCarryCap !== undefined ? String(currentMaxCarryCap) : "16"
   );
-  const [applyToToday, setApplyToToday] = React.useState(
-    todayCompletedRounds === 0
-  );
+  const [applyToToday, setApplyToToday] = React.useState(true);
   const [isSavingPolicy, setIsSavingPolicy] = React.useState(false);
   const [isResolvingOffer, setIsResolvingOffer] = React.useState(false);
   const [showSettings, setShowSettings] = React.useState(true);

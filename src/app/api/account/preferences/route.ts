@@ -65,7 +65,7 @@ export async function PATCH(request: Request) {
     );
   }
 
-  // Keep today's initialized Sadhana day aligned if present
+  // Keep today's initialized Sadhana day aligned and apply carry-forward policy to today
   try {
     const profileRes = await auth.supabase
       .from("profiles")
@@ -74,11 +74,30 @@ export async function PATCH(request: Request) {
       .maybeSingle();
     const tz = profileRes.data?.timezone ?? "UTC";
     const todayDate = getLocalDateString(tz);
-    await auth.supabase.rpc("ensure_my_daily_sadhana", {
-      p_target_date: todayDate,
+    
+    // Apply policy to today so that setting fresh_daily or custom cap immediately updates today's target!
+    await auth.supabase.rpc("update_carry_forward_policy", {
+      p_policy: d.carryForwardPolicy,
+      p_custom_rule: customRule,
+      p_apply_to_today: true,
+      p_today_date: todayDate,
     });
   } catch {
-    // Do not block saving notification/privacy preferences on day sync
+    // Fallback: ensure today's day exists
+    try {
+      const profileRes = await auth.supabase
+        .from("profiles")
+        .select("timezone")
+        .eq("id", auth.user.id)
+        .maybeSingle();
+      const tz = profileRes.data?.timezone ?? "UTC";
+      const todayDate = getLocalDateString(tz);
+      await auth.supabase.rpc("ensure_my_daily_sadhana", {
+        p_target_date: todayDate,
+      });
+    } catch {
+      // Do not block saving notification/privacy preferences on day sync
+    }
   }
 
   revalidatePath("/account");

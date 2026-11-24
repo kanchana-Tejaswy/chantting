@@ -59,7 +59,7 @@ export function FormField({
 }
 
 const baseInputStyles =
-  "w-full min-h-11 rounded-[10px] border bg-paper px-3.5 py-2.5 text-sm text-ink placeholder:text-ink-muted/65 transition-[border-color,box-shadow] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-antique disabled:cursor-not-allowed disabled:opacity-55";
+  "w-full min-h-11 rounded-[10px] border bg-paper px-3.5 py-2.5 text-base sm:text-sm text-ink placeholder:text-ink-muted/65 transition-[border-color,box-shadow] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-antique disabled:cursor-not-allowed disabled:opacity-55";
 
 export interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {

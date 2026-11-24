@@ -4,8 +4,8 @@ import { LotusEmblem } from "@/components/sacred/ornaments";
 export function LandingFooter() {
   return (
     <footer className="border-t border-white/[0.08] bg-[#0D090B] text-slate-400">
-      <div className="mx-auto max-w-6xl px-5 py-14 sm:px-8 sm:py-18">
-        <div className="grid gap-10 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
+      <div className="mx-auto max-w-6xl px-4 py-12 xs:px-5 sm:px-8 sm:py-18">
+        <div className="grid gap-8 sm:gap-10 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
           {/* Brand Column */}
           <div className="sm:col-span-2 space-y-4">
             <Link

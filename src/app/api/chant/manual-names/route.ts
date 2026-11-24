@@ -88,9 +88,39 @@ export async function POST(request: Request) {
       mantraId: parsed.data.mantraId ?? null,
     });
   } catch (err) {
+    const rawError = err instanceof Error ? err.message : "Failed to record manual names.";
+
+    // Detect PostgREST schema-cache, missing RPC function, or transient transport failures
+    const isSchemaOrServiceUnavailable =
+      rawError.includes("schema cache") ||
+      rawError.includes("Could not find the function") ||
+      rawError.includes("fetch failed") ||
+      rawError.includes("connection refused") ||
+      rawError.includes("timeout") ||
+      rawError.includes("ECONNRESET");
+
+    if (isSchemaOrServiceUnavailable) {
+      // SEC-01: Never create an alternative or surrogate contribution.
+      // Return HTTP 503 so the client can safely retry the authoritative RPC with the exact same idempotency key.
+      return NextResponse.json(
+        {
+          error:
+            "The sacred counter service is refreshing its schema cache. Please retry in a moment with the same request.",
+          retryable: true,
+        },
+        {
+          status: 503,
+          headers: {
+            "Retry-After": "2",
+            ...PRIVATE_NO_STORE_HEADERS,
+          },
+        }
+      );
+    }
+
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Failed to record manual names." },
-      { status: 400 }
+      { error: rawError },
+      { status: 400, headers: PRIVATE_NO_STORE_HEADERS }
     );
   }
 

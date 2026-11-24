@@ -12,7 +12,7 @@ export function LandingHero() {
         alt="Tranquil Vrindavan twilight lake with a wooden devotional boat drifting across calm water"
       />
 
-      <div className="relative z-10 mx-auto grid w-full max-w-6xl gap-10 px-5 pt-10 pb-16 sm:px-8 sm:pt-14 sm:pb-20 lg:grid-cols-[1.12fr_0.88fr] lg:items-center lg:gap-14 lg:py-20">
+      <div className="relative z-10 mx-auto grid w-full max-w-6xl gap-8 px-4 pt-8 pb-14 xs:px-5 xs:pt-10 sm:px-8 sm:pt-14 sm:pb-20 lg:grid-cols-[1.12fr_0.88fr] lg:items-center lg:gap-14 lg:py-20">
         {/* Left Column: Heading, Devotional Pitch & CTAs with Bidirectional Scroll Reveal */}
         <MotionReveal className="flex flex-col items-start">
           <div
@@ -25,24 +25,24 @@ export function LandingHero() {
 
           <h1
             style={{ animationDelay: "130ms" }}
-            className="animate-hero-fade-in mt-5 font-display text-5xl font-semibold leading-[1.08] tracking-tight text-white text-balance drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] sm:text-6xl lg:text-7xl"
+            className="animate-hero-fade-in mt-5 font-display text-4xl xs:text-5xl font-semibold leading-[1.08] tracking-tight text-white text-balance drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] sm:text-6xl lg:text-7xl"
           >
             SMARAN
-            <span className="mt-2 block font-devanagari text-2xl font-normal text-[#E5C378] sm:text-3xl lg:text-4xl">
+            <span className="mt-2 block font-devanagari text-xl xs:text-2xl font-normal text-[#E5C378] sm:text-3xl lg:text-4xl">
               स्मरण
             </span>
           </h1>
 
           <p
             style={{ animationDelay: "210ms" }}
-            className="animate-hero-fade-in mt-3 font-serif text-lg font-medium tracking-wide text-[#F3E2B8]/95 drop-shadow-[0_1px_3px_rgba(0,0,0,0.7)] sm:text-2xl"
+            className="animate-hero-fade-in mt-3 font-serif text-base xs:text-lg font-medium tracking-wide text-[#F3E2B8]/95 drop-shadow-[0_1px_3px_rgba(0,0,0,0.7)] sm:text-2xl"
           >
             One mantra at a time.
           </p>
 
           <p
             style={{ animationDelay: "290ms" }}
-            className="animate-hero-fade-in mt-5 max-w-xl text-base leading-relaxed text-slate-300 text-pretty drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)] sm:text-lg"
+            className="animate-hero-fade-in mt-4 sm:mt-5 max-w-xl text-sm xs:text-base leading-relaxed text-slate-300 text-pretty drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)] sm:text-lg"
           >
             A peaceful space to build your chanting practice, deepen your devotion
             and stay connected with Krishna.
@@ -50,11 +50,11 @@ export function LandingHero() {
 
           <div
             style={{ animationDelay: "370ms" }}
-            className="animate-hero-fade-in mt-8 flex flex-wrap items-center gap-3.5"
+            className="animate-hero-fade-in mt-7 sm:mt-8 flex w-full flex-col xs:w-auto xs:flex-row xs:flex-wrap items-stretch xs:items-center gap-3 xs:gap-3.5"
           >
             <Link
               href="/auth?next=/sadhana"
-              className="group inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[#9E364C]/50 bg-[#7A2638] px-6 text-sm font-semibold text-white shadow-[0_4px_20px_rgba(122,38,56,0.45),inset_0_1px_0_rgba(255,255,255,0.25)] transition-[transform,background-color,box-shadow] duration-200 hover:bg-[#641C2C] hover:shadow-[0_6px_28px_rgba(122,38,56,0.65)] active:scale-[0.97]"
+              className="group inline-flex h-11 w-full xs:w-auto items-center justify-center gap-2 rounded-xl border border-[#9E364C]/50 bg-[#7A2638] px-6 text-sm font-semibold text-white shadow-[0_4px_20px_rgba(122,38,56,0.45),inset_0_1px_0_rgba(255,255,255,0.25)] transition-[transform,background-color,box-shadow] duration-200 hover:bg-[#641C2C] hover:shadow-[0_6px_28px_rgba(122,38,56,0.65)] active:scale-[0.97]"
             >
               <Flame className="size-4 text-[#E5C378]" aria-hidden="true" />
               <span>Begin Your Journey</span>
@@ -65,7 +65,7 @@ export function LandingHero() {
             </Link>
             <a
               href="#experience"
-              className="inline-flex h-11 items-center justify-center rounded-xl border border-white/20 bg-white/[0.06] px-5 text-sm font-medium text-slate-100 backdrop-blur-md transition-[transform,background-color,border-color,color] duration-200 hover:border-[#C29438]/50 hover:bg-[#7A2638]/20 hover:text-white active:scale-[0.97]"
+              className="inline-flex h-11 w-full xs:w-auto items-center justify-center rounded-xl border border-white/20 bg-white/[0.06] px-5 text-sm font-medium text-slate-100 backdrop-blur-md transition-[transform,background-color,border-color,color] duration-200 hover:border-[#C29438]/50 hover:bg-[#7A2638]/20 hover:text-white active:scale-[0.97]"
             >
               Explore SMARAN
             </a>
@@ -73,7 +73,7 @@ export function LandingHero() {
 
           <div
             style={{ animationDelay: "450ms" }}
-            className="animate-hero-fade-in mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-white/[0.12] pt-6 text-xs text-slate-300 drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]"
+            className="animate-hero-fade-in mt-7 sm:mt-8 flex w-full flex-col xs:flex-row xs:flex-wrap items-start xs:items-center gap-x-6 gap-y-2 border-t border-white/[0.12] pt-5 sm:pt-6 text-xs text-slate-300 drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]"
           >
             <span className="inline-flex items-center gap-1.5">
               <ShieldCheck
@@ -99,7 +99,7 @@ export function LandingHero() {
           delayMs={120}
           className="relative mx-auto w-full max-w-md lg:mx-0"
         >
-          <div className="animate-float-slow relative overflow-hidden rounded-3xl border border-white/[0.14] bg-[#1E1518]/90 p-5 text-white shadow-[0_24px_60px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-xl sm:p-6 transition-all duration-500 hover:border-[#C29438]/40 hover:shadow-[0_28px_70px_rgba(0,0,0,0.7)]">
+          <div className="animate-float-slow relative overflow-hidden rounded-3xl border border-white/[0.14] bg-[#1E1518]/90 p-4 xs:p-5 text-white shadow-[0_24px_60px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-xl sm:p-6 transition-all duration-500 hover:border-[#C29438]/40 hover:shadow-[0_28px_70px_rgba(0,0,0,0.7)]">
             {/* Ambient illumination */}
             <div
               aria-hidden="true"
@@ -144,14 +144,14 @@ export function LandingHero() {
               </div>
 
               {/* Sacred Chanting Verse Box */}
-              <div className="mt-2.5 w-full space-y-1.5 rounded-2xl border border-white/[0.08] bg-[#120B0E]/80 px-4 py-3.5 text-center backdrop-blur-sm transition-all duration-300 hover:border-[#C29438]/30 hover:bg-[#120B0E]/90">
-                <p className="font-devanagari text-base leading-relaxed font-medium text-[#F3E2B8] drop-shadow-sm sm:text-lg">
+              <div className="mt-2.5 w-full space-y-1.5 rounded-2xl border border-white/[0.08] bg-[#120B0E]/80 px-3.5 py-3 xs:px-4 xs:py-3.5 text-center backdrop-blur-sm transition-all duration-300 hover:border-[#C29438]/30 hover:bg-[#120B0E]/90">
+                <p className="font-devanagari text-sm xs:text-base leading-relaxed font-medium text-[#F3E2B8] drop-shadow-sm sm:text-lg">
                   हरे कृष्ण हरे कृष्ण कृष्ण कृष्ण हरे हरे ।
                 </p>
-                <p className="font-devanagari text-base leading-relaxed font-medium text-[#F3E2B8] drop-shadow-sm sm:text-lg">
+                <p className="font-devanagari text-sm xs:text-base leading-relaxed font-medium text-[#F3E2B8] drop-shadow-sm sm:text-lg">
                   हरे राम हरे राम राम राम हरे हरे ॥
                 </p>
-                <p className="mt-1 font-serif text-[11px] tracking-wider text-slate-400 italic">
+                <p className="mt-1 font-serif text-[10px] xs:text-[11px] tracking-wider text-slate-400 italic">
                   hare kṛṣṇa hare kṛṣṇa kṛṣṇa kṛṣṇa hare hare
                   <br />
                   hare rāma hare rāma rāma rāma hare hare
@@ -159,16 +159,16 @@ export function LandingHero() {
               </div>
 
               {/* Japa Bead Rhythm Indicator */}
-              <div className="mt-4 flex w-full items-center justify-between gap-3 border-t border-white/[0.08] pt-3 text-left">
+              <div className="mt-4 flex w-full flex-col xs:flex-row items-start xs:items-center justify-between gap-2.5 xs:gap-3 border-t border-white/[0.08] pt-3 text-left">
                 <div className="space-y-0.5">
                   <span className="text-[10px] font-medium tracking-wider text-slate-400 uppercase">
                     Daily Sādhana Rhythm
                   </span>
-                  <p className="text-sm font-semibold text-white">
+                  <p className="text-xs xs:text-sm font-semibold text-white">
                     108 Beads · 16 Rounds Target
                   </p>
                 </div>
-                <div className="flex items-center gap-1.5 rounded-full border border-[#7A2638]/40 bg-[#7A2638]/20 px-3 py-1 text-xs font-medium text-[#E8A4B2] shadow-sm">
+                <div className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#7A2638]/40 bg-[#7A2638]/20 px-3 py-1 text-xs font-medium text-[#E8A4B2] shadow-sm">
                   <span className="animate-sacred-pulse size-2 rounded-full bg-[#9E364C]" />
                   <span>Sacred Japa</span>
                 </div>

@@ -112,5 +112,30 @@ describe("SMARAN — Premium Landing Page Implementation", () => {
     expect(html).toContain('href="/auth"');
     expect(html).toContain('href="/auth?next=/sadhana"');
   });
+
+  it("verifies universal responsive and mobile screen adaptations across landing sections", () => {
+    const html = renderToStaticMarkup(<HomePage />);
+
+    // 1. Mobile & desktop responsive button labels in navbar
+    expect(html).toContain("Begin</span>");
+    expect(html).toContain("Begin Your Journey</span>");
+
+    // 2. Responsive hero heading typography
+    expect(html).toContain("text-4xl xs:text-5xl");
+
+    // 3. Full-width mobile CTA buttons with inline desktop progression
+    expect(html).toContain("w-full xs:w-auto");
+
+    // 4. Lakshya overlay responsive labels to prevent text squishing on mobile
+    expect(html).toContain("Base Target");
+    expect(html).toContain("Daily Base Target");
+    expect(html).toContain("Carried");
+    expect(html).toContain("Yesterday Balance");
+    expect(html).toContain("Effective");
+    expect(html).toContain("Today Effective Target");
+
+    // 5. Responsive rhythm and flex containers
+    expect(html).toContain("flex-col xs:flex-row");
+  });
 });
 

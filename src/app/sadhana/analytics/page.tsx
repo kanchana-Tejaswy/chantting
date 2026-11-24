@@ -141,6 +141,9 @@ export default async function SadhanaAnalyticsPage({
         displayName={result.displayName}
         timezone={result.timezone}
         analytics={result.analytics}
+        activeSankalpa={result.activeSankalpa}
+        allSankalpas={result.allSankalpas}
+        recentSessions={result.recentSessions}
         initialDayDetail={result.initialDayDetail}
       />
     </AppShell>

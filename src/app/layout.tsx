@@ -39,6 +39,11 @@ const tiroDevanagari = Tiro_Devanagari_Sanskrit({
 
 export const metadata: Metadata = {
   applicationName: "SMARAN",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: "/media/nav-drsti.jpg",
+    apple: "/media/nav-drsti.jpg",
+  },
   title: {
     default: "SMARAN (स्मरण) — Remember Him. Stay Connected.",
     template: "%s · SMARAN",
@@ -48,6 +53,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: "SMARAN",
+    statusBarStyle: "default",
   },
   openGraph: {
     type: "website",
@@ -69,6 +75,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({

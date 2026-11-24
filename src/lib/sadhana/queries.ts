@@ -67,12 +67,12 @@ export type OnboardingContextResult =
   | { status: "schema_not_ready"; userEmail: string | null; detail: string }
   | { status: "error"; userEmail: string | null; message: string }
   | {
-      status: "ready";
-      userEmail: string | null;
-      profile: UserProfileRecord;
-      preferences: UserPreferencesRecord;
-      alreadyCompleted: boolean;
-    };
+    status: "ready";
+    userEmail: string | null;
+    profile: UserProfileRecord;
+    preferences: UserPreferencesRecord;
+    alreadyCompleted: boolean;
+  };
 
 export type SadhanaLoadResult =
   | { status: "unauthenticated" }
@@ -80,19 +80,19 @@ export type SadhanaLoadResult =
   | { status: "schema_not_ready"; userEmail: string | null; detail: string }
   | { status: "error"; userEmail: string | null; message: string }
   | {
-      status: "ready";
-      userEmail: string | null;
-      profile: UserProfileRecord;
-      preferences: UserPreferencesRecord;
-      metrics: PersonalDashboardMetrics;
-      recentSessions: ChantingSessionSummary[];
-      activeSession: ChantingSessionRecord | null;
-      carryForwardLedger: CarryForwardLedgerEntry[];
-      pendingOptionalOffer: PendingOptionalCarryOffer | null;
-      unappliedPendingNotice: UnappliedPendingNotice | null;
-      sankalpas: SankalpaRecord[];
-      activeSankalpa: SankalpaRecord | null;
-    };
+    status: "ready";
+    userEmail: string | null;
+    profile: UserProfileRecord;
+    preferences: UserPreferencesRecord;
+    metrics: PersonalDashboardMetrics;
+    recentSessions: ChantingSessionSummary[];
+    activeSession: ChantingSessionRecord | null;
+    carryForwardLedger: CarryForwardLedgerEntry[];
+    pendingOptionalOffer: PendingOptionalCarryOffer | null;
+    unappliedPendingNotice: UnappliedPendingNotice | null;
+    sankalpas: SankalpaRecord[];
+    activeSankalpa: SankalpaRecord | null;
+  };
 
 export type ChantWorkspaceLoadResult =
   | { status: "unauthenticated" }
@@ -116,14 +116,17 @@ export type AnalyticsLoadResult =
   | { status: "schema_not_ready"; userEmail: string | null; detail: string }
   | { status: "error"; userEmail: string | null; message: string }
   | {
-      status: "ready";
-      userEmail: string | null;
-      displayName: string;
-      avatarUrl?: string | null;
-      timezone: string;
-      analytics: SadhanaAnalyticsSummary;
-      initialDayDetail: SadhanaDayDetailPayload;
-    };
+    status: "ready";
+    userEmail: string | null;
+    displayName: string;
+    avatarUrl?: string | null;
+    timezone: string;
+    analytics: SadhanaAnalyticsSummary;
+    activeSankalpa: SankalpaRecord | null;
+    allSankalpas?: SankalpaRecord[];
+    recentSessions?: ChantingSessionRecord[];
+    initialDayDetail: SadhanaDayDetailPayload;
+  };
 
 export function isMissingSchemaError(
   err: { code?: string; message?: string } | null
@@ -728,19 +731,19 @@ export async function loadChantWorkspaceData(): Promise<ChantWorkspaceLoadResult
       lifetimeRounds,
       manualCounterState: manualStateRes?.data
         ? {
-            cumulative_names: Number(manualStateRes.data.cumulative_names ?? 0),
-            cumulative_rounds: Number(manualStateRes.data.cumulative_rounds ?? 0),
-            current_remainder: Number(manualStateRes.data.current_remainder ?? 0),
-            last_entry: null,
-            active_session: null,
-          }
+          cumulative_names: Number(manualStateRes.data.cumulative_names ?? 0),
+          cumulative_rounds: Number(manualStateRes.data.cumulative_rounds ?? 0),
+          current_remainder: Number(manualStateRes.data.current_remainder ?? 0),
+          last_entry: null,
+          active_session: null,
+        }
         : {
-            cumulative_names: 0,
-            cumulative_rounds: 0,
-            current_remainder: 0,
-            last_entry: null,
-            active_session: null,
-          },
+          cumulative_names: 0,
+          cumulative_rounds: 0,
+          current_remainder: 0,
+          last_entry: null,
+          active_session: null,
+        },
       manualEntries: (manualEntriesRes?.data ?? []) as any[],
     },
   };
@@ -764,7 +767,7 @@ export async function loadSadhanaAnalyticsData(
     return { status: "unauthenticated" };
   }
 
-  const [profileRes, prefRes, historyRes] = await Promise.all([
+  const [profileRes, prefRes, historyRes, sankalpasRes, sessionsHistoryRes] = await Promise.all([
     supabase
       .from("profiles")
       .select("id, display_name, avatar_url, timezone, preferred_language, created_at, updated_at")
@@ -784,6 +787,22 @@ export async function loadSadhanaAnalyticsData(
       )
       .eq("user_id", user.id)
       .order("sadhana_date", { ascending: true }),
+    supabase
+      .from("sankalpas")
+      .select(
+        "id, user_id, title, description, target_rounds, completed_rounds, start_date, end_date, status, completed_at, created_at, updated_at"
+      )
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("chanting_sessions")
+      .select(
+        "id, user_id, sadhana_date, method, status, current_bead_count, rounds_completed, client_session_key, started_at, last_activity_at, paused_at, ended_at"
+      )
+      .eq("user_id", user.id)
+      .gt("rounds_completed", 0)
+      .order("started_at", { ascending: false })
+      .limit(300),
   ]);
 
   const err = profileRes.error ?? prefRes.error ?? historyRes.error;
@@ -892,6 +911,10 @@ export async function loadSadhanaAnalyticsData(
     ledgerEntry: (todayLedgerRes.data as CarryForwardLedgerEntry | null) ?? null,
   };
 
+  const allSankalpas = (sankalpasRes.data ?? []) as SankalpaRecord[];
+  const activeSankalpa = allSankalpas.find((s) => s.status === "active") ?? null;
+  const recentSessions = (sessionsHistoryRes.data ?? []) as ChantingSessionRecord[];
+
   return {
     status: "ready",
     userEmail: user.email ?? null,
@@ -899,41 +922,44 @@ export async function loadSadhanaAnalyticsData(
     avatarUrl: profile.avatar_url ?? null,
     timezone: profile.timezone,
     analytics,
+    activeSankalpa,
+    allSankalpas,
+    recentSessions,
     initialDayDetail,
   };
 }
 
 export type DrstiDashboardLoadResult =
   | {
-      status: "ready";
-      userEmail: string | null;
-      displayName: string;
-      avatarUrl?: string | null;
-      timezone: string;
-      todayDate: string;
-      todaySadhana: DailySadhana;
-      metrics: PersonalDashboardMetrics;
-      analytics: SadhanaAnalyticsSummary;
-      activeSankalpa: SankalpaRecord | null;
-      sankalpas: SankalpaRecord[];
-      initialDayDetail: SadhanaDayDetailPayload;
-    }
+    status: "ready";
+    userEmail: string | null;
+    displayName: string;
+    avatarUrl?: string | null;
+    timezone: string;
+    todayDate: string;
+    todaySadhana: DailySadhana;
+    metrics: PersonalDashboardMetrics;
+    analytics: SadhanaAnalyticsSummary;
+    activeSankalpa: SankalpaRecord | null;
+    sankalpas: SankalpaRecord[];
+    initialDayDetail: SadhanaDayDetailPayload;
+  }
   | { status: "unauthenticated" }
   | {
-      status: "needs_onboarding";
-      userEmail: string | null;
-      displayName: string;
-    }
+    status: "needs_onboarding";
+    userEmail: string | null;
+    displayName: string;
+  }
   | {
-      status: "schema_not_ready";
-      userEmail: string | null;
-      detail: string;
-    }
+    status: "schema_not_ready";
+    userEmail: string | null;
+    detail: string;
+  }
   | {
-      status: "error";
-      userEmail: string | null;
-      message: string;
-    };
+    status: "error";
+    userEmail: string | null;
+    message: string;
+  };
 
 /**
  * Loads comprehensive, authoritative data for the DṚṢṬI Personal Spiritual Progress Dashboard:

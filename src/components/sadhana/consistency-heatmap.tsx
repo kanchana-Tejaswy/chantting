@@ -12,6 +12,7 @@ import {
   History,
   Info,
   Sparkles,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type {
@@ -118,15 +119,7 @@ export function ConsistencyHeatmap({
   const [isLoadingDetail, setIsLoadingDetail] = React.useState(false);
   const [detailError, setDetailError] = React.useState<string | null>(null);
   const [showGuide, setShowGuide] = React.useState(false);
-  const [selectedCell, setSelectedCell] = React.useState<HeatmapDayCell | null>(
-    () => {
-      for (const week of weeks) {
-        const found = week.days.find((d) => d?.date === initialDayDetail.date);
-        if (found) return found;
-      }
-      return null;
-    }
-  );
+  const [selectedCell, setSelectedCell] = React.useState<HeatmapDayCell | null>(null);
 
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
   const todayButtonRef = React.useRef<HTMLButtonElement | null>(null);
@@ -185,13 +178,32 @@ export function ConsistencyHeatmap({
       }
 
       if (targetWeekIndex >= 0) {
-        const container = scrollContainerRef.current;
-        // Each week column is 14px + 4px gap = 18px
-        const scrollPosition = Math.max(0, targetWeekIndex * 18 - container.clientWidth / 2);
-        container.scrollTo({ left: scrollPosition, behavior: "smooth" });
+        const timer = setTimeout(() => {
+          if (scrollContainerRef.current) {
+            const container = scrollContainerRef.current;
+            // Each week column is 14px + 4px gap = 18px
+            const scrollPosition = Math.max(0, targetWeekIndex * 18 - container.clientWidth / 2);
+            container.scrollTo({ left: scrollPosition, behavior: "smooth" });
+          }
+        }, 120);
+        return () => clearTimeout(timer);
       }
     }
   }, [selectedYear, currentYear, todayDate, weeks]);
+
+  const handleScrollToMonth = React.useCallback(
+    (monthIdx: number) => {
+      if (!scrollContainerRef.current) return;
+      const targetLabel = MONTH_ABBR[monthIdx];
+      const match = monthHeaders.find((m) => m.label === targetLabel);
+      if (match) {
+        const container = scrollContainerRef.current;
+        const scrollPosition = Math.max(0, match.weekIndex * 18 - 24);
+        container.scrollTo({ left: scrollPosition, behavior: "smooth" });
+      }
+    },
+    [monthHeaders]
+  );
 
   const handleScrollToToday = () => {
     if (scrollContainerRef.current) {
@@ -488,7 +500,7 @@ export function ConsistencyHeatmap({
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-[11px] font-medium text-gold-ink">
-                    Clicked Day
+                    Selected Day
                   </span>
                   <a
                     href="#daily-detail-panel"
@@ -496,9 +508,32 @@ export function ConsistencyHeatmap({
                   >
                     View details below ↓
                   </a>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCell(null)}
+                    className="p-1 rounded-md text-ink-muted hover:text-ink hover:bg-gold-wash/50 transition-colors"
+                    aria-label="Dismiss day banner"
+                  >
+                    <X className="size-3.5" />
+                  </button>
                 </div>
               </div>
             )}
+
+            {/* Quick Month Jump Strip for Mobile & Touch Devices */}
+            <div className="mb-2.5 flex items-center gap-1 overflow-x-auto pb-1 text-[11px] font-medium scrollbar-none sm:hidden">
+              <span className="shrink-0 text-[10px] font-semibold uppercase text-ink-muted pr-1">Jump:</span>
+              {MONTH_ABBR.map((m, idx) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => handleScrollToMonth(idx)}
+                  className="shrink-0 rounded-lg border border-sandalwood-border/70 bg-paper/90 px-2 py-1 text-[11px] font-semibold text-ink-muted hover:text-ink active:scale-95 transition-all shadow-2xs touch-manipulation"
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
 
             {/* Scrollable Annual Heatmap Matrix */}
             <div
@@ -583,7 +618,7 @@ export function ConsistencyHeatmap({
                               aria-label={describeCellAria(cell)}
                               aria-pressed={isSelected}
                               className={cn(
-                                "relative flex size-3.5 cursor-pointer items-center justify-center rounded-[3px] transition-all duration-150 focus:outline-none",
+                                "relative flex size-3.5 cursor-pointer items-center justify-center rounded-[3px] transition-all duration-150 focus:outline-none touch-manipulation after:absolute after:-inset-1 after:content-['']",
                                 getCellClass(cell.status),
                                 isToday &&
                                   "ring-2 ring-gold-antique ring-offset-1 ring-offset-paper z-10 scale-105",
@@ -662,7 +697,11 @@ export function ConsistencyHeatmap({
       <Card id="daily-detail-panel" surface="elevated" className="border-gold-border/80 shadow-sm scroll-mt-6">
         <CardHeader className="flex flex-col gap-2 border-b border-sandalwood-border/40 pb-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="gold" className="text-xs">
+                <LotusEmblem size={12} className="text-[#8C6F2D]" />
+                <span>Section E · Daily Activity Detail</span>
+              </Badge>
               <CardTitle className="tabular-nums font-display text-xl sm:text-2xl text-ink">
                 Daily Detail · {selectedDate}
               </CardTitle>
@@ -797,31 +836,111 @@ export function ConsistencyHeatmap({
                 </div>
               </dl>
 
-              {detail.records.length > 0 && (
-                <div className="rounded-xl border border-sandalwood-border/50 bg-paper/70 p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
-                    <p className="text-xs font-semibold text-ink flex items-center gap-1.5">
-                      <LotusEmblem size={13} className="text-gold-antique" />
-                      <span>
-                        Completed rounds logged on {formatReadableDate(detail.date)} ({detail.records.length})
-                      </span>
+              {/* Detailed Breakdown: Holy Names, Sessions & Records */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                {/* Chanting Sessions Detail */}
+                <div className="rounded-xl border border-sandalwood-border/60 bg-paper/80 p-4 space-y-2.5">
+                  <div className="flex items-center justify-between text-xs font-semibold text-ink">
+                    <span className="flex items-center gap-1.5">
+                      <History className="size-3.5 text-peacock-deep" />
+                      <span>Chanting Sessions ({detail.sessions.length})</span>
+                    </span>
+                    <span className="text-[11px] text-ink-muted">
+                      {(detail.dailySadhana.completed_rounds * 108).toLocaleString()} holy names
+                    </span>
+                  </div>
+
+                  {detail.sessions.length === 0 ? (
+                    <p className="text-xs text-ink-muted italic">
+                      No session container records logged for this date.
                     </p>
+                  ) : (
+                    <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                      {detail.sessions.map((s) => (
+                        <div
+                          key={s.id}
+                          className="flex items-center justify-between rounded-lg border border-sandalwood-border/40 bg-linen/50 p-2 text-xs"
+                        >
+                          <div>
+                            <span className="font-semibold text-ink">
+                              {s.method === "japa_mala" ? "108-Bead Japa Mala" : "Manual Counter"}
+                            </span>
+                            <span className="text-[10px] text-ink-muted block">
+                              Started: {new Date(s.started_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                              {s.ended_at && ` · Ended: ${new Date(s.ended_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`}
+                            </span>
+                          </div>
+                          <Badge variant="neutral" className="tabular-nums text-[10px]">
+                            {s.rounds_completed} {s.rounds_completed === 1 ? "round" : "rounds"}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Chanting Records with Corrections / Reverted Entries */}
+                <div className="rounded-xl border border-sandalwood-border/60 bg-paper/80 p-4 space-y-2.5">
+                  <div className="flex items-center justify-between text-xs font-semibold text-ink">
+                    <span className="flex items-center gap-1.5">
+                      <LotusEmblem size={13} className="text-gold-antique" />
+                      <span>Round Contributions &amp; Submissions ({detail.records.length})</span>
+                    </span>
                     <Link
                       href="/sadhana/chant"
-                      className="text-[11px] font-semibold text-gold-ink hover:text-ink hover:underline"
+                      className="text-[10px] text-gold-ink hover:underline font-semibold"
                     >
-                      Log / Edit in Japa Workspace →
+                      Japa Workspace →
                     </Link>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {detail.records.map((rec, idx) => (
-                      <Badge key={rec.id} variant="neutral" className="border-sandalwood-border/80">
-                        #{detail.records.length - idx} ·{" "}
-                        {rec.method === "japa_mala" ? "Japa Mala" : "Manual"} ·{" "}
-                        {rec.recorded_at.slice(11, 16)} UTC
-                      </Badge>
-                    ))}
-                  </div>
+
+                  {detail.records.length === 0 ? (
+                    <p className="text-xs text-ink-muted italic">
+                      No individual round contributions logged for this date.
+                    </p>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto">
+                      {detail.records.map((rec, idx) => (
+                        <span
+                          key={rec.id}
+                          className={cn(
+                            "inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] tabular-nums font-medium shadow-2xs",
+                            rec.is_reverted
+                              ? "border-kumkum/40 bg-kumkum/10 text-kumkum line-through"
+                              : "border-sandalwood-border/80 bg-paper text-ink"
+                          )}
+                          title={
+                            rec.is_reverted
+                              ? "Corrected / Reverted entry (excluded from totals)"
+                              : `Recorded at ${rec.recorded_at}`
+                          }
+                        >
+                          <span>#{detail.records.length - idx}</span>
+                          <span>·</span>
+                          <span>{rec.method === "japa_mala" ? "Japa" : "Manual"}</span>
+                          <span>·</span>
+                          <span>{rec.round_delta >= 0 ? `+${rec.round_delta}r` : `${rec.round_delta}r`}</span>
+                          {rec.is_reverted && (
+                            <span className="text-[9px] uppercase tracking-wider font-bold">
+                              [Reverted]
+                            </span>
+                          )}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Carry Forward Ledger Info if present */}
+              {detail.ledgerEntry && (
+                <div className="rounded-xl border border-gold-border/60 bg-gold-wash/40 p-3 text-xs text-ink-muted flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Sparkles className="size-3.5 text-gold-antique shrink-0" />
+                    <span>
+                      Carry-forward ledger active: <strong>+{detail.ledgerEntry.carried_amount} rounds</strong> carried from {detail.ledgerEntry.from_date} (Policy: {detail.ledgerEntry.policy_applied}).
+                    </span>
+                  </span>
                 </div>
               )}
             </div>

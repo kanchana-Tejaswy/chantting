@@ -2,11 +2,14 @@
 // Operational Reliability & Privacy Architecture
 // STRICT SAFEGUARD: Never caches private user chanting records, auth tokens, or API requests.
 
-const CACHE_NAME = 'smaran-static-v1';
+const CACHE_NAME = 'smaran-static-v2';
 
 const STATIC_PRECACHE_URLS = [
   '/',
   '/manifest.webmanifest',
+  '/favicon.ico',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
   '/media/nav-drsti.jpg',
   '/media/nav-gita.jpg',
   '/media/nav-japa.jpg',
